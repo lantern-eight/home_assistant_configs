@@ -1,0 +1,141 @@
+# configuration.yaml
+
+notify:
+  - name: mobile_phones
+    platform: group
+    services:
+      - service: mobile_app_flip7
+      - service: mobile_app_pixel_7a
+
+
+
+alias: 3D Print Failure Alert
+mode: parallel
+triggers:
+  - entity_id:
+      - sensor.centauri_carbon_print_error
+      - sensor.centauri_carbon_2_print_error
+      - sensor.centauri_carbon_error_status_reason
+      - sensor.centauri_carbon_2_error_status_reason
+    trigger: state
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.to_state.state not in ['none', 'ok', 'unknown', 'unavailable'] }}
+actions:
+  # 1. Variables to clean up the entity ID and build the notification pieces
+  - variables:
+      # This regex_replace handles both suffix types at once to find the printer name
+      base_name: >
+        {{ trigger.entity_id 
+           | replace('sensor.', '') 
+           | replace('_print_error', '') 
+           | replace('_error_status_reason', '') }}
+      
+      notif_title: "{{ base_name | replace('_', ' ') | title }} — Print Error ❌"
+      
+      notif_message: >
+        File: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+
+        🚨 Error: {{ trigger.to_state.state | replace('_',' ') | title }}
+      
+      notif_image: >
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+  # 2. Notify
+  - data:
+      title: "{{ notif_title }}"
+      message: "{{ notif_message }}"
+      data:
+        image: "{{ notif_image }}"
+    action: notify.boss_phones
+
+  # 3. Reset the halfway notification boolean so the next print works correctly
+  - target:
+      entity_id: "input_boolean.{{ base_name }}_half_notified"
+    action: input_boolean.turn_off
+
+
+
+
+
+
+
+
+alias: 3D Print Complete Notification
+mode: parallel
+triggers:
+  - entity_id:
+      - sensor.centauri_carbon_print_status
+      - sensor.centauri_carbon_2_print_status
+    to: complete
+    trigger: state
+actions:
+  # 1. Define variables
+  - variables:
+      base_name: "{{ trigger.entity_id | replace('sensor.','') | replace('_print_status','') }}"
+      notif_title: "{{ base_name | replace('_',' ') | title }} Print Done 👍"
+      notif_message: >
+        Printed: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+      notif_image: >
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+  # 2. Notify the Group
+  - data:
+      title: "{{ notif_title }}"
+      message: "{{ notif_message }}"
+      data:
+        image: "{{ notif_image }}"
+    action: notify.mobile_phones
+
+
+
+
+
+
+
+
+alias: 3D Print Halfway Notification
+mode: parallel
+triggers:
+  - entity_id:
+      - sensor.centauri_carbon_percent_complete
+      - sensor.centauri_carbon_2_percent_complete
+    above: 49
+    below: 57
+    trigger: numeric_state
+conditions:
+  - condition: template
+    value_template: |
+      {{ states('input_boolean.' ~ (trigger.entity_id | replace('sensor.','') | replace('_percent_complete','_half_notified'))) == 'off' }}
+actions:
+  # 1. Define variables first so we don't have to copy-paste the logic
+  - variables:
+      # Clean up the entity ID to get the base name (e.g., centauri_carbon)
+      base_name: "{{ trigger.entity_id | replace('sensor.','') | replace('_percent_complete','') }}"
+      
+      # Generate the Title
+      notif_title: "{{ base_name | replace('_',' ') | title }} — Half done printing! 🕓"
+      
+      # Generate the Message
+      notif_message: >
+        File: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+
+        ⏳ Time remaining: {{ (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60 }} hours {{ (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60 }} minutes
+      
+      # Generate the Image URL
+      notif_image: >
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+  # 2. Turn on the boolean (prevents duplicate notifications)
+  - target:
+      entity_id: "input_boolean.{{ base_name }}_half_notified"
+    action: input_boolean.turn_on
+
+# Notify
+- data:
+      title: "{{ notif_title }}"
+      message: "{{ notif_message }}"
+      data:
+        image: "{{ notif_image }}"
+    action: notify.boss_phones
