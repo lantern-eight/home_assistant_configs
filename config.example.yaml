@@ -1,0 +1,8 @@
+# Copy to config.yaml and fill in real values.
+# config.yaml is gitignored and cursorignored.
+
+smb_server: "192.168.1.100" 
+smb_share: "config"
+smb_path: "" # path within share, optional
+smb_user: ""
+smb_password: ""
