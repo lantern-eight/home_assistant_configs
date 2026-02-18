@@ -114,8 +114,11 @@ def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
                 for name in redact_names:
                     if name and len(name.strip()) > 0:
                         # Case-insensitive replacement
-                        # We use re.sub with ignorecase
-                        content = re.sub(re.escape(name), 'person', content, flags=re.IGNORECASE)
+                        content = re.sub(re.escape(name), '<person>', content, flags=re.IGNORECASE)
+
+                # Redact pronouns: him/her -> them
+                content = re.sub(r'\bhim\b', 'them', content, flags=re.IGNORECASE)
+                content = re.sub(r'\bher\b', 'them', content, flags=re.IGNORECASE)
                 
                 # Only write if changed (optional optimization, but good practice)
                 if len(content) != original_len or content != open(file_path, 'r', encoding='utf-8').read():
