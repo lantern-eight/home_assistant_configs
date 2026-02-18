@@ -1,0 +1,33 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# ---------------------------
+# Custom added by me below this line
+# ---------------------------
+
+# template: !include templates.yaml
+sensor: !include custom__sensors.yaml
+# group: !include group.yaml
+# input_boolean: !include input_boolean.yaml
+# input_number: !include input_number.yaml
+# input_select: !include input_select.yaml
+# input_text: !include input_text.yaml
+# utility_meter: !include utility_meter.yaml
+
+
+# Notification group for phones
+notify:
+  - name: boss_phones
+    platform: group
+    services:
+      - service: mobile_app_<person>
+      - service: mobile_app_<person>
