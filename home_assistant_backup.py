@@ -117,8 +117,17 @@ def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
                         content = re.sub(re.escape(name), '<person>', content, flags=re.IGNORECASE)
 
                 # Redact pronouns: him/her -> them
-                content = re.sub(r'\bhim\b', 'them', content, flags=re.IGNORECASE)
-                content = re.sub(r'\bher\b', 'them', content, flags=re.IGNORECASE)
+                # Replace gendered pronouns (he/him/his, she/her/hers) with gender-neutral ones (they/them/theirs)
+                pronoun_map = [
+                    (r"\bhe\b",    "they"),
+                    (r"\bhim\b",   "them"),
+                    (r"\bhis\b",   "their"),
+                    (r"\bshe\b",   "they"),
+                    (r"\bher\b",   "them"),
+                    (r"\bhers\b",  "theirs"),
+                ]
+                for pattern, replacement in pronoun_map:
+                    content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
                 
                 # Only write if changed (optional optimization, but good practice)
                 if len(content) != original_len or content != open(file_path, 'r', encoding='utf-8').read():
