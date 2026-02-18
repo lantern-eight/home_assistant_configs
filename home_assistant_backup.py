@@ -1,6 +1,7 @@
 import fnmatch
 import logging
 import os
+import re
 import shutil
 import sys
 from getopt import GetoptError, getopt
@@ -21,7 +22,7 @@ USAGE = (
 CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
 
 
-def _load_config() -> dict[str, str]:
+def _load_config() -> dict:
     """Load SMB config from config.yaml if present, else from environment."""
     if CONFIG_PATH.exists():
         with open(CONFIG_PATH) as f:
@@ -32,6 +33,7 @@ def _load_config() -> dict[str, str]:
             'smb_path': str(raw.get('smb_path', '')),
             'smb_user': str(raw.get('smb_user', '')),
             'smb_password': str(raw.get('smb_password', '')),
+            'redact_names': raw.get('redact_names', []),
         }
     return {
         'smb_server': os.environ.get('SMB_SERVER', ''),
@@ -39,6 +41,7 @@ def _load_config() -> dict[str, str]:
         'smb_path': os.environ.get('SMB_PATH', ''),
         'smb_user': os.environ.get('SMB_USER', ''),
         'smb_password': os.environ.get('SMB_PASSWORD', ''),
+        'redact_names': [],
     }
 
 
@@ -48,6 +51,11 @@ SMB_SHARE = _cfg['smb_share']
 SMB_PATH = _cfg['smb_path']
 SMB_USER = _cfg['smb_user']
 SMB_PASSWORD = _cfg['smb_password']
+REDACT_NAMES = _cfg.get('redact_names', [])
+if REDACT_NAMES is None:
+    REDACT_NAMES = []
+elif isinstance(REDACT_NAMES, str):
+    REDACT_NAMES = [REDACT_NAMES]
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
 
@@ -73,6 +81,52 @@ IGNORE_PATTERNS = [
 def should_ignore(name: str) -> bool:
   '''Return True if the file/dir name matches any ignore pattern.'''
   return any(fnmatch.fnmatch(name, p) for p in IGNORE_PATTERNS)
+
+
+def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
+    """Post-process backup files to redact sensitive info and shorten IDs."""
+    LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
+    
+    # Regex for 32-char hex strings (device_id, entity_id)
+    id_pattern = re.compile(r'\b([0-9a-fA-F]{32})\b')
+    
+    def shorten_id(match):
+        s = match.group(1)
+        return f'{s[:2]}...{s[-2:]}'
+
+    for root, _, files in os.walk(dest_dir):
+        for file in files:
+            # Process YAML and other text files
+            if not file.endswith(('.yaml', '.json', '.conf', '.txt')):
+                continue
+            
+            file_path = os.path.join(root, file)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                original_len = len(content)
+                
+                # Shorten IDs
+                content = id_pattern.sub(shorten_id, content)
+                
+                # Redact names
+                for name in redact_names:
+                    if name and len(name.strip()) > 0:
+                        # Case-insensitive replacement
+                        # We use re.sub with ignorecase
+                        content = re.sub(re.escape(name), 'person', content, flags=re.IGNORECASE)
+                
+                # Only write if changed (optional optimization, but good practice)
+                if len(content) != original_len or content != open(file_path, 'r', encoding='utf-8').read():
+                     with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    
+            except Exception as e:
+                LOGGER.warning(
+                    'Failed to process file',
+                    extra={'file': file_path, 'error': str(e)}
+                )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -189,6 +243,9 @@ def main(argv: list[str] | None = None) -> None:
           'Failed to copy file',
           extra={'smb_file': smb_file, 'local_file': local_file, 'error': str(e)},
         )
+
+  # Post-process files (redaction + ID shortening)
+  _process_backup_files(DEST, REDACT_NAMES)
 
   smbclient.reset_connection_cache()
   LOGGER.info(

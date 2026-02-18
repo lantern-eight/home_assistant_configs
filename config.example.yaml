@@ -6,3 +6,9 @@ smb_share: "config"
 smb_path: "" # path within share, optional
 smb_user: ""
 smb_password: ""
+
+# Names to redact from aliases (case-insensitive)
+# Replaces with "person"
+redact_names:
+  - "Alice"
+  - "Bob"
