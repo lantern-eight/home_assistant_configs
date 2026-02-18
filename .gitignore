@@ -227,3 +227,5 @@ __pycache__/
 # Secrets
 secrets.yaml
 config.yaml
+home_assistant_backup/themes/material_you/material_you.yaml
+/home_assistant_backup/www/community
