@@ -14,7 +14,7 @@ scene: !include scenes.yaml
 # Custom added by me below this line
 # ---------------------------
 
-sensor: !include custom__sensors.yaml
+template: !include custom__sensors.yaml
 
 # Notification group for phones
 notify:
