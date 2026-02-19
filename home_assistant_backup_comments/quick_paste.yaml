@@ -4,8 +4,8 @@ notify:
   - name: mobile_phones
     platform: group
     services:
-      - service: mobile_app_flip7
-      - service: mobile_app_pixel_7a
+      - service: mobile_app_<entity_9>
+      - service: mobile_app_<entity_7>
 
 
 
