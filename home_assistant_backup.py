@@ -63,6 +63,7 @@ SMB_PASSWORD = _cfg['smb_password']
 REDACT_NAMES = _normalize_redact_names(_cfg.get('redact_names', []))
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
+COMMENTS_DIR = os.path.join(os.getcwd(), 'home_assistant_backup_comments')
 
 IGNORE_PATTERNS = [
   '*.db',
@@ -272,6 +273,8 @@ def main(argv: list[str] | None = None) -> None:
 
   # Post-process files (redaction + ID shortening)
   _process_backup_files(DEST, REDACT_NAMES)
+  if os.path.isdir(COMMENTS_DIR):
+    _process_backup_files(COMMENTS_DIR, REDACT_NAMES)
 
   smbclient.reset_connection_cache()
   LOGGER.info(
