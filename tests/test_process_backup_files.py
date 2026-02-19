@@ -121,6 +121,31 @@ class TestProcessBackupFilesSubdirectories:
       assert "<entity_1>" in result
 
 
+class TestProcessBackupFilesYamlNormalization:
+
+  def test_newline_escape_in_yaml_becomes_real_newline(self):
+    with tempfile.TemporaryDirectory() as tmp:
+      content = 'entity_id: "hello\\nworld"\n'
+      path = _write_file(tmp, "automations.yaml", content)
+      _process_backup_files(tmp, [])
+      result = _read_file(path)
+      assert '\\n' not in result
+
+  def test_yaml_without_escape_sequences_unchanged(self):
+    with tempfile.TemporaryDirectory() as tmp:
+      content = "alias: Morning Routine\nmode: single\n"
+      path = _write_file(tmp, "automations.yaml", content)
+      _process_backup_files(tmp, [])
+      assert _read_file(path) == content
+
+  def test_newline_escape_not_expanded_in_non_yaml(self):
+    with tempfile.TemporaryDirectory() as tmp:
+      content = 'entity_id: "hello\\nworld"\n'
+      path = _write_file(tmp, "notes.txt", content)
+      _process_backup_files(tmp, [])
+      assert _read_file(path) == content
+
+
 class TestProcessBackupFilesEdgeCases:
 
   def test_empty_names_list(self):

@@ -134,6 +134,35 @@ def neutralize_pronouns(content: str) -> str:
     return content
 
 
+class _LiteralDumper(yaml.SafeDumper):
+    """SafeDumper that uses literal block style (|) for multiline strings."""
+
+
+def _literal_str_representer(dumper, data):
+    if '\n' in data:
+        # PyYAML refuses literal block style when any line has trailing whitespace;
+        # strip it since trailing spaces in Jinja2 templates are insignificant.
+        cleaned = '\n'.join(line.rstrip() for line in data.split('\n'))
+        return dumper.represent_scalar('tag:yaml.org,2002:str', cleaned, style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+
+
+_LiteralDumper.add_representer(str, _literal_str_representer)
+
+
+def normalize_yaml_escapes(content: str) -> str:
+    """Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters."""
+    if '\\n' not in content:
+        return content
+    try:
+        parsed = yaml.safe_load(content)
+        if parsed is None:
+            return content
+        return yaml.dump(parsed, default_flow_style=False, allow_unicode=True, sort_keys=False, Dumper=_LiteralDumper)
+    except yaml.YAMLError:
+        return content
+
+
 def save_entity_map(entity_map: dict, path: Path | str = ENTITY_MAP_PATH) -> None:
     """Write the entity map to a YAML file."""
     with open(path, 'w', encoding='utf-8') as f:
@@ -173,6 +202,8 @@ def _process_backup_files(
                 content = shorten_ids(content, id_map)
                 content = redact_names_in_text(content, redact_names, name_map)
                 content = neutralize_pronouns(content)
+                if file.endswith('.yaml'):
+                    content = normalize_yaml_escapes(content)
                 
                 if content != original:
                      with open(file_path, 'w', encoding='utf-8') as f:

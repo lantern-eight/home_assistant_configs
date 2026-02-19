@@ -47,12 +47,12 @@
     - action: notify.mobile_app_<entity_7>
       metadata: {}
       data:
-        message: "\U0001F3C3\U0001F6AA\U0001F440"
+        message: 🏃🚪👀
       alias: Notify <entity_6>
     - action: notify.mobile_app_<entity_9>
       metadata: {}
       data:
-        message: "\U0001F3C3\U0001F6AA\U0001F440"
+        message: 🏃🚪👀
       alias: Notify <entity_8>
   mode: single
 - id: '1745768622067'
@@ -98,12 +98,12 @@
     - action: notify.mobile_app_<entity_7>
       metadata: {}
       data:
-        message: "\U0001F6AA\U0001F512"
+        message: 🚪🔒
       alias: Notify <entity_6>
     - device_id: 6f9...032
       domain: mobile_app
       type: notify
-      message: "\U0001F6AA\U0001F512"
+      message: 🚪🔒
       alias: Notify <entity_8>
   mode: single
 - id: '1747941426924'
@@ -278,18 +278,20 @@
     trigger: state
   actions:
   - variables:
-      base_name: '{{ trigger.entity_id | replace(''sensor.'','''') | replace(''_print_status'','''')
-        }}'
-      notif_title: "{{ base_name | replace('_',' ') | title }} Print Done \U0001F44D"
-      notif_message: 'Printed: {{ states(''input_text.'' ~ base_name ~ ''_last_file'')
-        | replace(''_'','' '') | replace(''.gcode'','''') | default(''Unknown file'',
-        true) }}
-
-        '
-      notif_image: '/api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp()
+      base_name: |
+        {{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '')
         }}
-
-        '
+      notif_title: '{{ base_name | replace(''_'','' '') | title }} Print Done 👍'
+      notif_message: |
+        Printed: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
+      notif_image: |
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
   - data:
       title: '{{ notif_title }}'
       message: '{{ notif_message }}'
@@ -306,12 +308,15 @@
     trigger: state
   conditions:
   - condition: template
-    value_template: "{{ trigger.to_state.state\n      not in ['unknown', 'Unknown',
-      'unavailable', 'Unavailable', ''] }}\n"
+    value_template: |
+      {{ trigger.to_state.state
+            not in ['unknown', 'Unknown', 'unavailable', 'Unavailable', ''] }}
   actions:
   - target:
-      entity_id: "input_text.{{ trigger.entity_id\n  | replace('sensor.','')\n  |
-        replace('_file_name','_last_file') }}\n"
+      entity_id: |
+        input_text.{{ trigger.entity_id
+          | replace('sensor.','')
+          | replace('_file_name','_last_file') }}
     data:
       value: '{{ trigger.to_state.state }}'
     action: input_text.set_value
@@ -327,8 +332,10 @@
     trigger: state
   actions:
   - target:
-      entity_id: "input_boolean.{{ trigger.entity_id\n  | replace('sensor.','')\n
-        \ | replace('_print_status','_half_notified') }}\n"
+      entity_id: |
+        input_boolean.{{ trigger.entity_id
+          | replace('sensor.','')
+          | replace('_print_status','_half_notified') }}
     action: input_boolean.turn_off
   mode: parallel
 - id: '1770362666172'
@@ -342,29 +349,34 @@
     trigger: numeric_state
   conditions:
   - condition: template
-    value_template: '{{ states(''input_boolean.'' ~ (trigger.entity_id | replace(''sensor.'','''')
-      | replace(''_percent_complete'',''_half_notified''))) == ''off'' }}
-
-      '
+    value_template: |
+      {{ states('input_boolean.' ~ (trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_percent_complete', '_half_notified')
+        )) == 'off' }}
   actions:
   - variables:
-      base_name: '{{ trigger.entity_id | replace(''sensor.'','''') | replace(''_percent_complete'','''')
-        }}'
-      notif_title: "{{ base_name | replace('_',' ') | title }} — Half done printing!
-        \U0001F553"
-      notif_message: 'File: {{ states(''input_text.'' ~ base_name ~ ''_last_file'')
-        | replace(''_'','' '') | replace(''.gcode'','''') | default(''Unknown file'',
-        true) }}
-
-        ⏳ Time remaining: {{ (states(''sensor.'' ~ base_name ~ ''_remaining_print_time''))
-        | int // 60 }} hours {{ (states(''sensor.'' ~ base_name ~ ''_remaining_print_time''))
-        | int % 60 }} minutes
-
-        '
-      notif_image: '/api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp()
+      base_name: |
+        {{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_percent_complete', '')
         }}
+      notif_title: '{{ base_name | replace(''_'','' '') | title }} — Half done printing!
+        🕓'
+      notif_message: |
+        File: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
 
-        '
+        ⏳ Time remaining: {{
+          (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60
+        }} hours {{
+          (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60
+        }} minutes
+      notif_image: |
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
   - target:
       entity_id: input_boolean.{{ base_name }}_half_notified
     action: input_boolean.turn_on
@@ -386,23 +398,27 @@
     trigger: state
   conditions:
   - condition: template
-    value_template: '{{ trigger.to_state.state not in [''none'', ''ok'', ''unknown'',
-      ''unavailable''] }}
-
-      '
+    value_template: |
+      {{ trigger.to_state.state not in ['none', 'ok', 'unknown', 'unavailable'] }}
   actions:
   - variables:
-      base_name: "{{ trigger.entity_id \n   | replace('sensor.', '') \n   | replace('_print_error',
-        '') \n   | replace('_error_status_reason', '') }}\n"
+      base_name: |
+        {{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_error', '')
+          | replace('_error_status_reason', '') }}
       notif_title: '{{ base_name | replace(''_'', '' '') | title }} — Print Error
         ❌'
-      notif_message: "File: {{ states('input_text.' ~ base_name ~ '_last_file') |
-        replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}\n\U0001F6A8
-        Error: {{ trigger.to_state.state | replace('_',' ') | title }}\n"
-      notif_image: '/api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp()
-        }}
+      notif_message: |
+        File: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
 
-        '
+        🚨 Error: {{ trigger.to_state.state | replace('_',' ') | title }}
+      notif_image: |
+        /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
   - data:
       title: '{{ notif_title }}'
       message: '{{ notif_message }}'
@@ -424,7 +440,9 @@
     trigger: state
   actions:
   - target:
-      entity_id: "light.{{ trigger.entity_id\n  | replace('sensor.','')\n  | replace('_print_status','_chamber_light')
-        }}\n"
+      entity_id: |
+        light.{{ trigger.entity_id
+          | replace('sensor.','')
+          | replace('_print_status','_chamber_light') }}
     action: light.turn_on
   mode: parallel

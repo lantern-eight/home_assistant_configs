@@ -91,7 +91,7 @@ actions:
       message: "{{ notif_message }}"
       data:
         image: "{{ notif_image }}"
-    action: notify.mobile_phones
+    action: notify.boss_phones
 
 
 # ----------------------
@@ -149,8 +149,8 @@ actions:
       entity_id: "input_boolean.{{ base_name }}_half_notified"
     action: input_boolean.turn_on
 
-# Notify
-- data:
+  # Notify
+  - data:
       title: "{{ notif_title }}"
       message: "{{ notif_message }}"
       data:

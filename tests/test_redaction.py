@@ -1,8 +1,8 @@
-"""Tests for the pure text-transformation functions: shorten_ids, redact_names_in_text, neutralize_pronouns."""
+"""Tests for the pure text-transformation functions: shorten_ids, redact_names_in_text, neutralize_pronouns, normalize_yaml_escapes."""
 
 import pytest
 
-from home_assistant_backup import shorten_ids, redact_names_in_text, neutralize_pronouns
+from home_assistant_backup import shorten_ids, redact_names_in_text, neutralize_pronouns, normalize_yaml_escapes
 
 
 # ---------------------------------------------------------------------------
@@ -226,3 +226,49 @@ class TestNeutralizePronouns:
     """'hers' must be matched; 'her' inside 'hers' should not cause partial match."""
     result = neutralize_pronouns("that bag is hers")
     assert result == "that bag is theirs"
+
+
+# ---------------------------------------------------------------------------
+# normalize_yaml_escapes
+# ---------------------------------------------------------------------------
+
+class TestNormalizeYamlEscapes:
+
+  def test_no_escape_sequences_returns_unchanged(self):
+    content = "key: value\nnumber: 42\n"
+    assert normalize_yaml_escapes(content) == content
+
+  def test_newline_escape_in_double_quoted_string_becomes_real_newline(self):
+    content = 'entity_id: "hello\\nworld"\n'
+    result = normalize_yaml_escapes(content)
+    assert '\\n' not in result
+    assert 'hello' in result
+    assert 'world' in result
+
+  def test_multiline_jinja_template_expanded(self):
+    """Mirrors the real automation pattern that triggered the fix."""
+    content = (
+      "entity_id: \"input_boolean.{{ trigger.entity_id\\n"
+      "  | replace('sensor.','')\\n"
+      "  | replace('_print_status','_half_notified') }}\\n\"\n"
+    )
+    result = normalize_yaml_escapes(content)
+    assert '\\n' not in result
+
+  def test_trailing_space_before_escape_converted(self):
+    """Lines ending with a space before \\n (e.g. 'entity_id \\n') must still be converted."""
+    content = "base_name: \"{{ trigger.entity_id \\n  | replace('sensor.', '') }}\\n\"\n"
+    result = normalize_yaml_escapes(content)
+    assert '\\n' not in result
+
+  def test_invalid_yaml_returns_unchanged(self):
+    content = "key: \\n: bad: yaml: [unclosed\n"
+    assert normalize_yaml_escapes(content) == content
+
+  def test_empty_content_returns_unchanged(self):
+    assert normalize_yaml_escapes("") == ""
+
+  def test_key_order_preserved(self):
+    content = 'z: "a\\nb"\na: 1\n'
+    result = normalize_yaml_escapes(content)
+    assert result.index('z:') < result.index('a:')
