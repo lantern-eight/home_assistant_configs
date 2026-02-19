@@ -25,7 +25,7 @@ ENTITY_MAP_PATH = Path(__file__).resolve().parent / 'entity_map.yaml'
 
 
 def _load_config() -> dict:
-  """Load SMB config from config.yaml if present, else from environment."""
+  '''Load SMB config from config.yaml if present, else from environment.'''
   if CONFIG_PATH.exists():
     with open(CONFIG_PATH) as f:
       raw = yaml.safe_load(f) or {}
@@ -48,7 +48,7 @@ def _load_config() -> dict:
 
 
 def _normalize_redact_names(names):
-  """Normalize redact_names from config: None -> [], str -> [str], list unchanged."""
+  '''Normalize redact_names from config: None -> [], str -> [str], list unchanged.'''
   if names is None:
     return []
   if isinstance(names, str):
@@ -96,17 +96,17 @@ PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
 _ID_PATTERN = re.compile(r'\b([0-9a-fA-F]{32})\b')
 
 PRONOUN_MAP = [
-  (r"\bhe\b",    "they"),
-  (r"\bhim\b",   "them"),
-  (r"\bhis\b",   "their"),
-  (r"\bshe\b",   "they"),
-  (r"\bher\b",   "them"),
-  (r"\bhers\b",  "theirs"),
+  (r'\bhe\b',    'they'),
+  (r'\bhim\b',   'them'),
+  (r'\bhis\b',   'their'),
+  (r'\bshe\b',   'they'),
+  (r'\bher\b',   'them'),
+  (r'\bhers\b',  'theirs'),
 ]
 
 
 def shorten_ids(content: str, id_map: dict | None = None) -> str:
-  """Replace 32-char hex IDs with a shortened form (first3...last3)."""
+  '''Replace 32-char hex IDs with a shortened form (first3...last3).'''
   def _shorten(match):
     s = match.group(1)
     short = f'{s[:3]}...{s[-3:]}'
@@ -117,7 +117,7 @@ def shorten_ids(content: str, id_map: dict | None = None) -> str:
 
 
 def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
-  """Replace each name in *names* with '<entity_N>' (case-insensitive, numbered)."""
+  '''Replace each name in *names* with '<entity_N>' (case-insensitive, numbered).'''
   for i, name in enumerate(names, 1):
     if name and len(name.strip()) > 0:
       placeholder = f'<entity_{i}>'
@@ -128,14 +128,14 @@ def redact_names_in_text(content: str, names: list[str], name_map: dict | None =
 
 
 def neutralize_pronouns(content: str) -> str:
-  """Replace gendered pronouns with gender-neutral equivalents."""
+  '''Replace gendered pronouns with gender-neutral equivalents.'''
   for pattern, replacement in PRONOUN_MAP:
     content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
   return content
 
 
 class _LiteralDumper(yaml.SafeDumper):
-  """SafeDumper that uses literal block style (|) for multiline strings."""
+  '''SafeDumper that uses literal block style (|) for multiline strings.'''
 
 
 def _literal_str_representer(dumper, data):
@@ -151,7 +151,7 @@ _LiteralDumper.add_representer(str, _literal_str_representer)
 
 
 def normalize_yaml_escapes(content: str) -> str:
-  """Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters."""
+  '''Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters.'''
   if '\\n' not in content:
     return content
   try:
@@ -164,14 +164,14 @@ def normalize_yaml_escapes(content: str) -> str:
 
 
 def save_entity_map(entity_map: dict, path: Path | str = ENTITY_MAP_PATH) -> None:
-  """Write the entity map to a YAML file."""
+  '''Write the entity map to a YAML file.'''
   with open(path, 'w', encoding='utf-8') as f:
     yaml.dump(entity_map, f, default_flow_style=False, sort_keys=True)
   LOGGER.info('Entity map saved', extra={'path': str(path)})
 
 
 def load_entity_map(path: Path | str = ENTITY_MAP_PATH) -> dict:
-  """Read the entity map from a YAML file."""
+  '''Read the entity map from a YAML file.'''
   with open(path, 'r', encoding='utf-8') as f:
     data = yaml.safe_load(f) or {}
   return {'ids': data.get('ids', {}), 'names': data.get('names', {})}
@@ -182,7 +182,7 @@ def _process_backup_files(
   redact_names: list[str],
   entity_map: dict | None = None,
 ) -> None:
-  """Post-process backup files to redact sensitive info and shorten IDs."""
+  '''Post-process backup files to redact sensitive info and shorten IDs.'''
   LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
 
   id_map = entity_map['ids'] if entity_map is not None else None
@@ -217,7 +217,7 @@ def _process_backup_files(
 
 
 def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
-  """Reverse redaction in backup files using a previously saved entity map."""
+  '''Reverse redaction in backup files using a previously saved entity map.'''
   names = entity_map.get('names', {})
   ids = entity_map.get('ids', {})
   LOGGER.info(
@@ -328,7 +328,7 @@ def main(argv: list[str] | None = None) -> None:
 
   smbclient.ClientConfig(username=SMB_USER or None, password=SMB_PASSWORD or None)
   LOGGER.debug(
-    f"SMB_SERVER='{SMB_SERVER}', type={type(SMB_SERVER)}",
+    f'SMB_SERVER=\'{SMB_SERVER}\', type={type(SMB_SERVER)}',
     extra={'SMB_SERVER': SMB_SERVER, 'type': str(type(SMB_SERVER))}
   )
   smbclient.register_session(
