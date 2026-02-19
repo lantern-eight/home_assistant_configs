@@ -15,17 +15,17 @@ class TestShortenIds:
     hex_id = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
     assert len(hex_id) == 32
     result = shorten_ids(hex_id)
-    assert result == "a1...d4"
+    assert result == "a1b...3d4"
 
   def test_uppercase_hex_is_shortened(self):
     hex_id = "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4"
     result = shorten_ids(hex_id)
-    assert result == "A1...D4"
+    assert result == "A1B...3D4"
 
   def test_mixed_case_hex_is_shortened(self):
     hex_id = "aAbBcCdDeEfF00112233445566778899"
     result = shorten_ids(hex_id)
-    assert result == "aA...99"
+    assert result == "aAb...899"
 
   def test_shorter_hex_untouched(self):
     short = "a1b2c3d4e5f6"
@@ -48,15 +48,15 @@ class TestShortenIds:
     id2 = "22222222222222222222222222222222"
     text = f"device: {id1}\nentity: {id2}"
     result = shorten_ids(text)
-    assert "11...11" in result
-    assert "22...22" in result
+    assert "111...111" in result
+    assert "222...222" in result
     assert id1 not in result
     assert id2 not in result
 
   def test_id_embedded_in_yaml(self):
     yaml_content = "  unique_id: abcdef01234567890abcdef012345678\n  name: Light"
     result = shorten_ids(yaml_content)
-    assert result == "  unique_id: ab...78\n  name: Light"
+    assert result == "  unique_id: abc...678\n  name: Light"
 
   def test_empty_string(self):
     assert shorten_ids("") == ""
@@ -70,7 +70,7 @@ class TestShortenIds:
     hex_id = "abcdef01234567890abcdef012345678"
     text = f"prefix-{hex_id}-suffix"
     result = shorten_ids(text)
-    assert result == "prefix-ab...78-suffix"
+    assert result == "prefix-abc...678-suffix"
 
   def test_id_embedded_in_longer_alnum_not_matched(self):
     """A 32-char hex substring inside a longer alphanumeric token is not matched."""
@@ -88,19 +88,19 @@ class TestRedactNamesInText:
 
   def test_simple_name_redaction(self):
     result = redact_names_in_text("Hello Alice", ["Alice"])
-    assert result == "Hello <person>"
+    assert result == "Hello <person_1>"
 
   def test_case_insensitive(self):
     result = redact_names_in_text("hello alice and ALICE", ["Alice"])
-    assert result == "hello <person> and <person>"
+    assert result == "hello <person_1> and <person_1>"
 
   def test_multiple_names(self):
     result = redact_names_in_text("Alice and Bob went home", ["Alice", "Bob"])
-    assert result == "<person> and <person> went home"
+    assert result == "<person_1> and <person_2> went home"
 
   def test_name_in_entity_id(self):
     result = redact_names_in_text("person.alice_phone", ["alice"])
-    assert result == "person.<person>_phone"
+    assert result == "person.<person_1>_phone"
 
   def test_empty_names_list(self):
     text = "Hello Alice"
@@ -108,23 +108,23 @@ class TestRedactNamesInText:
 
   def test_none_in_names_list(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, [None, "Alice"]) == "Hello <person>"
+    assert redact_names_in_text(text, [None, "Alice"]) == "Hello <person_2>"
 
   def test_whitespace_only_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["  ", "Alice"]) == "Hello <person>"
+    assert redact_names_in_text(text, ["  ", "Alice"]) == "Hello <person_2>"
 
   def test_empty_string_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["", "Alice"]) == "Hello <person>"
+    assert redact_names_in_text(text, ["", "Alice"]) == "Hello <person_2>"
 
   def test_name_with_special_regex_chars(self):
     result = redact_names_in_text("User: alice.b", ["alice.b"])
-    assert result == "User: <person>"
+    assert result == "User: <person_1>"
 
   def test_preserves_surrounding_text(self):
     result = redact_names_in_text("sensor.alice_room_temp: 22.5", ["Alice"])
-    assert result == "sensor.<person>_room_temp: 22.5"
+    assert result == "sensor.<person_1>_room_temp: 22.5"
 
   def test_empty_content(self):
     assert redact_names_in_text("", ["Alice"]) == ""
