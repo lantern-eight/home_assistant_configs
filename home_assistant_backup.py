@@ -13,11 +13,11 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-    'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-r] [-h]\n'
-    '  -d, --debug      Set log level to DEBUG\n'
-    '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-    '  -r, --restore    Restore redacted files using entity_map.yaml\n'
-    '  -h, --help       Show this help'
+  'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-r] [-h]\n'
+  '  -d, --debug      Set log level to DEBUG\n'
+  '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
+  '  -r, --restore    Restore redacted files using entity_map.yaml\n'
+  '  -h, --help       Show this help'
 )
 
 CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
@@ -25,35 +25,35 @@ ENTITY_MAP_PATH = Path(__file__).resolve().parent / 'entity_map.yaml'
 
 
 def _load_config() -> dict:
-    """Load SMB config from config.yaml if present, else from environment."""
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH) as f:
-            raw = yaml.safe_load(f) or {}
-        return {
-            'smb_server': str(raw.get('smb_server', '')),
-            'smb_share': str(raw.get('smb_share', '')),
-            'smb_path': str(raw.get('smb_path', '')),
-            'smb_user': str(raw.get('smb_user', '')),
-            'smb_password': str(raw.get('smb_password', '')),
-            'redact_names': raw.get('redact_names', []),
-        }
+  """Load SMB config from config.yaml if present, else from environment."""
+  if CONFIG_PATH.exists():
+    with open(CONFIG_PATH) as f:
+      raw = yaml.safe_load(f) or {}
     return {
-        'smb_server': os.environ.get('SMB_SERVER', ''),
-        'smb_share': os.environ.get('SMB_SHARE', ''),
-        'smb_path': os.environ.get('SMB_PATH', ''),
-        'smb_user': os.environ.get('SMB_USER', ''),
-        'smb_password': os.environ.get('SMB_PASSWORD', ''),
-        'redact_names': [],
+      'smb_server': str(raw.get('smb_server', '')),
+      'smb_share': str(raw.get('smb_share', '')),
+      'smb_path': str(raw.get('smb_path', '')),
+      'smb_user': str(raw.get('smb_user', '')),
+      'smb_password': str(raw.get('smb_password', '')),
+      'redact_names': raw.get('redact_names', []),
     }
+  return {
+    'smb_server': os.environ.get('SMB_SERVER', ''),
+    'smb_share': os.environ.get('SMB_SHARE', ''),
+    'smb_path': os.environ.get('SMB_PATH', ''),
+    'smb_user': os.environ.get('SMB_USER', ''),
+    'smb_password': os.environ.get('SMB_PASSWORD', ''),
+    'redact_names': [],
+  }
 
 
 def _normalize_redact_names(names):
-    """Normalize redact_names from config: None -> [], str -> [str], list unchanged."""
-    if names is None:
-        return []
-    if isinstance(names, str):
-        return [names]
-    return names
+  """Normalize redact_names from config: None -> [], str -> [str], list unchanged."""
+  if names is None:
+    return []
+  if isinstance(names, str):
+    return [names]
+  return names
 
 
 _cfg = _load_config()
@@ -96,160 +96,160 @@ PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
 _ID_PATTERN = re.compile(r'\b([0-9a-fA-F]{32})\b')
 
 PRONOUN_MAP = [
-    (r"\bhe\b",    "they"),
-    (r"\bhim\b",   "them"),
-    (r"\bhis\b",   "their"),
-    (r"\bshe\b",   "they"),
-    (r"\bher\b",   "them"),
-    (r"\bhers\b",  "theirs"),
+  (r"\bhe\b",    "they"),
+  (r"\bhim\b",   "them"),
+  (r"\bhis\b",   "their"),
+  (r"\bshe\b",   "they"),
+  (r"\bher\b",   "them"),
+  (r"\bhers\b",  "theirs"),
 ]
 
 
 def shorten_ids(content: str, id_map: dict | None = None) -> str:
-    """Replace 32-char hex IDs with a shortened form (first3...last3)."""
-    def _shorten(match):
-        s = match.group(1)
-        short = f'{s[:3]}...{s[-3:]}'
-        if id_map is not None:
-            id_map[short] = s
-        return short
-    return _ID_PATTERN.sub(_shorten, content)
+  """Replace 32-char hex IDs with a shortened form (first3...last3)."""
+  def _shorten(match):
+    s = match.group(1)
+    short = f'{s[:3]}...{s[-3:]}'
+    if id_map is not None:
+      id_map[short] = s
+    return short
+  return _ID_PATTERN.sub(_shorten, content)
 
 
 def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
-    """Replace each name in *names* with '<entity_N>' (case-insensitive, numbered)."""
-    for i, name in enumerate(names, 1):
-        if name and len(name.strip()) > 0:
-            placeholder = f'<entity_{i}>'
-            if name_map is not None:
-                name_map[placeholder] = name
-            content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
-    return content
+  """Replace each name in *names* with '<entity_N>' (case-insensitive, numbered)."""
+  for i, name in enumerate(names, 1):
+    if name and len(name.strip()) > 0:
+      placeholder = f'<entity_{i}>'
+      if name_map is not None:
+        name_map[placeholder] = name
+      content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
+  return content
 
 
 def neutralize_pronouns(content: str) -> str:
-    """Replace gendered pronouns with gender-neutral equivalents."""
-    for pattern, replacement in PRONOUN_MAP:
-        content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
-    return content
+  """Replace gendered pronouns with gender-neutral equivalents."""
+  for pattern, replacement in PRONOUN_MAP:
+    content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
+  return content
 
 
 class _LiteralDumper(yaml.SafeDumper):
-    """SafeDumper that uses literal block style (|) for multiline strings."""
+  """SafeDumper that uses literal block style (|) for multiline strings."""
 
 
 def _literal_str_representer(dumper, data):
-    if '\n' in data:
-        # PyYAML refuses literal block style when any line has trailing whitespace;
-        # strip it since trailing spaces in Jinja2 templates are insignificant.
-        cleaned = '\n'.join(line.rstrip() for line in data.split('\n'))
-        return dumper.represent_scalar('tag:yaml.org,2002:str', cleaned, style='|')
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+  if '\n' in data:
+    # PyYAML refuses literal block style when any line has trailing whitespace;
+    # strip it since trailing spaces in Jinja2 templates are insignificant.
+    cleaned = '\n'.join(line.rstrip() for line in data.split('\n'))
+    return dumper.represent_scalar('tag:yaml.org,2002:str', cleaned, style='|')
+  return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
 
 _LiteralDumper.add_representer(str, _literal_str_representer)
 
 
 def normalize_yaml_escapes(content: str) -> str:
-    """Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters."""
-    if '\\n' not in content:
-        return content
-    try:
-        parsed = yaml.safe_load(content)
-        if parsed is None:
-            return content
-        return yaml.dump(parsed, default_flow_style=False, allow_unicode=True, sort_keys=False, Dumper=_LiteralDumper)
-    except yaml.YAMLError:
-        return content
+  """Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters."""
+  if '\\n' not in content:
+    return content
+  try:
+    parsed = yaml.safe_load(content)
+    if parsed is None:
+      return content
+    return yaml.dump(parsed, default_flow_style=False, allow_unicode=True, sort_keys=False, Dumper=_LiteralDumper)
+  except yaml.YAMLError:
+    return content
 
 
 def save_entity_map(entity_map: dict, path: Path | str = ENTITY_MAP_PATH) -> None:
-    """Write the entity map to a YAML file."""
-    with open(path, 'w', encoding='utf-8') as f:
-        yaml.dump(entity_map, f, default_flow_style=False, sort_keys=True)
-    LOGGER.info('Entity map saved', extra={'path': str(path)})
+  """Write the entity map to a YAML file."""
+  with open(path, 'w', encoding='utf-8') as f:
+    yaml.dump(entity_map, f, default_flow_style=False, sort_keys=True)
+  LOGGER.info('Entity map saved', extra={'path': str(path)})
 
 
 def load_entity_map(path: Path | str = ENTITY_MAP_PATH) -> dict:
-    """Read the entity map from a YAML file."""
-    with open(path, 'r', encoding='utf-8') as f:
-        data = yaml.safe_load(f) or {}
-    return {'ids': data.get('ids', {}), 'names': data.get('names', {})}
+  """Read the entity map from a YAML file."""
+  with open(path, 'r', encoding='utf-8') as f:
+    data = yaml.safe_load(f) or {}
+  return {'ids': data.get('ids', {}), 'names': data.get('names', {})}
 
 
 def _process_backup_files(
-    dest_dir: str,
-    redact_names: list[str],
-    entity_map: dict | None = None,
+  dest_dir: str,
+  redact_names: list[str],
+  entity_map: dict | None = None,
 ) -> None:
-    """Post-process backup files to redact sensitive info and shorten IDs."""
-    LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
+  """Post-process backup files to redact sensitive info and shorten IDs."""
+  LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
 
-    id_map = entity_map['ids'] if entity_map is not None else None
-    name_map = entity_map['names'] if entity_map is not None else None
+  id_map = entity_map['ids'] if entity_map is not None else None
+  name_map = entity_map['names'] if entity_map is not None else None
 
-    for root, _, files in os.walk(dest_dir):
-        for file in files:
-            if not file.endswith(PROCESSABLE_EXTENSIONS):
-                continue
-            
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
-                original = content
-                content = shorten_ids(content, id_map)
-                content = redact_names_in_text(content, redact_names, name_map)
-                content = neutralize_pronouns(content)
-                if file.endswith('.yaml'):
-                    content = normalize_yaml_escapes(content)
-                
-                if content != original:
-                     with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    
-            except Exception as e:
-                LOGGER.warning(
-                    'Failed to process file',
-                    extra={'file': file_path, 'error': str(e)}
-                )
+  for root, _, files in os.walk(dest_dir):
+    for file in files:
+      if not file.endswith(PROCESSABLE_EXTENSIONS):
+        continue
+
+      file_path = os.path.join(root, file)
+      try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+          content = f.read()
+
+        original = content
+        content = shorten_ids(content, id_map)
+        content = redact_names_in_text(content, redact_names, name_map)
+        content = neutralize_pronouns(content)
+        if file.endswith('.yaml'):
+          content = normalize_yaml_escapes(content)
+
+        if content != original:
+          with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+      except Exception as e:
+        LOGGER.warning(
+          'Failed to process file',
+          extra={'file': file_path, 'error': str(e)}
+        )
 
 
 def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
-    """Reverse redaction in backup files using a previously saved entity map."""
-    names = entity_map.get('names', {})
-    ids = entity_map.get('ids', {})
-    LOGGER.info(
-        'Starting restore of backup files',
-        extra={'name_count': len(names), 'id_count': len(ids)},
-    )
+  """Reverse redaction in backup files using a previously saved entity map."""
+  names = entity_map.get('names', {})
+  ids = entity_map.get('ids', {})
+  LOGGER.info(
+    'Starting restore of backup files',
+    extra={'name_count': len(names), 'id_count': len(ids)},
+  )
 
-    for root, _, files in os.walk(dest_dir):
-        for file in files:
-            if not file.endswith(PROCESSABLE_EXTENSIONS):
-                continue
+  for root, _, files in os.walk(dest_dir):
+    for file in files:
+      if not file.endswith(PROCESSABLE_EXTENSIONS):
+        continue
 
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+      file_path = os.path.join(root, file)
+      try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+          content = f.read()
 
-                original = content
-                for placeholder, real_name in names.items():
-                    content = content.replace(placeholder, real_name)
-                for short_id, full_id in ids.items():
-                    content = content.replace(short_id, full_id)
+        original = content
+        for placeholder, real_name in names.items():
+          content = content.replace(placeholder, real_name)
+        for short_id, full_id in ids.items():
+          content = content.replace(short_id, full_id)
 
-                if content != original:
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content)
+        if content != original:
+          with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
 
-            except Exception as e:
-                LOGGER.warning(
-                    'Failed to restore file',
-                    extra={'file': file_path, 'error': str(e)},
-                )
+      except Exception as e:
+        LOGGER.warning(
+          'Failed to restore file',
+          extra={'file': file_path, 'error': str(e)},
+        )
 
 
 def main(argv: list[str] | None = None) -> None:
