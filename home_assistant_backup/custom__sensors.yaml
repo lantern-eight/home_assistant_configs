@@ -1,6 +1,8 @@
 - binary_sensor:
-    - name: "Take Trash Out To Curb"
-      state: >
-        {{ now().weekday() == 3 and 
-            now().hour >= 17 and 
-            now().hour < 23 }}
+  - name: "Take Trash Out To Curb"
+    state: >
+      {{
+        now().weekday() == 3 and 
+        now().hour >= 17 and 
+        now().hour < 23
+      }}

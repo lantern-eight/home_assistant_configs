@@ -14,15 +14,7 @@ scene: !include scenes.yaml
 # Custom added by me below this line
 # ---------------------------
 
-# template: !include templates.yaml
 sensor: !include custom__sensors.yaml
-# group: !include group.yaml
-# input_boolean: !include input_boolean.yaml
-# input_number: !include input_number.yaml
-# input_select: !include input_select.yaml
-# input_text: !include input_text.yaml
-# utility_meter: !include utility_meter.yaml
-
 
 # Notification group for phones
 notify:
