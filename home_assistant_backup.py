@@ -45,17 +45,22 @@ def _load_config() -> dict:
     }
 
 
+def _normalize_redact_names(names):
+    """Normalize redact_names from config: None -> [], str -> [str], list unchanged."""
+    if names is None:
+        return []
+    if isinstance(names, str):
+        return [names]
+    return names
+
+
 _cfg = _load_config()
 SMB_SERVER = _cfg['smb_server']
 SMB_SHARE = _cfg['smb_share']
 SMB_PATH = _cfg['smb_path']
 SMB_USER = _cfg['smb_user']
 SMB_PASSWORD = _cfg['smb_password']
-REDACT_NAMES = _cfg.get('redact_names', [])
-if REDACT_NAMES is None:
-    REDACT_NAMES = []
-elif isinstance(REDACT_NAMES, str):
-    REDACT_NAMES = [REDACT_NAMES]
+REDACT_NAMES = _normalize_redact_names(_cfg.get('redact_names', []))
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
 
@@ -83,21 +88,50 @@ def should_ignore(name: str) -> bool:
   return any(fnmatch.fnmatch(name, p) for p in IGNORE_PATTERNS)
 
 
+PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
+
+_ID_PATTERN = re.compile(r'\b([0-9a-fA-F]{32})\b')
+
+PRONOUN_MAP = [
+    (r"\bhe\b",    "they"),
+    (r"\bhim\b",   "them"),
+    (r"\bhis\b",   "their"),
+    (r"\bshe\b",   "they"),
+    (r"\bher\b",   "them"),
+    (r"\bhers\b",  "theirs"),
+]
+
+
+def shorten_ids(content: str) -> str:
+    """Replace 32-char hex IDs with a shortened form (first2...last2)."""
+    def _shorten(match):
+        s = match.group(1)
+        return f'{s[:2]}...{s[-2:]}'
+    return _ID_PATTERN.sub(_shorten, content)
+
+
+def redact_names_in_text(content: str, names: list[str]) -> str:
+    """Replace each name in *names* with '<person>' (case-insensitive)."""
+    for name in names:
+        if name and len(name.strip()) > 0:
+            content = re.sub(re.escape(name), '<person>', content, flags=re.IGNORECASE)
+    return content
+
+
+def neutralize_pronouns(content: str) -> str:
+    """Replace gendered pronouns with gender-neutral equivalents."""
+    for pattern, replacement in PRONOUN_MAP:
+        content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
+    return content
+
+
 def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
     """Post-process backup files to redact sensitive info and shorten IDs."""
     LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
-    
-    # Regex for 32-char hex strings (device_id, entity_id)
-    id_pattern = re.compile(r'\b([0-9a-fA-F]{32})\b')
-    
-    def shorten_id(match):
-        s = match.group(1)
-        return f'{s[:2]}...{s[-2:]}'
 
     for root, _, files in os.walk(dest_dir):
         for file in files:
-            # Process YAML and other text files
-            if not file.endswith(('.yaml', '.json', '.conf', '.txt')):
+            if not file.endswith(PROCESSABLE_EXTENSIONS):
                 continue
             
             file_path = os.path.join(root, file)
@@ -105,32 +139,12 @@ def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                original_len = len(content)
+                original = content
+                content = shorten_ids(content)
+                content = redact_names_in_text(content, redact_names)
+                content = neutralize_pronouns(content)
                 
-                # Shorten IDs
-                content = id_pattern.sub(shorten_id, content)
-                
-                # Redact names
-                for name in redact_names:
-                    if name and len(name.strip()) > 0:
-                        # Case-insensitive replacement
-                        content = re.sub(re.escape(name), '<person>', content, flags=re.IGNORECASE)
-
-                # Redact pronouns: him/her -> them
-                # Replace gendered pronouns (he/him/his, she/her/hers) with gender-neutral ones (they/them/theirs)
-                pronoun_map = [
-                    (r"\bhe\b",    "they"),
-                    (r"\bhim\b",   "them"),
-                    (r"\bhis\b",   "their"),
-                    (r"\bshe\b",   "they"),
-                    (r"\bher\b",   "them"),
-                    (r"\bhers\b",  "theirs"),
-                ]
-                for pattern, replacement in pronoun_map:
-                    content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
-                
-                # Only write if changed (optional optimization, but good practice)
-                if len(content) != original_len or content != open(file_path, 'r', encoding='utf-8').read():
+                if content != original:
                      with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
                     
