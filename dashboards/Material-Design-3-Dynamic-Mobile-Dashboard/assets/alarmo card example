@@ -1,0 +1,44 @@
+type: vertical-stack
+cards:
+  - type: custom:bubble-card
+    card_type: pop-up
+    hash: "#alarmo"
+    name: Alarm
+    icon: m3of:pin
+    styles: |-
+      #root {
+              height: unset !important;
+              max-height: 100% !important;
+              transition: transform var(--md-sys-motion-expressive-spatial-default) !important;
+            }
+            .bubble-pop-up-container {
+              padding-bottom: 64px !important;
+
+
+            }
+    bg_color: var(--card-background-color)
+    button_type: name
+  - states:
+      - arm_away
+    type: alarm-panel
+    entity: alarm_control_panel.alarmo
+    name: Alarmo
+    theme: Material You
+  - type: custom:bubble-card
+    card_type: separator
+    styles: |-
+      .bubble-icon,
+      .bubble-name {
+        display: none;
+      }
+      .bubble-line {
+        margin-right: 0;
+        height: 4px;
+        max-width: 32px;
+        opacity: 1;
+        background: var(--md-sys-color-on-surface-variant);
+      }
+      .bubble-separator {
+        height: min-content !important;
+        justify-content: center;
+      }

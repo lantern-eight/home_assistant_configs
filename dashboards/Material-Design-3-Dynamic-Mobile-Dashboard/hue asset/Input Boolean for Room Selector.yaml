@@ -1,0 +1,12 @@
+single_guest_room_dynamic_scene:
+  name: Single Guest Room Dynamic Scene
+sofa_dynamic_scene:
+  name: Sofa Dynamic Scene
+baby_room_dynamic_scene:
+  name: Baby Room Dynamic Scene
+dining_table_dynamic_scene:
+  name: Dining Table Dynamic Scene
+master_bedroom_dynamic_scene:
+  name: Master Bedroom Dynamic Scene
+multiple_guest_room_dynamic_scene:
+  name: Multiple Guest Room Dynamic Scene

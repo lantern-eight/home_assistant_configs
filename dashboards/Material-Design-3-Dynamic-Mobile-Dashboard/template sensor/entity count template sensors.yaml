@@ -1,0 +1,116 @@
+# Room Cards Entity Count
+
+- sensor:
+    - name: "Lights LA Count"
+      state: "{{ expand('light.lights_la_for_count_only') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows LA Count"
+      state: "{{ expand('group.windows_la') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors LA Count"
+      state: "{{ expand('group.doors_la') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights GRG Count"
+      state: "{{ expand('switch.lights_grg') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows GRG Count"
+      state: "{{ expand('group.windows_grg') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors GRG Count"
+      state: "{{ expand('group.doors_grg') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights MBR Count"
+      state: "{{ expand('light.lights_mbr_for_count_only') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows MBR Count"
+      state: "{{ expand('group.windows_mbr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Covers MBR Count"
+      state: "{{ expand('group.curtains_mbr') | selectattr('state', 'in', ['open', 'opening']) | list | count }}"
+
+    - name: "Doors MBR Count"
+      state: "{{ expand('group.doors_mbr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights BR Count"
+      state: "{{ expand('light.lights_br_for_count_only') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows BR Count"
+      state: "{{ expand('group.windows_br') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors BR Count"
+      state: "{{ expand('binary_sensor.door_sensor_br_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights SGR Count"
+      state: "{{ expand('light.lights_sgr_for_count_only') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows SGR Count"
+      state: "{{ expand('group.windows_sgr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors SGR Count"
+      state: "{{ expand('binary_sensor.door_sensor_sgr_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights MGR Count"
+      state: "{{ expand('light.lights_mgr_for_count_only') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows MGR Count"
+      state: "{{ expand('group.windows_mgr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors MGR Count"
+      state: "{{ expand('binary_sensor.door_sensor_mgr_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights DRW Count"
+      state: "{{ expand('group.light_switches_drw') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors DRW Count"
+      state: "{{ expand('group.doors_drw') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights ETR Count"
+      state: "{{ expand('light.lights_etr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors ETR Count"
+      state: "{{ expand('binary_sensor.door_sensor_etr_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights OR Count"
+      state: "{{ expand('light.light_switch_or') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows OR Count"
+      state: "{{ expand('group.windows_or') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors OR Count"
+      state: "{{ expand('binary_sensor.door_sensor_or_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights GBR Count"
+      state: "{{ expand('light.lights_gbr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows GBR Count"
+      state: "{{ expand('group.windows_gbr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Fans GBR Count"
+      state: "{{ expand('group.guest_bathroom_fans') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights LR Count"
+      state: "{{ expand('switch.lights_lr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors LR Count"
+      state: "{{ expand('binary_sensor.outdoor_door_sensor_lr_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Fans LR Count"
+      state: "{{ expand('fan.lr') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights HW Count"
+      state: "{{ expand('switch.light_switch_hw') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Windows HW Count"
+      state: "{{ expand('group.windows_hw') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights ATC Count"
+      state: "{{ expand('switch.light_switch_atc') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors ATC Count"
+      state: "{{ expand('binary_sensor.door_sensor_atc_contact') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Lights OTD Count"
+      state: "{{ expand('switch.lights_patio') | selectattr('state', 'eq', 'on') | list | count }}"
+
+    - name: "Doors OTD Count"
+      state: "{{ expand('group.doors_otd') | selectattr('state', 'eq', 'on') | list | count }}"

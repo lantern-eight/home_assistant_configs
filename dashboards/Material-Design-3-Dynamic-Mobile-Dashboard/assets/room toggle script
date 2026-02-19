@@ -1,0 +1,29 @@
+alias: Handle Room Toggle
+mode: single
+fields:
+  current_toggle:
+    description: The toggle that was interacted with
+sequence:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ is_state(current_toggle, 'off') }}"
+        sequence:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: "{{ current_toggle }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ is_state(current_toggle, 'on') }}"
+        sequence:
+          - variables:
+              is_mobile: "{{ 'mobile' in current_toggle }}"
+              all_toggles: |
+                {% if is_mobile %}
+                  ['input_boolean.room_toggle_one_mobile', 'input_boolean.room_toggle_two_mobile', 'input_boolean.room_toggle_three_mobile']
+                {% else %}
+                  ['input_boolean.room_toggle_one', 'input_boolean.room_toggle_two', 'input_boolean.room_toggle_three']
+                {% endif %}
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ all_toggles | reject('eq', current_toggle) | list }}"

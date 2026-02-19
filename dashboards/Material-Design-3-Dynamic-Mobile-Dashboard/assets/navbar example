@@ -1,0 +1,81 @@
+type: custom:navbar-card
+mobile:
+  show_labels: true
+haptic: true
+desktop:
+  show_labels: true
+  position: left
+  min_width: 768
+  show_popup_label_backgrounds: false
+routes:
+  - url: /mobile-dashboard/overview
+    label: Home
+    icon: m3o:home
+    icon_selected: m3of:home
+  - url: /mobile-dashboard/rooms
+    label: Rooms
+    icon: m3o:chair
+    icon_selected: mdi:sofa
+  - url: /mobile-dashboard/scenes
+    label: Scenes
+    icon: m3o:layers
+    icon_selected: m3of:layers
+  - url: /mobile-dashboard/camera
+    label: Camera
+    icon: m3o:camera
+    icon_selected: m3of:camera
+  - icon: mdi:dots-horizontal
+    label: More
+    tap_action:
+      action: open-popup
+    popup:
+      - icon: m3of:tools-wrench
+        url: /config/dashboard
+      - icon: m3of:sprinkler
+        url: /mobile-dashboard/irrigation
+      - icon: m3of:colors
+        url: /material-you-configuration
+      - icon: m3of:power-settings-new
+        tap_action:
+          action: call-service
+          service: homeassistant.restart
+          service_data: {}
+          confirmation:
+            text: Are you sure you want to restart Home Assistant?
+styles: |
+  .navbar-card {
+    background: color-mix(in srgb, var(--md-sys-color-on-primary) 70%, transparent);
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(20px) !important;
+    background-blend-mode: overlay;
+    border-radius: 20px;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .button.active {
+    background: transparent;
+  }
+
+  ha-ripple {
+    display: none !important;
+  }
+media_player:
+  entity: media_player.your_media
+  album_cover_background: true
+  tap_action:
+    action: navigate
+    navigation_path: "#music-player"

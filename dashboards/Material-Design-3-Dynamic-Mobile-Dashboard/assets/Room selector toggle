@@ -1,0 +1,24 @@
+type: vertical-stack
+cards:
+  - type: custom:streamline-card
+    template: spacer_card
+    variables:
+      padding: 4px
+  - type: custom:streamline-card
+    template: room_toggles_chip_card
+    variables:
+      entity_area_one: input_boolean.room_toggle_one_mobile
+      area_one_icon: mdi:star
+      area_one_name: Default
+      entity_area_two: input_boolean.room_toggle_two_mobile
+      area_two_icon: mdi:home
+      area_two_name: Others
+      entity_area_three: input_boolean.room_toggle_three_mobile
+      area_three_icon: mdi:light-flood-down
+      area_three_name: Outdoor
+      animation_delay: 0.5s
+      alignment: start
+  - type: custom:streamline-card
+    template: spacer_card
+    variables:
+      padding: 4px
