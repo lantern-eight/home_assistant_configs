@@ -45,17 +45,22 @@ def _load_config() -> dict:
     }
 
 
+def _normalize_redact_names(names):
+    """Normalize redact_names from config: None -> [], str -> [str], list unchanged."""
+    if names is None:
+        return []
+    if isinstance(names, str):
+        return [names]
+    return names
+
+
 _cfg = _load_config()
 SMB_SERVER = _cfg['smb_server']
 SMB_SHARE = _cfg['smb_share']
 SMB_PATH = _cfg['smb_path']
 SMB_USER = _cfg['smb_user']
 SMB_PASSWORD = _cfg['smb_password']
-REDACT_NAMES = _cfg.get('redact_names', [])
-if REDACT_NAMES is None:
-    REDACT_NAMES = []
-elif isinstance(REDACT_NAMES, str):
-    REDACT_NAMES = [REDACT_NAMES]
+REDACT_NAMES = _normalize_redact_names(_cfg.get('redact_names', []))
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
 

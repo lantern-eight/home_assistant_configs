@@ -102,25 +102,10 @@ class TestRedactNamesNormalization:
   """The module-level normalization of REDACT_NAMES handles None, str, and list."""
 
   def test_none_becomes_empty_list(self):
-    names = None
-    if names is None:
-      names = []
-    elif isinstance(names, str):
-      names = [names]
-    assert names == []
+    assert hab._normalize_redact_names(None) == []
 
   def test_string_becomes_single_item_list(self):
-    names = "Alice"
-    if names is None:
-      names = []
-    elif isinstance(names, str):
-      names = [names]
-    assert names == ["Alice"]
+    assert hab._normalize_redact_names("Alice") == ["Alice"]
 
   def test_list_stays_as_list(self):
-    names = ["Alice", "Bob"]
-    if names is None:
-      names = []
-    elif isinstance(names, str):
-      names = [names]
-    assert names == ["Alice", "Bob"]
+    assert hab._normalize_redact_names(["Alice", "Bob"]) == ["Alice", "Bob"]
