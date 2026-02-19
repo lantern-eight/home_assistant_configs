@@ -88,19 +88,19 @@ class TestRedactNamesInText:
 
   def test_simple_name_redaction(self):
     result = redact_names_in_text("Hello Alice", ["Alice"])
-    assert result == "Hello <person_1>"
+    assert result == "Hello <entity_1>"
 
   def test_case_insensitive(self):
     result = redact_names_in_text("hello alice and ALICE", ["Alice"])
-    assert result == "hello <person_1> and <person_1>"
+    assert result == "hello <entity_1> and <entity_1>"
 
   def test_multiple_names(self):
     result = redact_names_in_text("Alice and Bob went home", ["Alice", "Bob"])
-    assert result == "<person_1> and <person_2> went home"
+    assert result == "<entity_1> and <entity_2> went home"
 
   def test_name_in_entity_id(self):
     result = redact_names_in_text("person.alice_phone", ["alice"])
-    assert result == "person.<person_1>_phone"
+    assert result == "person.<entity_1>_phone"
 
   def test_empty_names_list(self):
     text = "Hello Alice"
@@ -108,23 +108,23 @@ class TestRedactNamesInText:
 
   def test_none_in_names_list(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, [None, "Alice"]) == "Hello <person_2>"
+    assert redact_names_in_text(text, [None, "Alice"]) == "Hello <entity_2>"
 
   def test_whitespace_only_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["  ", "Alice"]) == "Hello <person_2>"
+    assert redact_names_in_text(text, ["  ", "Alice"]) == "Hello <entity_2>"
 
   def test_empty_string_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["", "Alice"]) == "Hello <person_2>"
+    assert redact_names_in_text(text, ["", "Alice"]) == "Hello <entity_2>"
 
   def test_name_with_special_regex_chars(self):
     result = redact_names_in_text("User: alice.b", ["alice.b"])
-    assert result == "User: <person_1>"
+    assert result == "User: <entity_1>"
 
   def test_preserves_surrounding_text(self):
     result = redact_names_in_text("sensor.alice_room_temp: 22.5", ["Alice"])
-    assert result == "sensor.<person_1>_room_temp: 22.5"
+    assert result == "sensor.<entity_1>_room_temp: 22.5"
 
   def test_empty_content(self):
     assert redact_names_in_text("", ["Alice"]) == ""

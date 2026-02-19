@@ -38,7 +38,7 @@ class TestEntityMapSaveLoad:
     def test_round_trip(self):
         entity_map = {
             "ids": {"abc...678": "abcdef01234567890abcdef012345678"},
-            "names": {"<person_1>": "Alice", "<person_2>": "Bob"},
+            "names": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
@@ -58,15 +58,15 @@ class TestEntityMapSaveLoad:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
             with open(path, "w") as f:
-                yaml.dump({"names": {"<person_1>": "Alice"}}, f)
+                yaml.dump({"names": {"<entity_1>": "Alice"}}, f)
             loaded = load_entity_map(path)
         assert loaded["ids"] == {}
-        assert loaded["names"] == {"<person_1>": "Alice"}
+        assert loaded["names"] == {"<entity_1>": "Alice"}
 
     def test_saved_file_is_valid_yaml(self):
         entity_map = {
             "ids": {"abc...678": "abcdef01234567890abcdef012345678"},
-            "names": {"<person_1>": "Alice"},
+            "names": {"<entity_1>": "Alice"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
@@ -74,7 +74,7 @@ class TestEntityMapSaveLoad:
             with open(path) as f:
                 raw = yaml.safe_load(f)
         assert raw["ids"]["abc...678"] == "abcdef01234567890abcdef012345678"
-        assert raw["names"]["<person_1>"] == "Alice"
+        assert raw["names"]["<entity_1>"] == "Alice"
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class TestEntityMapAccumulation:
     def test_redact_names_populates_name_map(self):
         name_map = {}
         redact_names_in_text("Hello Alice and Bob", ["Alice", "Bob"], name_map)
-        assert name_map == {"<person_1>": "Alice", "<person_2>": "Bob"}
+        assert name_map == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
 
     def test_redact_names_no_map_when_none(self):
         redact_names_in_text("Hello Alice", ["Alice"])
@@ -118,7 +118,7 @@ class TestEntityMapAccumulation:
             _process_backup_files(tmp, ["Alice"], entity_map)
 
             assert entity_map["ids"]["aab...344"] == hex_id
-            assert entity_map["names"]["<person_1>"] == "Alice"
+            assert entity_map["names"]["<entity_1>"] == "Alice"
 
 
 # ---------------------------------------------------------------------------
@@ -128,9 +128,9 @@ class TestEntityMapAccumulation:
 class TestRestoreBackupFiles:
 
     def test_restores_names(self):
-        entity_map = {"ids": {}, "names": {"<person_1>": "Alice"}}
+        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
-            path = _write_file(tmp, "auto.yaml", "alias: <person_1>'s Routine\n")
+            path = _write_file(tmp, "auto.yaml", "alias: <entity_1>'s Routine\n")
             _restore_backup_files(tmp, entity_map)
             assert _read_file(path) == "alias: Alice's Routine\n"
 
@@ -146,46 +146,46 @@ class TestRestoreBackupFiles:
         full_id = "aabbccdd11223344aabbccdd11223344"
         entity_map = {
             "ids": {"aab...344": full_id},
-            "names": {"<person_1>": "Alice"},
+            "names": {"<entity_1>": "Alice"},
         }
         with tempfile.TemporaryDirectory() as tmp:
-            content = "unique_id: aab...344\nalias: <person_1> Morning\n"
+            content = "unique_id: aab...344\nalias: <entity_1> Morning\n"
             path = _write_file(tmp, "auto.yaml", content)
             _restore_backup_files(tmp, entity_map)
             result = _read_file(path)
             assert full_id in result
             assert "Alice Morning" in result
-            assert "<person_1>" not in result
+            assert "<entity_1>" not in result
             assert "aab...344" not in result
 
     def test_restores_multiple_names(self):
         entity_map = {
             "ids": {},
-            "names": {"<person_1>": "Alice", "<person_2>": "Bob"},
+            "names": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
         }
         with tempfile.TemporaryDirectory() as tmp:
-            content = "<person_1> and <person_2> went home\n"
+            content = "<entity_1> and <entity_2> went home\n"
             path = _write_file(tmp, "auto.yaml", content)
             _restore_backup_files(tmp, entity_map)
             assert _read_file(path) == "Alice and Bob went home\n"
 
     def test_restores_across_subdirectories(self):
-        entity_map = {"ids": {}, "names": {"<person_1>": "Alice"}}
+        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
-            path = _write_file(tmp, "sub/deep/auto.yaml", "alias: <person_1>\n")
+            path = _write_file(tmp, "sub/deep/auto.yaml", "alias: <entity_1>\n")
             _restore_backup_files(tmp, entity_map)
             assert _read_file(path) == "alias: Alice\n"
 
     def test_skips_non_processable_extensions(self):
-        entity_map = {"ids": {}, "names": {"<person_1>": "Alice"}}
+        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
-            content = "name = '<person_1>'\n"
+            content = "name = '<entity_1>'\n"
             path = _write_file(tmp, "script.py", content)
             _restore_backup_files(tmp, entity_map)
             assert _read_file(path) == content
 
     def test_no_match_leaves_file_unchanged(self):
-        entity_map = {"ids": {}, "names": {"<person_1>": "Alice"}}
+        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             content = "plain: value\n"
             path = _write_file(tmp, "plain.yaml", content)
@@ -201,7 +201,7 @@ class TestRestoreBackupFiles:
             assert _read_file(path) == content
 
     def test_empty_directory(self):
-        entity_map = {"ids": {"abc...678": "x" * 32}, "names": {"<person_1>": "Alice"}}
+        entity_map = {"ids": {"abc...678": "x" * 32}, "names": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             _restore_backup_files(tmp, entity_map)
 

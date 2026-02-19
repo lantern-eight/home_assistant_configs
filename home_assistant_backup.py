@@ -117,10 +117,10 @@ def shorten_ids(content: str, id_map: dict | None = None) -> str:
 
 
 def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
-    """Replace each name in *names* with '<person_N>' (case-insensitive, numbered)."""
+    """Replace each name in *names* with '<entity_N>' (case-insensitive, numbered)."""
     for i, name in enumerate(names, 1):
         if name and len(name.strip()) > 0:
-            placeholder = f'<person_{i}>'
+            placeholder = f'<entity_{i}>'
             if name_map is not None:
                 name_map[placeholder] = name
             content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
