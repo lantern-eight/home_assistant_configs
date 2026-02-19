@@ -23,3 +23,13 @@ notify:
     services:
       - service: mobile_app_<entity_9>
       - service: mobile_app_<entity_7>
+      
+      
+# Dashboards
+lovelace:
+  dashboards:
+    mobile-dashboard:
+      mode: yaml
+      filename: dashboards/Material-Design-3-Dynamic-Mobile-Dashboard/dashboard.yaml
+      title: MD3 Mobile
+      icon: mdi:cellphone
