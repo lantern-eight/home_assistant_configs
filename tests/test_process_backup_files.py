@@ -27,7 +27,7 @@ class TestProcessBackupFilesYaml:
       content = "unique_id: abcdef01234567890abcdef012345678\n"
       path = _write_file(tmp, "test.yaml", content)
       _process_backup_files(tmp, [])
-      assert _read_file(path) == "unique_id: ab...78\n"
+      assert _read_file(path) == "unique_id: abc...678\n"
 
   def test_names_redacted_in_yaml(self):
     with tempfile.TemporaryDirectory() as tmp:
@@ -36,7 +36,7 @@ class TestProcessBackupFilesYaml:
       _process_backup_files(tmp, ["Alice"])
       result = _read_file(path)
       assert "Alice" not in result
-      assert "<person>" in result
+      assert "<entity_1>" in result
 
   def test_pronouns_neutralized_in_yaml(self):
     with tempfile.TemporaryDirectory() as tmp:
@@ -57,10 +57,10 @@ class TestProcessBackupFilesYaml:
       path = _write_file(tmp, "automation.yaml", content)
       _process_backup_files(tmp, ["Alice"])
       result = _read_file(path)
-      assert "aa...44" in result
+      assert "aab...344" in result
       assert hex_id not in result
       assert "Alice" not in result
-      assert "<person>" in result
+      assert "<entity_1>" in result
       assert "Tell them the lights are on" in result
 
 
@@ -71,21 +71,21 @@ class TestProcessBackupFilesExtensions:
       content = '{"name": "Alice"}'
       path = _write_file(tmp, "data.json", content)
       _process_backup_files(tmp, ["Alice"])
-      assert "<person>" in _read_file(path)
+      assert "<entity_1>" in _read_file(path)
 
   def test_conf_file_is_processed(self):
     with tempfile.TemporaryDirectory() as tmp:
       content = "owner = Alice\n"
       path = _write_file(tmp, "app.conf", content)
       _process_backup_files(tmp, ["Alice"])
-      assert "<person>" in _read_file(path)
+      assert "<entity_1>" in _read_file(path)
 
   def test_txt_file_is_processed(self):
     with tempfile.TemporaryDirectory() as tmp:
       content = "Alice was here\n"
       path = _write_file(tmp, "notes.txt", content)
       _process_backup_files(tmp, ["Alice"])
-      assert "<person>" in _read_file(path)
+      assert "<entity_1>" in _read_file(path)
 
   def test_py_file_is_not_processed(self):
     with tempfile.TemporaryDirectory() as tmp:
@@ -118,7 +118,7 @@ class TestProcessBackupFilesSubdirectories:
       _process_backup_files(tmp, ["Bob"])
       result = _read_file(path)
       assert "Bob" not in result
-      assert "<person>" in result
+      assert "<entity_1>" in result
 
 
 class TestProcessBackupFilesEdgeCases:

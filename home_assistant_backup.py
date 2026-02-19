@@ -13,13 +13,15 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-    'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-h]\n'
+    'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-r] [-h]\n'
     '  -d, --debug      Set log level to DEBUG\n'
     '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
+    '  -r, --restore    Restore redacted files using entity_map.yaml\n'
     '  -h, --help       Show this help'
 )
 
 CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
+ENTITY_MAP_PATH = Path(__file__).resolve().parent / 'entity_map.yaml'
 
 
 def _load_config() -> dict:
@@ -103,19 +105,25 @@ PRONOUN_MAP = [
 ]
 
 
-def shorten_ids(content: str) -> str:
-    """Replace 32-char hex IDs with a shortened form (first2...last2)."""
+def shorten_ids(content: str, id_map: dict | None = None) -> str:
+    """Replace 32-char hex IDs with a shortened form (first3...last3)."""
     def _shorten(match):
         s = match.group(1)
-        return f'{s[:2]}...{s[-2:]}'
+        short = f'{s[:3]}...{s[-3:]}'
+        if id_map is not None:
+            id_map[short] = s
+        return short
     return _ID_PATTERN.sub(_shorten, content)
 
 
-def redact_names_in_text(content: str, names: list[str]) -> str:
-    """Replace each name in *names* with '<person>' (case-insensitive)."""
-    for name in names:
+def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
+    """Replace each name in *names* with '<entity_N>' (case-insensitive, numbered)."""
+    for i, name in enumerate(names, 1):
         if name and len(name.strip()) > 0:
-            content = re.sub(re.escape(name), '<person>', content, flags=re.IGNORECASE)
+            placeholder = f'<entity_{i}>'
+            if name_map is not None:
+                name_map[placeholder] = name
+            content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
     return content
 
 
@@ -126,9 +134,30 @@ def neutralize_pronouns(content: str) -> str:
     return content
 
 
-def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
+def save_entity_map(entity_map: dict, path: Path | str = ENTITY_MAP_PATH) -> None:
+    """Write the entity map to a YAML file."""
+    with open(path, 'w', encoding='utf-8') as f:
+        yaml.dump(entity_map, f, default_flow_style=False, sort_keys=True)
+    LOGGER.info('Entity map saved', extra={'path': str(path)})
+
+
+def load_entity_map(path: Path | str = ENTITY_MAP_PATH) -> dict:
+    """Read the entity map from a YAML file."""
+    with open(path, 'r', encoding='utf-8') as f:
+        data = yaml.safe_load(f) or {}
+    return {'ids': data.get('ids', {}), 'names': data.get('names', {})}
+
+
+def _process_backup_files(
+    dest_dir: str,
+    redact_names: list[str],
+    entity_map: dict | None = None,
+) -> None:
     """Post-process backup files to redact sensitive info and shorten IDs."""
     LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
+
+    id_map = entity_map['ids'] if entity_map is not None else None
+    name_map = entity_map['names'] if entity_map is not None else None
 
     for root, _, files in os.walk(dest_dir):
         for file in files:
@@ -141,8 +170,8 @@ def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
                     content = f.read()
                 
                 original = content
-                content = shorten_ids(content)
-                content = redact_names_in_text(content, redact_names)
+                content = shorten_ids(content, id_map)
+                content = redact_names_in_text(content, redact_names, name_map)
                 content = neutralize_pronouns(content)
                 
                 if content != original:
@@ -153,6 +182,42 @@ def _process_backup_files(dest_dir: str, redact_names: list[str]) -> None:
                 LOGGER.warning(
                     'Failed to process file',
                     extra={'file': file_path, 'error': str(e)}
+                )
+
+
+def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
+    """Reverse redaction in backup files using a previously saved entity map."""
+    names = entity_map.get('names', {})
+    ids = entity_map.get('ids', {})
+    LOGGER.info(
+        'Starting restore of backup files',
+        extra={'name_count': len(names), 'id_count': len(ids)},
+    )
+
+    for root, _, files in os.walk(dest_dir):
+        for file in files:
+            if not file.endswith(PROCESSABLE_EXTENSIONS):
+                continue
+
+            file_path = os.path.join(root, file)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                original = content
+                for placeholder, real_name in names.items():
+                    content = content.replace(placeholder, real_name)
+                for short_id, full_id in ids.items():
+                    content = content.replace(short_id, full_id)
+
+                if content != original:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+
+            except Exception as e:
+                LOGGER.warning(
+                    'Failed to restore file',
+                    extra={'file': file_path, 'error': str(e)},
                 )
 
 
@@ -186,11 +251,12 @@ def main(argv: list[str] | None = None) -> None:
   argv = argv if argv is not None else sys.argv[1:]
 
   try:
-    opts, _ = getopt(argv, 'hdl:', ['help', 'debug', 'log-level='])
+    opts, _ = getopt(argv, 'hdl:r', ['help', 'debug', 'log-level=', 'restore'])
   except GetoptError:
     LOGGER.error('Invalid options. %s', USAGE)
     sys.exit(1)
 
+  restore_mode = False
   for opt, arg in opts:
     if opt in ('-h', '--help'):
       print(USAGE)
@@ -205,6 +271,19 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1)
       LOGGER.setLevel(level)
       LOGGER.debug('Log level set to %s', arg.upper())
+    if opt in ('-r', '--restore'):
+      restore_mode = True
+
+  if restore_mode:
+    if not ENTITY_MAP_PATH.exists():
+      LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
+      sys.exit(1)
+    entity_map = load_entity_map(ENTITY_MAP_PATH)
+    _restore_backup_files(DEST, entity_map)
+    if os.path.isdir(COMMENTS_DIR):
+      _restore_backup_files(COMMENTS_DIR, entity_map)
+    LOGGER.info('Restore complete')
+    return
 
   if not SMB_SERVER or not SMB_SHARE:
     LOGGER.error(
@@ -271,10 +350,13 @@ def main(argv: list[str] | None = None) -> None:
           extra={'smb_file': smb_file, 'local_file': local_file, 'error': str(e)},
         )
 
-  # Post-process files (redaction + ID shortening)
-  _process_backup_files(DEST, REDACT_NAMES)
+  # Post-process files (redaction + ID shortening) and build entity map
+  entity_map = {'ids': {}, 'names': {}}
+  _process_backup_files(DEST, REDACT_NAMES, entity_map)
   if os.path.isdir(COMMENTS_DIR):
-    _process_backup_files(COMMENTS_DIR, REDACT_NAMES)
+    _process_backup_files(COMMENTS_DIR, REDACT_NAMES, entity_map)
+  if entity_map['ids'] or entity_map['names']:
+    save_entity_map(entity_map, ENTITY_MAP_PATH)
 
   smbclient.reset_connection_cache()
   LOGGER.info(

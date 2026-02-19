@@ -29,5 +29,5 @@ notify:
   - name: boss_phones
     platform: group
     services:
-      - service: mobile_app_<person>
-      - service: mobile_app_<person>
+      - service: mobile_app_<entity_9>
+      - service: mobile_app_<entity_7>

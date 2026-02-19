@@ -35,7 +35,11 @@ actions:
       notif_title: "{{ base_name | replace('_', ' ') | title }} — Print Error ❌"
       
       notif_message: >
-        File: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+        File: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
 
         🚨 Error: {{ trigger.to_state.state | replace('_',' ') | title }}
       
@@ -73,10 +77,18 @@ triggers:
 actions:
   # 1. Define variables
   - variables:
-      base_name: "{{ trigger.entity_id | replace('sensor.','') | replace('_print_status','') }}"
+      base_name: >
+        {{ trigger.entity_id
+           | replace('sensor.', '')
+           | replace('_print_status', '')
+        }}
       notif_title: "{{ base_name | replace('_',' ') | title }} Print Done 👍"
       notif_message: >
-        Printed: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+        Printed: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
       notif_image: >
         /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
 
@@ -107,22 +119,37 @@ triggers:
 conditions:
   - condition: template
     value_template: |
-      {{ states('input_boolean.' ~ (trigger.entity_id | replace('sensor.','') | replace('_percent_complete','_half_notified'))) == 'off' }}
+      {{ states('input_boolean.' ~ (trigger.entity_id
+           | replace('sensor.', '')
+           | replace('_percent_complete', '_half_notified')
+        )) == 'off' }}
 actions:
   # 1. Define variables first so we don't have to copy-paste the logic
   - variables:
       # Clean up the entity ID to get the base name (e.g., centauri_carbon)
-      base_name: "{{ trigger.entity_id | replace('sensor.','') | replace('_percent_complete','') }}"
+      base_name: >
+        {{ trigger.entity_id
+           | replace('sensor.', '')
+           | replace('_percent_complete', '')
+        }}
       
       # Generate the Title
       notif_title: "{{ base_name | replace('_',' ') | title }} — Half done printing! 🕓"
       
       # Generate the Message
       notif_message: >
-        File: {{ states('input_text.' ~ base_name ~ '_last_file') | replace('_',' ') | replace('.gcode','') | default('Unknown file', true) }}
+        File: >
+          {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
 
-        ⏳ Time remaining: {{ (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60 }} hours {{ (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60 }} minutes
-      
+        ⏳ Time remaining: {{
+          (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60
+        }} hours {{
+          (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60
+        }} minutes
+
       # Generate the Image URL
       notif_image: >
         /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}

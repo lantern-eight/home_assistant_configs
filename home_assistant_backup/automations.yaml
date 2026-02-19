@@ -1,11 +1,11 @@
 - id: '1743804334500'
-  alias: <person>'s Door Opens After Bedtime
+  alias: <entity_3>'s Door Opens After Bedtime
   description: ''
   triggers:
-  - alias: <person>'s door opens
+  - alias: <entity_3>'s door opens
     type: opened
-    device_id: e0...01
-    entity_id: 64...bc
+    device_id: e0f...001
+    entity_id: 649...abc
     domain: binary_sensor
     trigger: device
   conditions:
@@ -23,8 +23,8 @@
   actions:
   - parallel:
     - type: turn_off
-      device_id: 16...67
-      entity_id: 74...5f
+      device_id: 165...267
+      entity_id: 741...55f
       domain: remote
     - action: lifx.set_state
       metadata: {}
@@ -37,31 +37,31 @@
         brightness_pct: 15
       target:
         device_id:
-        - df...0b
-        - 92...6f
-        - 83...43
+        - dfd...50b
+        - 921...86f
+        - 83e...943
     - action: media_player.turn_off
       target:
-        device_id: 06...fc
+        device_id: 06f...bfc
       data: {}
-    - action: notify.mobile_app_<person>
+    - action: notify.mobile_app_<entity_7>
       metadata: {}
       data:
         message: "\U0001F3C3\U0001F6AA\U0001F440"
-      alias: Notify <person>
-    - action: notify.mobile_app_<person>
+      alias: Notify <entity_6>
+    - action: notify.mobile_app_<entity_9>
       metadata: {}
       data:
         message: "\U0001F3C3\U0001F6AA\U0001F440"
-      alias: Notify <person>
+      alias: Notify <entity_8>
   mode: single
 - id: '1745768622067'
-  alias: <person>'s Door Closes After Bedtime
+  alias: <entity_3>'s Door Closes After Bedtime
   description: ''
   triggers:
   - type: not_opened
-    device_id: e0...01
-    entity_id: 64...bc
+    device_id: e0f...001
+    entity_id: 649...abc
     domain: binary_sensor
     trigger: device
   conditions:
@@ -89,22 +89,22 @@
         brightness_pct: 20
       target:
         device_id:
-        - df...0b
-        - 92...6f
+        - dfd...50b
+        - 921...86f
     - type: turn_off
-      device_id: 83...43
-      entity_id: 5c...e5
+      device_id: 83e...943
+      entity_id: 5ca...2e5
       domain: light
-    - action: notify.mobile_app_<person>
+    - action: notify.mobile_app_<entity_7>
       metadata: {}
       data:
         message: "\U0001F6AA\U0001F512"
-      alias: Notify <person>
-    - device_id: 6f...32
+      alias: Notify <entity_6>
+    - device_id: 6f9...032
       domain: mobile_app
       type: notify
       message: "\U0001F6AA\U0001F512"
-      alias: Notify <person>
+      alias: Notify <entity_8>
   mode: single
 - id: '1747941426924'
   alias: Go to bed
@@ -116,12 +116,12 @@
   actions:
   - parallel:
     - type: turn_off
-      device_id: 16...67
-      entity_id: 74...5f
+      device_id: 165...267
+      entity_id: 741...55f
       domain: remote
     - action: media_player.turn_off
       target:
-        device_id: 06...fc
+        device_id: 06f...bfc
       data: {}
   mode: single
 - id: '1766852942445'
@@ -142,16 +142,16 @@
     metadata: {}
     target:
       entity_id:
-      - light.<person>s_lamp
-      - light.<person>s_lamp
+      - light.<entity_1>s_lamp
+      - light.<entity_2>s_lamp
       - light.ceiling_light
     data:
       color_temp_kelvin: 4190
       brightness_pct: 100
   mode: single
 - id: '1766853485146'
-  alias: <person> Nighttime
-  description: Turn off <person>'s light for them to go to sleep.
+  alias: <entity_4> Nighttime
+  description: Turn off <entity_4>'s light for them to go to sleep.
   triggers:
   - trigger: time
     at: '19:15:00'
@@ -168,13 +168,13 @@
   - action: light.turn_off
     metadata: {}
     target:
-      entity_id: light.<person>s_room
+      entity_id: light.<entity_4>s_room
     data:
       transition: 60
   mode: single
 - id: '1766854460562'
-  alias: <person> Daytime
-  description: Wake up <person>
+  alias: <entity_4> Daytime
+  description: Wake up <entity_4>
   triggers:
   - trigger: time
     at: 07:15:00
@@ -191,7 +191,7 @@
   - action: light.turn_on
     metadata: {}
     target:
-      entity_id: light.<person>s_room
+      entity_id: light.<entity_4>s_room
     data:
       color_temp_kelvin: 5205
       brightness_pct: 52
@@ -221,8 +221,8 @@
       brightness_pct: 100
   mode: single
 - id: '1767848379827'
-  alias: <person> Second off
-  description: Turn off <person>'s light a second time to be sure.
+  alias: <entity_4> Second off
+  description: Turn off <entity_4>'s light a second time to be sure.
   triggers:
   - trigger: time
     at: '20:05:00'
@@ -239,12 +239,12 @@
   - action: light.turn_off
     metadata: {}
     target:
-      entity_id: light.<person>s_room
+      entity_id: light.<entity_4>s_room
     data:
       transition: 60
   mode: single
 - id: '1767921881819'
-  alias: <person> ready for bed
+  alias: <entity_4> ready for bed
   description: Set to night time color
   triggers:
   - trigger: time
@@ -263,7 +263,7 @@
     metadata: {}
     target:
       entity_id:
-      - light.<person>s_room
+      - light.<entity_4>s_room
     data:
       color_temp_kelvin: 2500
       brightness_pct: 60
