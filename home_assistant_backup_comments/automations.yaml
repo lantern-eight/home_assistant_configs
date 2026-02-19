@@ -72,8 +72,8 @@ actions:
   - variables:
       base_name: >
         {{ trigger.entity_id
-           | replace('sensor.', '')
-           | replace('_print_status', '')
+          | replace('sensor.', '')
+          | replace('_print_status', '')
         }}
       notif_title: "{{ base_name | replace('_',' ') | title }} Print Done 👍"
       notif_message: >
@@ -110,8 +110,8 @@ conditions:
   - condition: template
     value_template: |
       {{ states('input_boolean.' ~ (trigger.entity_id
-           | replace('sensor.', '')
-           | replace('_percent_complete', '_half_notified')
+          | replace('sensor.', '')
+          | replace('_percent_complete', '_half_notified')
         )) == 'off' }}
 actions:
   # 1. Define variables first so we don't have to copy-paste the logic
@@ -119,8 +119,8 @@ actions:
       # Clean up the entity ID to get the base name (e.g., centauri_carbon)
       base_name: >
         {{ trigger.entity_id
-           | replace('sensor.', '')
-           | replace('_percent_complete', '')
+          | replace('sensor.', '')
+          | replace('_percent_complete', '')
         }}
       
       # Generate the Title
