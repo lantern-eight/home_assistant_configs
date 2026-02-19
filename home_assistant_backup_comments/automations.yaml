@@ -1,14 +1,10 @@
-# configuration.yaml
+# File that has some better formatting and comments around the automations. Not all
+# automations are included in this file. Just ones that are more complex or have
+# special logic.
 
-notify:
-  - name: mobile_phones
-    platform: group
-    services:
-      - service: mobile_app_<entity_9>
-      - service: mobile_app_<entity_7>
-
-
-
+# ----------------------
+# 3D Print Failure Alert
+# ----------------------
 alias: 3D Print Failure Alert
 mode: parallel
 triggers:
@@ -60,12 +56,9 @@ actions:
     action: input_boolean.turn_off
 
 
-
-
-
-
-
-
+# ----------------------
+# 3D Print Complete Notification
+# ----------------------
 alias: 3D Print Complete Notification
 mode: parallel
 triggers:
@@ -101,12 +94,9 @@ actions:
     action: notify.mobile_phones
 
 
-
-
-
-
-
-
+# ----------------------
+# 3D Print Halfway Notification
+# ----------------------
 alias: 3D Print Halfway Notification
 mode: parallel
 triggers:
