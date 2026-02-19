@@ -28,9 +28,9 @@ actions:
       # This regex_replace handles both suffix types at once to find the printer name
       base_name: >
         {{ trigger.entity_id 
-           | replace('sensor.', '') 
-           | replace('_print_error', '') 
-           | replace('_error_status_reason', '') }}
+          | replace('sensor.', '') 
+          | replace('_print_error', '') 
+          | replace('_error_status_reason', '') }}
       
       notif_title: "{{ base_name | replace('_', ' ') | title }} — Print Error ❌"
       
