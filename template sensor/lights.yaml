@@ -1,0 +1,21 @@
+  - platform: group
+    name: "Lights (MBR) - For Count Only"
+    entities:
+      - light.light_one_mbr
+      - light.light_two_mbr
+      - light.light_one_mbrt
+      - light.light_two_mbrt
+      - light.light_one_wr
+      - light.light_two_wr
+
+  - platform: group
+    name: "Lights (BR) - For Count Only"
+    entities:
+      - light.light_one_br
+      - light.light_two_br
+
+  - platform: group
+    name: "Lights (SGR) - For Count Only"
+    entities:
+      - light.light_one_sgr
+      - light.light_two_sgr

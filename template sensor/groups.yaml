@@ -1,0 +1,22 @@
+  windows_or:
+    name: "Windows (SGR)"
+    entities:
+      - binary_sensor.left_window_sensor_or_contact
+      - binary_sensor.right_window_sensor_or_contact
+  doors_la:
+    name: "Doors (LA)"
+    entities:
+      - binary_sensor.main_sliding_door_sensor_la_contact
+      - binary_sensor.side_sliding_door_sensor_la_contact
+
+  curtains_mbr:
+    name: "Curtains (MBR)"
+    entities:
+      - cover.left_blackout_curtain_mbr
+      - cover.right_blackout_curtain_mbr
+
+  guest_bathroom_fans:
+    name: "Guest Bathroom Fans"
+    entities:
+      - fan.gbrb
+      - fan.gbrv

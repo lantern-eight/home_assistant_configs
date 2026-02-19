@@ -1,0 +1,39 @@
+baby_room_dynamic_scene_active:
+  name: Baby Room Dynamic Scene Active
+  initial: ""
+  mode: text
+
+dining_table_dynamic_scene_active:
+  name: Dining Table Dynamic Scene Active
+  initial: ""
+  mode: text
+
+master_bedroom_dynamic_scene_active:
+  name: Master Bedroom Dynamic Scene Active
+  initial: ""
+  mode: text
+
+single_guest_room_dynamic_scene_active:
+  name: Single Guest Room Dynamic Scene Active
+  initial: ""
+  mode: text
+
+multiple_guest_room_dynamic_scene_active:
+  name: Multiple Guest Room Dynamic Scene Active
+  initial: ""
+  mode: text
+
+sofa_dynamic_scene_active:
+  name: Sofa Dynamic Scene Active
+  initial: ""
+  mode: text
+
+scene_color:
+  name: Scene Color
+  initial: ""
+  mode: text
+
+dynamic_scene_selected:
+  name: Dynamic Scene Selected
+  initial: ""
+  mode: text

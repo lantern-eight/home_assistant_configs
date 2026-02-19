@@ -1,0 +1,135 @@
+alias: Apply Selected Dynamic Scene to Room
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - input_boolean.sofa_dynamic_scene
+      - input_boolean.dining_table_dynamic_scene
+      - input_boolean.master_bedroom_dynamic_scene
+      - input_boolean.baby_room_dynamic_scene
+      - input_boolean.single_guest_room_dynamic_scene
+      - input_boolean.multiple_guest_room_dynamic_scene
+conditions: []
+actions:
+  - variables:
+      room_config:
+        sofa:
+          lights:
+            - light.light_one_sofa
+            - light.light_two_sofa
+            - light.light_three_sofa
+            - light.light_four_sofa
+          light_group: light.lights_sofa
+          presence_automation: automation.room_presence_sofa
+          presence_sensor: binary_sensor.presence_sensor_sofa_radar_target
+          has_presence_logic: true
+          turn_off_script: script.turn_off_lights_sofa
+        dining_table:
+          lights:
+            - light.light_one_dt
+            - light.light_two_dt
+            - light.light_three_dt
+            - light.light_one_ktc_dt
+            - light.light_two_ktc_dt
+            - light.light_three_ktc_dt
+          light_group: light.lights_dt
+          presence_automation: automation.room_presence_dining_table
+          presence_sensor: binary_sensor.presence_sensor_dining_table_all
+          has_presence_logic: true
+          turn_off_script: script.turn_off_lights_dining_table
+        master_bedroom:
+          lights:
+            - light.light_one_mbr
+            - light.light_two_mbr
+          light_group: light.lights_mbr
+          presence_automation: automation.room_presence_master_bedroom
+          has_presence_logic: false
+        baby_room:
+          lights:
+            - light.light_one_br
+            - light.light_two_br
+            - light.ava_bed_led
+            - light.iyla_bed_led
+          light_group: light.lights_br
+          presence_automation: automation.room_presence_baby_room
+          has_presence_logic: false
+        single_guest_room:
+          lights:
+            - light.light_one_sgr
+            - light.light_two_sgr
+          light_group: light.lights_sgr
+          presence_automation: automation.room_presence_single_guest_room
+          has_presence_logic: false
+        multiple_guest_room:
+          lights:
+            - light.light_one_mgr
+            - light.light_two_mgr
+          light_group: light.lights_mgr
+          presence_automation: automation.room_presence_multiple_guest_room
+          has_presence_logic: false
+      room_name: >
+        {{ trigger.entity_id.replace('input_boolean.',
+        '').replace('_dynamic_scene', '') }}
+      room_data: "{{ room_config[room_name] }}"
+      turning_on: >
+        {{ trigger.from_state.state == 'off' and trigger.to_state.state == 'on'
+        }}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ turning_on }}"
+        sequence:
+          - action: script.apply_selected_dynamic_scene_to_room
+            data:
+              room_lights: "{{ room_data.lights }}"
+              presence_automation: "{{ room_data.presence_automation }}"
+              room_boolean: input_boolean.{{ room_name }}_dynamic_scene
+              room_scene_tracker: input_text.{{ room_name }}_dynamic_scene_active
+      - conditions:
+          - condition: template
+            value_template: "{{ not turning_on }}"
+        sequence:
+          - action: scene_presets.stop_all_dynamic_scenes
+            data: {}
+          - action: homeassistant.turn_on
+            data:
+              entity_id: "{{ room_data.presence_automation }}"
+          - delay:
+              milliseconds: 500
+          - action: input_text.set_value
+            data:
+              entity_id: input_text.{{ room_name }}_dynamic_scene_active
+              value: ""
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ room_data.has_presence_logic }}"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ is_state(room_data.presence_sensor, 'on') }}"
+                        sequence:
+                          - action: light.turn_on
+                            data:
+                              brightness_pct: 100
+                              color_temp_kelvin: >-
+                                {{ states('sensor.sun_based_color_temperature')
+                                | int }}
+                              transition: 5
+                            target:
+                              entity_id: "{{ room_data.light_group }}"
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ is_state(room_data.presence_sensor, 'off') }}"
+                        sequence:
+                          - action: "{{ room_data.turn_off_script }}"
+                            data: {}
+            default:
+              - action: light.turn_off
+                data:
+                  transition: 5
+                target:
+                  entity_id: "{{ room_data.light_group }}"
+mode: parallel
+max: 10

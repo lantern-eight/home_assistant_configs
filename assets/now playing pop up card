@@ -1,0 +1,37 @@
+type: vertical-stack
+cards:
+  - type: custom:bubble-card
+    card_type: pop-up
+    hash: "#music-player"
+    name: Music Player
+    icon: m3of:music-note
+    styles: |-
+      #root {
+              height: unset !important;
+              max-height: 100% !important;
+              transition: transform var(--md-sys-motion-expressive-spatial-default) !important;
+            }
+            .bubble-pop-up-container {
+              padding-bottom: 64px !important;
+              
+            }
+    button_type: name
+    sub_button:
+      main: []
+      bottom: []
+    slider_fill_orientation: left
+    slider_value_position: right
+  - type: custom:mediocre-massive-media-player-card
+    entity_id: media_player.your_media
+    mode: card
+    action:
+      tap_action:
+        action: url
+        url_path: spotify://home
+    speaker_group:
+      entities:
+        - media_player.jbl_bar_500
+        - media_player.nestmini8699
+    media_browser: null
+    card_mod:
+      class: filled

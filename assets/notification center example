@@ -1,0 +1,423 @@
+type: vertical-stack
+cards:
+  - type: custom:bubble-card
+    card_type: pop-up
+    hash: "#notifications"
+    name: Notifications
+    icon: m3of:notifications
+    styles: |-
+      #root {
+              height: unset !important;
+              max-height: 100% !important;
+              transition: transform var(--md-sys-motion-expressive-spatial-default) !important;
+            }
+            .bubble-pop-up-container {
+              padding-bottom: 64px !important;
+
+            }
+    bg_color: var(--card-background-color)
+    button_type: name
+  - type: custom:mushroom-chips-card
+    chips:
+      - type: conditional
+        conditions:
+          - condition: numeric_state
+            entity: sensor.average_backyard_soil_humidity
+            below: 40
+        chip:
+          type: template
+          entity: sensor.average_backyard_soil_humidity
+          icon: mdi:water-percent
+          content: |-
+            {{ states('sensor.average_backyard_soil_humidity') }}% - 
+            {% set moisture = states('sensor.average_backyard_soil_humidity')
+                            | float(0) %}
+
+                            {% if moisture < 15 %}
+                              very dry
+                            {% elif moisture < 25 %}
+                              dry
+                            {% elif moisture < 45 %}
+                              moist
+                            {% else %}
+                              wet
+                            {% endif %}
+          icon_color: |-
+            {% set moisture = states('sensor.average_backyard_soil_humidity')
+                            | float(0) %} {% if moisture < 15 %}
+                              #A9A9A9
+                            {% elif moisture < 25 %}
+                              #ffd34f
+                            {% elif moisture < 45 %}
+                              #9fe7e8
+                            {% else %}
+                              #36a9e2
+                            {% endif %}
+          tap_action:
+            action: more-info
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: sensor.house_maintenance_chip_card
+            state: "true"
+        chip:
+          type: template
+          entity: sensor.house_maintenance_chip_card
+          icon: |
+            {% if is_state('input_boolean.rubbish', 'on') %}
+              mdi:trash-can
+            {% elif is_state('input_boolean.recycle', 'on') %}
+              mdi:recycle
+            {% else %} {% endif %}
+          icon_color: |
+            {% if is_state('input_boolean.rubbish', 'on') %}
+              #C41E3A
+            {% elif is_state('input_boolean.recycle', 'on') %}
+              #50C878
+            {% else %} {% endif %}
+          content: |
+            {% if is_state('input_boolean.rubbish', 'on') %}
+              Rubbish Day
+            {% elif is_state('input_boolean.recycle', 'on') %}
+              Recycle Day
+            {% else %} {% endif %}      
+          tap_action:
+            action: more-info
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: switch.all_water_taps
+            state: "on"
+        chip:
+          type: template
+          entity: switch.all_water_taps
+          content: |
+            {{ expand('switch.all_water_taps')
+                | selectattr('state', 'eq', 'on') 
+                | map(attribute='name') 
+                | join(', ') }}
+          icon: |
+            {% set open_tap = expand('switch.all_water_taps')
+                | selectattr('state', 'eq', 'on')
+                | list | count %}
+            {{ 'm3of:sprinkler' if open_tap > 0 else '' }}
+          icon_color: blue
+          tap_action:
+            action: navigate
+            navigation_path: /mobile-dashboard/irrigation
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: sensor.laundry_machine_state
+            state: Delay Run
+        chip:
+          type: entity
+          entity: sensor.laundry_delay_time_remaining
+          icon_color: blue
+          icon: m3of:timer-arrow-down
+          tap_action:
+            action: more-info
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: sensor.laundry_machine_state
+            state: Run
+        chip:
+          type: entity
+          entity: sensor.laundry_time_remaining
+          icon: m3of:laundry
+          icon_color: blue
+          tap_action:
+            action: more-info
+      - type: conditional
+        conditions:
+          - condition: numeric_state
+            entity: sensor.dryer_switch_lr_power
+            above: 10
+        chip:
+          type: template
+          entity: sensor.dryer_switch_lr_power
+          tap_action:
+            action: more-info
+          icon: mdi:tumble-dryer
+          icon_color: "#880808"
+          content: Dryer Running
+      - type: conditional
+        conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity: media_player.
+                state: playing
+              - condition: state
+                entity: media_player.living_area_soundbar
+                state: "on"
+        chip:
+          type: template
+          entity: media_player.living_area_soundbar
+          content: |
+            {{ expand(states.media_player.living_area_soundbar)
+                | selectattr('state', 'eq', 'playing')
+                | list | count }}
+          icon: m3of:music-note
+          icon_color: var(--primary-text-color)
+          tap_action:
+            action: more-info
+    alignment: start
+  - square: false
+    type: grid
+    cards:
+      - type: conditional
+        conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity: input_boolean.rubbish
+                state: "on"
+              - condition: state
+                entity: input_boolean.recycle
+                state: "on"
+              - condition: state
+                entity: switch.driveway_water_tap
+                state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:streamline-card
+              template: title_navigation_card
+              variables:
+                title: Driveway
+                navigation_path: /mobile-dashboard/camera
+            - type: custom:streamline-card
+              template: camera_rtsp_with_chips_card
+              variables:
+                camera_url: >-
+                  ffmpeg:rtsp://{{usernname:password}}@{{ip_address}}/h265Preview_01_main#video=copy#audio=opus
+                entity_id_light_one: switch.light_switch_drw
+                light_one_icon: m3of:lightbulb
+                entity_id_light_two: switch.porch_light_drw
+                light_two_icon: m3of:lightbulb
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: group.doors_grg
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:streamline-card
+              template: title_navigation_card
+              variables:
+                title: Garage
+                navigation_path: /mobile-dashboard/camera
+            - type: custom:streamline-card
+              template: camera_rtsp_with_chips_card
+              variables:
+                camera_url: >-
+                  ffmpeg:rtsp://{{usernname:password}}@{{ip_address}}/h264Preview_01_main#video=copy#audio=opus
+                entity_id_light_one: switch.light_switch_grg
+                light_one_icon: mdi:garage-variant
+                entity_id_light_two: switch.rear_light_switch_grg
+                light_two_icon: mdi:outdoor-lamp
+                camera_height: 238px
+    columns: 1
+  - type: conditional
+    conditions:
+      - condition: or
+        conditions:
+          - condition: state
+            entity: input_boolean.wash_cuddly
+            state: "on"
+          - condition: state
+            entity: input_boolean.wash_duvet
+            state: "on"
+    card:
+      type: custom:streamline-card
+      template: title_card
+      variables:
+        title: Chores
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.wash_cuddly
+            state: idle
+        card:
+          type: custom:timer-bar-card
+          entity: timer.wash_cuddly
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#f385bc"
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.wash_duvet
+            state: idle
+        card:
+          type: custom:timer-bar-card
+          entity: timer.wash_duvet
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#AFE1AF"
+  - type: conditional
+    conditions:
+      - condition: or
+        conditions:
+          - condition: state
+            entity: binary_sensor.show_wash_cuddly_timer
+            state: "on"
+          - condition: state
+            entity: switch.towel_switches
+            state: "on"
+          - condition: state
+            entity: timer.exhaust_fans
+            state: active
+          - condition: state
+            entity: timer.rice_cooker
+            state: active
+          - condition: state
+            entity: timer.blender
+            state: active
+          - condition: state
+            entity: timer.sprinkler
+            state: active
+          - condition: state
+            entity: binary_sensor.timer_wash_duvet_12h
+            state: "on"
+    card:
+      type: custom:streamline-card
+      template: title_card
+      variables:
+        title: Timer
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.show_wash_cuddly_timer
+            state: "on"
+        card:
+          type: custom:timer-bar-card
+          entity: timer.wash_cuddly
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#f385bc"
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.show_wash_duvet_timer
+            state: "on"
+        card:
+          type: custom:timer-bar-card
+          entity: timer.wash_duvet
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#AFE1AF"
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.heated_towel_rails
+            state: active
+        card:
+          type: custom:timer-bar-card
+          entity: timer.heated_towel_rails
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: orange
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.exhaust_fans
+            state: active
+        card:
+          type: custom:timer-bar-card
+          entity: timer.exhaust_fans
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#b5e0f7"
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.rice_cooker
+            state: active
+        card:
+          type: custom:timer-bar-card
+          entity: timer.rice_cooker
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#D70040"
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.blender
+            state: active
+        card:
+          type: custom:timer-bar-card
+          entity: timer.blender
+          invert: true
+          bar_direction: ltr
+          bar_width: 60%
+          mushroom:
+            layout: vertical
+            color: "#A020F0"
+  - type: custom:mushroom-chips-card
+    chips:
+      - type: template
+        icon: mdi:weather-cloudy-arrow-right
+        tap_action:
+          action: navigate
+          navigation_path: "#weather-panel"
+        content: Open Weather Panel
+        card_mod:
+          style:
+            .: |
+              ha-card {
+                --text-color: {{ 'var(--primary-background-color)' }};
+                --color: {{ 'var(--primary-background-color)'  }};
+                --chip-background: {{ 'var(--md-sys-color-primary)' }};
+              }
+    alignment: center
+  - type: custom:bubble-card
+    card_type: separator
+    styles: |-
+      .bubble-icon,
+      .bubble-name {
+        display: none;
+      }
+      .bubble-line {
+        margin-right: 0;
+        height: 4px;
+        max-width: 32px;
+        opacity: 1;
+        background: var(--md-sys-color-on-surface-variant);
+      }
+      .bubble-separator {
+        height: min-content !important;
+        justify-content: center;
+      }
