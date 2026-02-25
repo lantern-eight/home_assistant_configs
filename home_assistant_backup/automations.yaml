@@ -363,11 +363,13 @@
       notif_title: '{{ base_name | replace(''_'','' '') | title }} — Half done printing!
         🕓'
       notif_message: |
+        {% set remaining = states('sensor.' ~ base_name ~ '_remaining_print_time') | int(0) %}
+        {% set end_time = now() + timedelta(minutes=remaining) %}
         File: {{ states('input_text.' ~ base_name ~ '_last_file')
             | replace('_',' ')
             | replace('.gcode','')
             | default('Unknown file', true) }}
-        ⏳ Time remaining: {{
+        ⏳ End Time: {{ end_time.strftime('%-I:%M %p') }}, in {{
           (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60
         }} hours {{
           (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60
