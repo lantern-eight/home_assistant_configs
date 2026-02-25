@@ -31,12 +31,10 @@ actions:
       notif_title: "{{ base_name | replace('_', ' ') | title }} — Print Error ❌"
       
       notif_message: >
-        File: >
-          {{ states('input_text.' ~ base_name ~ '_last_file')
+        File: {{ states('input_text.' ~ base_name ~ '_last_file')
             | replace('_',' ')
             | replace('.gcode','')
             | default('Unknown file', true) }}
-
         🚨 Error: {{ trigger.to_state.state | replace('_',' ') | title }}
       
       notif_image: >
@@ -77,8 +75,7 @@ actions:
         }}
       notif_title: "{{ base_name | replace('_',' ') | title }} Print Done 👍"
       notif_message: >
-        Printed: >
-          {{ states('input_text.' ~ base_name ~ '_last_file')
+        Printed: {{ states('input_text.' ~ base_name ~ '_last_file')
             | replace('_',' ')
             | replace('.gcode','')
             | default('Unknown file', true) }}
@@ -128,12 +125,10 @@ actions:
       
       # Generate the Message
       notif_message: >
-        File: >
-          {{ states('input_text.' ~ base_name ~ '_last_file')
+        File: {{ states('input_text.' ~ base_name ~ '_last_file')
             | replace('_',' ')
             | replace('.gcode','')
             | default('Unknown file', true) }}
-
         ⏳ Time remaining: {{
           (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60
         }} hours {{
