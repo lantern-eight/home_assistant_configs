@@ -12,3 +12,5 @@ smb_password: ""
 redact_names:
   - "Alice"
   - "Bob"
+
+token: "your_token_here"
