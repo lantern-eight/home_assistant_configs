@@ -8,6 +8,7 @@ dependencies = [
     "python-json-logger>=2.0.0",
     "smbprotocol>=1.16.0",
     "pyyaml>=6.0",
+    "requests>=2.32.5",
 ]
 
 [dependency-groups]
