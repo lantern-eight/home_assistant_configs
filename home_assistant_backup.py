@@ -13,11 +13,17 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-  'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-r] [-h]\n'
+  'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
+  '  -b, --backup     Run the SMB pull only (no sanitize)\n'
+  '  -s, --sanitize   Run the redaction pass only (no SMB pull); processes\n'
+  '                   both home_assistant_backup/ and\n'
+  '                   home_assistant_backup_comments/\n'
+  '  -r, --restore    Restore redacted files using entity_map.yaml\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-  '  -r, --restore    Restore redacted files using entity_map.yaml\n'
-  '  -h, --help       Show this help'
+  '  -h, --help       Show this help\n'
+  '\n'
+  'With no -b/-s/-r flag, runs backup followed by sanitize (the default).'
 )
 
 CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
@@ -117,13 +123,42 @@ def shorten_ids(content: str, id_map: dict | None = None) -> str:
 
 
 def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
-  '''Replace each name in *names* with '<entity_N>' (case-insensitive, numbered).'''
-  for i, name in enumerate(names, 1):
-    if name and len(name.strip()) > 0:
-      placeholder = f'<entity_{i}>'
+  '''Replace each name in *names* with a stable '<entity_N>' placeholder.
+
+  If *name_map* already contains a mapping for a given name (e.g. from a
+  previous run loaded off disk), that placeholder is reused so repeated /
+  partial sanitize runs and reordering of *names* stay stable. New names
+  pick up the next unused index instead of just enumerating *names*.
+  '''
+  # Reverse-lookup of real_name (lowercased) -> placeholder, plus the set of
+  # already-used <entity_N> indices so we can pick the next free one.
+  existing: dict[str, str] = {}
+  used_indices: set[int] = set()
+  if name_map is not None:
+    for placeholder, real in name_map.items():
+      existing[real.lower()] = placeholder
+      m = re.match(r'<entity_(\d+)>$', placeholder)
+      if m:
+        used_indices.add(int(m.group(1)))
+
+  next_index = 1
+
+  for name in names:
+    if not name or not name.strip():
+      continue
+
+    placeholder = existing.get(name.lower())
+    if placeholder is None:
+      while next_index in used_indices:
+        next_index += 1
+      placeholder = f'<entity_{next_index}>'
+      used_indices.add(next_index)
+      existing[name.lower()] = placeholder
       if name_map is not None:
         name_map[placeholder] = name
-      content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
+
+    content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
+
   return content
 
 
@@ -252,70 +287,8 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
         )
 
 
-def main(argv: list[str] | None = None) -> None:
-  '''
-  Backup Home Assistant config from SMB share to /home_assistant_backup directory.
-
-  Example usage:
-
-    > uv run python home_assistant_backup.py
-    > uv run python home_assistant_backup.py -d
-    > uv run python home_assistant_backup.py -l DEBUG
-
-  Make sure you have filled out config.yaml (copied from config.example.yaml)
-  or exported the corresponding environment variables:
-
-    export SMB_SERVER=192.168.1.100
-    export SMB_SHARE=config
-    export SMB_USER=your_user
-    export SMB_PASSWORD=your_password
-
-  The backup will be saved in 'home_assistant_backup' in the current directory.
-
-  Requires: smbprotocol, smbclient
-
-  Args:
-    argv: Command line arguments (defaults to sys.argv[1:])
-  Returns:
-    None
-  '''
-  argv = argv if argv is not None else sys.argv[1:]
-
-  try:
-    opts, _ = getopt(argv, 'hdl:r', ['help', 'debug', 'log-level=', 'restore'])
-  except GetoptError:
-    LOGGER.error('Invalid options. %s', USAGE)
-    sys.exit(1)
-
-  restore_mode = False
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      print(USAGE)
-      sys.exit(0)
-    if opt in ('-d', '--debug'):
-      LOGGER.setLevel(logging.DEBUG)
-      LOGGER.debug('Running in debug mode')
-    if opt in ('-l', '--log-level'):
-      level = getattr(logging, arg.upper(), None)
-      if level is None:
-        LOGGER.error('Invalid log level: %s. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL', arg)
-        sys.exit(1)
-      LOGGER.setLevel(level)
-      LOGGER.debug('Log level set to %s', arg.upper())
-    if opt in ('-r', '--restore'):
-      restore_mode = True
-
-  if restore_mode:
-    if not ENTITY_MAP_PATH.exists():
-      LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
-      sys.exit(1)
-    entity_map = load_entity_map(ENTITY_MAP_PATH)
-    _restore_backup_files(DEST, entity_map)
-    if os.path.isdir(COMMENTS_DIR):
-      _restore_backup_files(COMMENTS_DIR, entity_map)
-    LOGGER.info('Restore complete')
-    return
-
+def _run_backup() -> None:
+  '''Pull HA config from the SMB share into DEST. Does NOT sanitize.'''
   if not SMB_SERVER or not SMB_SHARE:
     LOGGER.error(
       'Set smb_server and smb_share in config.yaml (copy from config.example.yaml) '
@@ -381,19 +354,138 @@ def main(argv: list[str] | None = None) -> None:
           extra={'smb_file': smb_file, 'local_file': local_file, 'error': str(e)},
         )
 
-  # Post-process files (redaction + ID shortening) and build entity map
-  entity_map = {'ids': {}, 'names': {}}
-  _process_backup_files(DEST, REDACT_NAMES, entity_map)
-  if os.path.isdir(COMMENTS_DIR):
-    _process_backup_files(COMMENTS_DIR, REDACT_NAMES, entity_map)
-  if entity_map['ids'] or entity_map['names']:
-    save_entity_map(entity_map, ENTITY_MAP_PATH)
-
   smbclient.reset_connection_cache()
   LOGGER.info(
     'Backup finished; connection cache reset',
     extra={'files_copied': files_copied, 'dest': os.path.abspath(DEST)},
   )
+
+
+def _run_sanitize() -> None:
+  '''Run the redaction pass over DEST and COMMENTS_DIR.
+
+  Loads the existing entity_map.yaml first if it exists so that placeholder
+  numbering for already-known names stays stable. This makes partial /
+  repeated sanitize runs safe: real names already replaced with
+  <entity_N> in a file are left alone, and any unredacted occurrences pick
+  up the SAME placeholder as before instead of drifting.
+  '''
+  entity_map: dict = {'ids': {}, 'names': {}}
+  if ENTITY_MAP_PATH.exists():
+    entity_map = load_entity_map(ENTITY_MAP_PATH)
+    LOGGER.info(
+      'Loaded existing entity_map for stable placeholder reuse',
+      extra={
+        'name_count': len(entity_map['names']),
+        'id_count': len(entity_map['ids']),
+        'path': str(ENTITY_MAP_PATH),
+      },
+    )
+
+  _process_backup_files(DEST, REDACT_NAMES, entity_map)
+  if os.path.isdir(COMMENTS_DIR):
+    _process_backup_files(COMMENTS_DIR, REDACT_NAMES, entity_map)
+
+  if entity_map['ids'] or entity_map['names']:
+    save_entity_map(entity_map, ENTITY_MAP_PATH)
+
+
+def main(argv: list[str] | None = None) -> None:
+  '''
+  Backup Home Assistant config from SMB share to /home_assistant_backup directory.
+
+  Modes (mutually exclusive):
+    (default) backup + sanitize
+    -b/--backup    backup only
+    -s/--sanitize  sanitize only (processes DEST and COMMENTS_DIR)
+    -r/--restore   restore redactions using entity_map.yaml
+
+  Example usage:
+
+    > uv run python home_assistant_backup.py
+    > uv run python home_assistant_backup.py -b
+    > uv run python home_assistant_backup.py -s
+    > uv run python home_assistant_backup.py -r
+    > uv run python home_assistant_backup.py -d
+    > uv run python home_assistant_backup.py -l DEBUG
+
+  Make sure you have filled out config.yaml (copied from config.example.yaml)
+  or exported the corresponding environment variables:
+
+    export SMB_SERVER=192.168.1.100
+    export SMB_SHARE=config
+    export SMB_USER=your_user
+    export SMB_PASSWORD=your_password
+
+  The backup will be saved in 'home_assistant_backup' in the current directory.
+
+  Requires: smbprotocol, smbclient
+
+  Args:
+    argv: Command line arguments (defaults to sys.argv[1:])
+  Returns:
+    None
+  '''
+  argv = argv if argv is not None else sys.argv[1:]
+
+  try:
+    opts, _ = getopt(
+      argv,
+      'hdl:rbs',
+      ['help', 'debug', 'log-level=', 'restore', 'backup', 'sanitize'],
+    )
+  except GetoptError:
+    LOGGER.error('Invalid options. %s', USAGE)
+    sys.exit(1)
+
+  mode: str | None = None  # None -> default (backup + sanitize)
+  for opt, arg in opts:
+    if opt in ('-h', '--help'):
+      print(USAGE)
+      sys.exit(0)
+    if opt in ('-d', '--debug'):
+      LOGGER.setLevel(logging.DEBUG)
+      LOGGER.debug('Running in debug mode')
+    if opt in ('-l', '--log-level'):
+      level = getattr(logging, arg.upper(), None)
+      if level is None:
+        LOGGER.error('Invalid log level: %s. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL', arg)
+        sys.exit(1)
+      LOGGER.setLevel(level)
+      LOGGER.debug('Log level set to %s', arg.upper())
+    if opt in ('-r', '--restore', '-b', '--backup', '-s', '--sanitize'):
+      requested = {
+        '-r': 'restore', '--restore': 'restore',
+        '-b': 'backup',  '--backup':  'backup',
+        '-s': 'sanitize','--sanitize':'sanitize',
+      }[opt]
+      if mode is not None and mode != requested:
+        LOGGER.error('-b/-s/-r are mutually exclusive')
+        sys.exit(1)
+      mode = requested
+
+  if mode == 'restore':
+    if not ENTITY_MAP_PATH.exists():
+      LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
+      sys.exit(1)
+    entity_map = load_entity_map(ENTITY_MAP_PATH)
+    _restore_backup_files(DEST, entity_map)
+    if os.path.isdir(COMMENTS_DIR):
+      _restore_backup_files(COMMENTS_DIR, entity_map)
+    LOGGER.info('Restore complete')
+    return
+
+  if mode == 'backup':
+    _run_backup()
+    return
+
+  if mode == 'sanitize':
+    _run_sanitize()
+    return
+
+  # Default: backup followed by sanitize.
+  _run_backup()
+  _run_sanitize()
 
 
 if __name__ == '__main__':
