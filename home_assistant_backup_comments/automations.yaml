@@ -100,16 +100,22 @@ triggers:
   - entity_id:
       - sensor.centauri_carbon_percent_complete
       - sensor.centauri_carbon_2_percent_complete
-    above: 49
-    below: 57
-    trigger: numeric_state
+    # Any percent update runs the automation; conditions below implement the real
+    # trigger.
+    trigger: state
 conditions:
+  # Fire once per job: upward edge across 50% (not the whole 49–57 band) and latch still
+  # off.
   - condition: template
     value_template: |
-      {{ states('input_boolean.' ~ (trigger.entity_id
+      {# Percent before/after this update; missing from_state treated as 0 (cold start). #}
+      {% set previous = (trigger.from_state.state if trigger.from_state else 0) | float(0) %}
+      {% set current = trigger.to_state.state | float(0) %}
+      {# e.g. input_boolean.centauri_carbon_2_half_notified — must be off or we already notified. #}
+      {% set half_notified_entity_id = 'input_boolean.' ~ (trigger.entity_id
           | replace('sensor.', '')
-          | replace('_percent_complete', '_half_notified')
-        )) == 'off' }}
+          | replace('_percent_complete', '_half_notified')) %}
+      {{ previous < 50 and current >= 50 and states(half_notified_entity_id) == 'off' }}
 actions:
   # 1. Define variables first so we don't have to copy-paste the logic
   - variables:
