@@ -1,0 +1,54 @@
+update_spoolman_from_filament_name:
+  alias: Update Spoolman From Filament Name
+  mode: queued
+  max: 10
+  fields:
+    filament_name:
+      required: true
+      name: Filament Name
+      description: Must match the Spoolman filament name exactly.
+      selector:
+        text: null
+    use_weight:
+      required: true
+      name: Use Weight (grams)
+      selector:
+        number:
+          min: 0
+          max: 100000
+          step: 0.01
+          unit_of_measurement: g
+  sequence:
+  - action: rest_command.spoolman_find_spools_by_name
+    data:
+      filament_name: '{{ filament_name }}'
+    response_variable: spool_response
+  - variables:
+      matched_spool_id: |
+        {% set raw = spool_response.content if spool_response.status == 200
+            else '[]' %}
+        {% set spools = raw if raw is list
+            else raw | from_json(default=[]) %}
+        {% set ns = namespace(best_id=none, best_weight=none) %} {% for spool in spools %}
+          {% set w = spool.remaining_weight | float(99999) %}
+          {% if ns.best_id is none or w < ns.best_weight %}
+            {% set ns.best_id = spool.id %}
+            {% set ns.best_weight = w %}
+          {% endif %}
+        {% endfor %} {{ ns.best_id }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: |
+          {{ matched_spool_id not in [none, 'None', 'null', ''] }}
+      sequence:
+      - action: spoolman.use_spool_filament
+        data:
+          id: '{{ matched_spool_id | int }}'
+          use_weight: '{{ use_weight | float }}'
+    default:
+    - action: persistent_notification.create
+      data:
+        title: 'Spoolman: No matching spool'
+        message: |
+          Could not find a non-archived Spoolman spool with filament name "{{ filament_name }}". The print used {{ use_weight }}g that was not tracked.

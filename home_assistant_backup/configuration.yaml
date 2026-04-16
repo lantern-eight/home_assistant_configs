@@ -14,7 +14,7 @@ scene: !include scenes.yaml
 # Custom added by me below this line
 # ---------------------------
 
-template: !include custom__sensors.yaml
+template: !include_dir_merge_list template_sensors
 
 # Notification group for phones
 notify:
@@ -23,3 +23,10 @@ notify:
     services:
       - service: mobile_app_<entity_9>
       - service: mobile_app_<entity_7>
+
+# Spoolman
+rest_command:
+  spoolman_find_spools_by_name:
+    url: "http://<entity_12>/api/v1/spool?filament.name={{ filament_name | urlencode }}&allow_archived=false"
+    method: GET
+    content_type: "application/json"

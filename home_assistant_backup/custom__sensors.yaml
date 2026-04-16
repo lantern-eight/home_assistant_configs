@@ -42,10 +42,10 @@
         {% set count = count + 1 %}
       {% endif %}
 
-      {# Check if <entity_3>'s door is open between 7:30 PM and 6 AM. #}
+      {# Check if <entity_3>s door is open between 7:30 PM and 6 AM. #}
       {# 'on' = door is open, in Home Assistant it will show 'open' as a friendly
       name based on the device class.#}
-      {% if is_state('binary_sensor.<entity_3>_s_door_door', 'on') %}
+      {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
 
         {% set current_hour = now().hour %}
         {% set current_minute = now().minute %}
