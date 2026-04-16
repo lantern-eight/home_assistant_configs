@@ -160,3 +160,202 @@ actions:
       data:
         image: "{{ notif_image }}"
     action: notify.boss_phones
+
+
+# ----------------------
+# Door Opens After Bedtime (multi-door)
+# ----------------------
+# Fires when ANY tracked bedroom door opens during the bedtime window
+# (19:45–23:59). Kills TV and media player, turns the bedroom LIFX lights to a
+# per-door color so you can tell at a glance which kid is up, and notifies
+# the parent phones with the offender's name.
+#
+# State preservation: On the FIRST door open (all other tracked doors still
+# closed), snapshots the current LIFX state into scene.house_state_pre_door_disruption.
+# The close automation restores from this scene when all doors are closed
+# again, so the room returns to whatever state it was in before the interruption.
+#
+# To wire up a new door later:
+#   1. Add its binary_sensor entity_id to triggers[0].entity_id AND to the
+#      all_doors variable in the actions below (keep these two in sync).
+#   2. Add a matching key (the base_name — i.e. with the possessive trailing
+#      's' stripped) to door_colors with rgb + brightness_pct values.
+alias: Door Opens After Bedtime
+mode: parallel
+triggers:
+  - entity_id:
+      - binary_sensor.<entity_3>s_door_door
+      - binary_sensor.<entity_4>s_door_door
+    from: "off"
+    to: "on"
+    trigger: state
+conditions:
+  - condition: time
+    after: "19:45:00"
+    before: "23:59:00"
+    # Every day of the week — bedtime is bedtime.
+    weekday: [mon, tue, wed, thu, fri, sat, sun]
+actions:
+  # 1. Derive per-door identity + LIFX color from the trigger entity.
+  - variables:
+      # Full list of tracked door sensors. Must stay in sync with
+      # triggers[0].entity_id above. Used by the "first door?" template below
+      # and referenced by the close automation's "all closed?" check.
+      all_doors:
+        - binary_sensor.<entity_3>s_door_door
+        - binary_sensor.<entity_4>s_door_door
+
+      # binary_sensor.<entity_3>s_door_door -> <entity_3>
+      # binary_sensor.<entity_4>s_door_door -> <entity_4>
+      # Strip prefix, strip '_door_door' suffix, the result matches the door_colors keys
+      # below.
+      base_name: >
+        {{ trigger.entity_id
+          | replace('binary_sensor.', '')
+          | replace('s_door_door', '') }}
+
+      # Drops into the phone notification so you know which door opened without looking
+      # at the LIFX color.
+      display_name: "{{ base_name | replace('_',' ') | title }}"
+
+      # Per-door LIFX color: the room color tells you WHICH kid is up without
+      # having to unlock your phone. Add a new key whenever a new door is
+      # added to the triggers list above.
+      door_colors:
+        <entity_3>:
+          rgb: [255, 0, 0]        # red
+          brightness_pct: 15
+        <entity_4>:
+          rgb: [128, 0, 128]      # purple
+          brightness_pct: 15
+
+      lifx_rgb: "{{ door_colors[base_name].rgb }}"
+      lifx_brightness_pct: "{{ door_colors[base_name].brightness_pct }}"
+
+      notif_message: "{{ display_name }} 🏃🚪👀"
+
+  # 2. If this is the FIRST tracked door to open (all other tracked doors are
+  #    still closed), snapshot the LIFX lights into a scene so the close
+  #    automation can restore them. If another door is already open, the
+  #    snapshot was taken on that earlier open — do NOT overwrite it, or we'd
+  #    capture the disruption color and "restore" to red later.
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% set others = all_doors | reject('equalto', trigger.entity_id) | list %}
+              {% set others_open = others | map('states') | select('equalto', 'on') | list | length %}
+              {{ others_open == 0 }}
+        sequence:
+          - action: scene.create
+            data:
+              scene_id: house_state_pre_door_disruption
+              # TODO: Replace with the actual light entity_ids for the targets by the
+              # lifx.set_state action. scene.create needs entity_ids (not device_ids)
+              # find them in HA ▸ Settings ▸ Devices ▸ <LIFX device> ▸ Entities.
+              snapshot_entities:
+                - light.kitchen_table_light
+                - light.<entity_1>s_lamp
+                - light.<entity_2>s_lamp
+
+  # 3. Run the bedtime-disruption actions concurrently.
+  - parallel:
+      # Turn off TV.
+      - type: turn_off
+        device_id: 165...267
+        entity_id: 741...55f
+        domain: remote
+
+      # Turn off media player.
+      - action: media_player.turn_off
+        target:
+          device_id: 06f...bfc
+
+      # Lights -> door-specific color.
+      - action: lifx.set_state
+        data:
+          power: true
+          rgb_color: "{{ lifx_rgb }}"
+          brightness_pct: "{{ lifx_brightness_pct }}"
+        target:
+          device_id:
+            - dfd...50b
+            - 921...86f
+            - 83e...943
+
+      # Notify parent phones with the per-door message.
+      - data:
+          message: "{{ notif_message }}"
+        action: notify.boss_phones
+
+
+# ----------------------
+# Door Closes After Bedtime (multi-door)
+# ----------------------
+# Sibling of the opens automation. Two behaviors, different scopes:
+#   - Notify parent phones with the closing door's name on EVERY close
+#     (even if other tracked doors are still open).
+#   - Revert the LIFX lights to the pre-disruption state ONLY when ALL
+#     tracked doors are now closed. Uses the scene snapshot captured by the
+#     opens automation, so the room returns to whatever mood it was in
+#     before the first door opened.
+#
+# Intent: if one kid closes their door but the other is still up and out,
+# the lights STAY in disruption color — the room is still interrupted until
+# everyone is back in bed.
+alias: Door Closes After Bedtime
+mode: parallel
+triggers:
+  - entity_id:
+      - binary_sensor.<entity_3>s_door_door
+      - binary_sensor.<entity_4>s_door_door
+    from: "on"
+    to: "off"
+    trigger: state
+conditions:
+  - condition: time
+    after: "19:45:00"
+    before: "23:59:00"
+    weekday: [mon, tue, wed, thu, fri, sat, sun]
+actions:
+  # 1. Same base_name + display_name derivation as the opens automation.
+  - variables:
+      # Keep in sync with the opens automation's all_doors and triggers list.
+      all_doors:
+        - binary_sensor.<entity_3>s_door_door
+        - binary_sensor.<entity_4>s_door_door
+
+      base_name: >
+        {{ trigger.entity_id
+          | replace('binary_sensor.', '')
+          | replace('_door_door', '')
+          | regex_replace(find='s$', replace='') }}
+
+      display_name: "{{ base_name | replace('_',' ') | title }}"
+
+      notif_message: "{{ display_name }} 🚪🔒"
+
+  # 2. Always notify parent phones — one message per door close, regardless
+  #    of whether any other door is still open.
+  - data:
+      message: "{{ notif_message }}"
+    action: notify.boss_phones
+
+  # 3. Only revert the LIFX lights when ALL tracked doors are now closed.
+  #    states() already reflects the trigger's new 'off' value by the time
+  #    actions run, so open_count == 0 means every tracked door is closed.
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %}
+              {{ open == 0 }}
+        sequence:
+          # Restore from the scene snapshot captured by the opens automation
+          # when the first door opened. The transition smooths the color
+          # change so it doesn't snap back jarringly.
+          - action: scene.turn_on
+            target:
+              entity_id: scene.house_state_pre_door_disruption
+            data:
+              transition: 2
