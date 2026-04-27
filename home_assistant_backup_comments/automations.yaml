@@ -221,6 +221,8 @@ actions:
       # Per-door LIFX color: the room color tells you WHICH kid is up without
       # having to unlock your phone. Add a new key whenever a new door is
       # added to the triggers list above.
+      # IMPORTANT: keys must be lowercase — HA entity IDs are always
+      # lowercase, so base_name will be lowercase.
       door_colors:
         <entity_3>:
           rgb: [255, 0, 0]        # red
@@ -358,4 +360,4 @@ actions:
             target:
               entity_id: scene.house_state_pre_door_disruption
             data:
-              transition: 2
+              transition: 1

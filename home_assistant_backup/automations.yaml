@@ -563,5 +563,5 @@
         target:
           entity_id: scene.house_state_pre_door_disruption
         data:
-          transition: 2
+          transition: 1
   mode: parallel
