@@ -24,31 +24,70 @@ update_spoolman_from_filament_name:
       filament_name: '{{ filament_name }}'
     response_variable: spool_response
   - variables:
-      matched_spool_id: |
+      sorted_spools: |
         {% set raw = spool_response.content if spool_response.status == 200
             else '[]' %}
-        {% set spools = raw if raw is list
-            else raw | from_json(default=[]) %}
-        {% set ns = namespace(best_id=none, best_weight=none) %} {% for spool in spools %}
-          {% set w = spool.remaining_weight | float(99999) %}
-          {% if ns.best_id is none or w < ns.best_weight %}
-            {% set ns.best_id = spool.id %}
-            {% set ns.best_weight = w %}
+        {% set spools = raw if (raw is iterable and raw is not string)
+            else (raw | from_json(default=[])) %}
+        {% set ns = namespace(items=[]) %} {% for s in spools %}
+          {% set w = s.remaining_weight | float(0) %}
+          {% if w > 0 %}
+            {% set ns.items = ns.items
+                + [dict(s, _jitter=range(0, 1000000) | random)] %}
           {% endif %}
-        {% endfor %} {{ ns.best_id }}
+        {% endfor %} {{ (ns.items | sort(attribute='_jitter'))
+              | sort(attribute='remaining_weight') }}
+      total_available: |
+        {% set raw = spool_response.content if spool_response.status == 200
+            else '[]' %}
+        {% set spools = raw if (raw is iterable and raw is not string)
+            else (raw | from_json(default=[])) %}
+        {{ spools | map(attribute='remaining_weight')
+                  | map('float', 0) | sum | round(4) }}
+      remaining_use: '{{ use_weight | float(0) | round(4) }}'
   - choose:
     - conditions:
       - condition: template
-        value_template: |
-          {{ matched_spool_id not in [none, 'None', 'null', ''] }}
+        value_template: '{{ sorted_spools | length == 0 }}'
       sequence:
-      - action: spoolman.use_spool_filament
+      - action: persistent_notification.create
         data:
-          id: '{{ matched_spool_id | int }}'
-          use_weight: '{{ use_weight | float }}'
-    default:
-    - action: persistent_notification.create
-      data:
-        title: 'Spoolman: No matching spool'
-        message: |
-          Could not find a non-archived Spoolman spool with filament name "{{ filament_name }}". The print used {{ use_weight }}g that was not tracked.
+          title: 'Spoolman: No matching spool'
+          message: |
+            Could not find a non-archived Spoolman spool with filament name "{{ filament_name }}". The print used {{ use_weight }}g that was not tracked.
+    - conditions:
+      - condition: template
+        value_template: '{{ sorted_spools | length > 0 }}'
+      sequence:
+      - repeat:
+          for_each: '{{ sorted_spools }}'
+          sequence:
+          - variables:
+              spool_remaining: '{{ repeat.item.remaining_weight | float(0) | round(4)
+                }}'
+              to_deduct: |-
+                {{ 0 if (remaining_use | float(0)) <= 0
+                      else ([remaining_use | float(0),
+                              spool_remaining | float(0)] | min) }}
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ to_deduct | float(0) > 0 }}'
+              sequence:
+              - action: spoolman.use_spool_filament
+                data:
+                  id: '{{ repeat.item.id | int }}'
+                  use_weight: '{{ to_deduct | float(0) | round(2) }}'
+              - variables:
+                  remaining_use: '{{ ((remaining_use | float(0)) - (to_deduct | float(0)))
+                    | round(4) }}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ (remaining_use | float(0)) > 0.01 }}'
+          sequence:
+          - action: persistent_notification.create
+            data:
+              title: 'Spoolman: Insufficient spool weight'
+              message: |
+                Print used {{ use_weight }}g of "{{ filament_name }}" but only {{ total_available }}g was available across {{ sorted_spools | length }} spool(s). All matching spools drained to 0; {{ (remaining_use | float(0)) | round(2) }}g unaccounted. Verify physical spools and adjust Spoolman manually.
