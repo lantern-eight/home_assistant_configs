@@ -435,7 +435,6 @@
   mode: single
 - id: '1776350087907'
   alias: Door Opens After Bedtime
-  description: ''
   triggers:
   - entity_id:
     - binary_sensor.<entity_3>s_door_door
@@ -480,7 +479,7 @@
           brightness_pct: 15
       lifx_rgb: '{{ door_colors[base_name].rgb }}'
       lifx_brightness_pct: '{{ door_colors[base_name].brightness_pct }}'
-      notif_message: '{{ display_name }} 🏃🚪👀'
+      notif_message: '{{ now().strftime(''%-I:%M %p'') }} {{ display_name }} 🏃🚪👀'
   - choose:
     - conditions:
       - condition: template
@@ -518,7 +517,6 @@
   mode: parallel
 - id: '1776350252493'
   alias: Door Closes After Bedtime
-  description: ''
   triggers:
   - entity_id:
     - binary_sensor.<entity_3>s_door_door
@@ -549,7 +547,7 @@
           | replace('_door_door', '')
           | regex_replace(find='s$', replace='') }}
       display_name: '{{ base_name | replace(''_'','' '') | title }}'
-      notif_message: '{{ display_name }} 🚪🔒'
+      notif_message: '{{ now().strftime(''%-I:%M %p'') }} {{ display_name }} 🚪🔒'
   - data:
       message: '{{ notif_message }}'
     action: notify.boss_phones
@@ -563,5 +561,5 @@
         target:
           entity_id: scene.house_state_pre_door_disruption
         data:
-          transition: 1
+          transition: 0
   mode: parallel
