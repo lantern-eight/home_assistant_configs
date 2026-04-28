@@ -45,15 +45,43 @@ Pull the full HA configuration over SMB, then redact names and shorten hex IDs
 for safe version control. An entity map is saved so redaction can be reversed.
 
 ```bash
-# Backup (default)
+# Backup + sanitize (default, with no flags)
 uv run python home_assistant_backup.py
 
-# Restore redacted files to original values
+# SMB pull only, no redaction pass
+# - backup
+uv run python home_assistant_backup.py -b
+
+# Redaction pass only, no SMB pull
+# (processes both home_assistant_backup/ and home_assistant_backup_comments/)
+# - sanitize
+uv run python home_assistant_backup.py -s
+
+# Restore redacted files to original values using entity_map.yaml
+# - restore
 uv run python home_assistant_backup.py -r
 
-# Debug mode
+# Debug logging
 uv run python home_assistant_backup.py -d
+
+# Set a specific log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+uv run python home_assistant_backup.py -l DEBUG
+
+# Help
+uv run python home_assistant_backup.py -h
 ```
+
+| Flag | Long form | Purpose |
+|---|---|---|
+| `-b` | `--backup` | SMB pull only (no sanitize) |
+| `-s` | `--sanitize` | Redaction pass only (no SMB pull) |
+| `-r` | `--restore` | Restore redacted files using `entity_map.yaml` |
+| `-d` | `--debug` | Set log level to `DEBUG` |
+| `-l` | `--log-level` | Set log level explicitly |
+| `-h` | `--help` | Show usage |
+
+The `-b`, `-s`, and `-r` flags are mutually exclusive. With none of them set,
+the script runs backup followed by sanitize.
 
 The backup lands in `home_assistant_backup/`. A parallel
 `home_assistant_backup_comments/` directory preserves comment-annotated versions
