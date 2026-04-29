@@ -306,6 +306,15 @@ actions:
 # Intent: if one kid closes their door but the other is still up and out,
 # the lights STAY in disruption color — the room is still interrupted until
 # everyone is back in bed.
+#
+# Restore strategy: we DON'T use scene.turn_on. LIFX firmware stores the
+# most recently set color, and scene.turn_on would just call light.turn_off
+# on any light that was off in the snapshot — leaving the door-disruption
+# red/purple as the bulb's "remembered" color. Next manual on would then
+# come up red/purple. Instead we iterate the tracked lights and call
+# lifx.set_state per-light: it lets us push the snapshotted color/brightness
+# AND the snapshotted power state in one call, so off lights still get
+# their pre-disruption color stored in firmware for the next manual on.
 alias: Door Closes After Bedtime
 mode: parallel
 triggers:
@@ -354,11 +363,55 @@ actions:
               {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %}
               {{ open == 0 }}
         sequence:
-          # Restore from the scene snapshot captured by the opens automation
-          # when the first door opened. Snap back immediately with no
-          # transition so the room flips back the instant the last door closes.
-          - action: scene.turn_on
-            target:
-              entity_id: scene.house_state_pre_door_disruption
-            data:
-              transition: 0
+          # Per-light restore via lifx.set_state. See the header comment for
+          # why we don't use scene.turn_on.
+          #
+          # tracked_lights MUST stay in sync with snapshot_entities in the
+          # opens automation's scene.create call.
+          - variables:
+              tracked_lights:
+                - light.kitchen_table_light
+                - light.<entity_1>s_lamp
+                - light.<entity_2>s_lamp
+              # Scene's 'entities' attribute is a dict keyed by entity_id with
+              # each entity's snapshotted state + attributes (state, brightness,
+              # hs_color, color_temp_kelvin, color_mode, ...).
+              snap: "{{ state_attr('scene.house_state_pre_door_disruption', 'entities') or {} }}"
+
+          - repeat:
+              for_each: "{{ tracked_lights }}"
+              sequence:
+                - variables:
+                    ent: "{{ repeat.item }}"
+                    es: "{{ snap.get(repeat.item, {}) }}"
+                    want_on: "{{ es.get('state') == 'on' }}"
+                    mode: "{{ es.get('color_mode') }}"
+                    hs: "{{ es.get('hs_color') }}"
+                    ct_k: "{{ es.get('color_temp_kelvin') }}"
+                    bri: "{{ es.get('brightness') }}"
+                - choose:
+                    # Light was in color-temp mode -> restore Kelvin.
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ mode == 'color_temp' and ct_k not in [none, 'unknown'] }}"
+                      sequence:
+                        - action: lifx.set_state
+                          target:
+                            entity_id: "{{ ent }}"
+                          data:
+                            power: "{{ want_on }}"
+                            color_temp_kelvin: "{{ ct_k | int }}"
+                            brightness: "{{ bri | int(128) }}"
+                            transition: 0
+                  # Default: restore HS color (covers hs/rgb/xy modes, and
+                  # falls back to a neutral value if the snapshot was empty
+                  # because the light was unavailable at snapshot time).
+                  default:
+                    - action: lifx.set_state
+                      target:
+                        entity_id: "{{ ent }}"
+                      data:
+                        power: "{{ want_on }}"
+                        hs_color: "{{ hs if hs else [0, 0] }}"
+                        brightness: "{{ bri | int(128) }}"
+                        transition: 0

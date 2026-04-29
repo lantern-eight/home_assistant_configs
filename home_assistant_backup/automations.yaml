@@ -557,9 +557,45 @@
         value_template: |
           {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %} {{ open == 0 }}
       sequence:
-      - action: scene.turn_on
-        target:
-          entity_id: scene.house_state_pre_door_disruption
-        data:
-          transition: 0
+      - variables:
+          tracked_lights:
+          - light.kitchen_table_light
+          - light.<entity_1>s_lamp
+          - light.<entity_2>s_lamp
+          snap: '{{ state_attr(''scene.house_state_pre_door_disruption'', ''entities'')
+            or {} }}'
+      - repeat:
+          for_each: '{{ tracked_lights }}'
+          sequence:
+          - variables:
+              ent: '{{ repeat.item }}'
+              es: '{{ snap.get(repeat.item, {}) }}'
+              want_on: '{{ es.get(''state'') == ''on'' }}'
+              mode: '{{ es.get(''color_mode'') }}'
+              hs: '{{ es.get(''hs_color'') }}'
+              ct_k: '{{ es.get(''color_temp_kelvin'') }}'
+              bri: '{{ es.get(''brightness'') }}'
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ mode == ''color_temp'' and ct_k not in [none,
+                  ''unknown''] }}'
+              sequence:
+              - action: lifx.set_state
+                target:
+                  entity_id: '{{ ent }}'
+                data:
+                  power: '{{ want_on }}'
+                  color_temp_kelvin: '{{ ct_k | int }}'
+                  brightness: '{{ bri | int(128) }}'
+                  transition: 0
+            default:
+            - action: lifx.set_state
+              target:
+                entity_id: '{{ ent }}'
+              data:
+                power: '{{ want_on }}'
+                hs_color: '{{ hs if hs else [0, 0] }}'
+                brightness: '{{ bri | int(128) }}'
+                transition: 0
   mode: parallel
