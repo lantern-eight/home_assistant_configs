@@ -57,6 +57,12 @@ actions:
 # ----------------------
 # 3D Print Complete Notification
 # ----------------------
+# Also re-arms the halfway notification latch for the next print. We deliberately
+# do NOT reset the latch on `to: printing` — the CC2's print_status bounces
+# Printing↔Idle during multi-color filament swaps, and a mid-print reset combined
+# with any sensor jitter on percent_complete leads to duplicate halfway notifications.
+# Resetting at job-end (here + in the Failure handler) means the latch stays armed
+# from the moment the halfway notification fires until the print actually ends.
 alias: 3D Print Complete Notification
 mode: parallel
 triggers:
@@ -90,12 +96,22 @@ actions:
         image: "{{ notif_image }}"
     action: notify.boss_phones
 
+  # 3. Reset the halfway notification latch so the next print works correctly
+  - target:
+      entity_id: "input_boolean.{{ base_name }}_half_notified"
+    action: input_boolean.turn_off
+
 
 # ----------------------
 # 3D Print Halfway Notification
 # ----------------------
+# mode: single (NOT parallel) — kills the race where two near-simultaneous percent
+# updates both pass the latch check before either action gets to flip the latch on,
+# resulting in duplicate notifications. The latch itself is reset only at job end
+# (see the Complete and Failure handlers), not on `to: printing`, so multi-color
+# filament-swap bounces in print_status can't re-arm it mid-print.
 alias: 3D Print Halfway Notification
-mode: parallel
+mode: single
 triggers:
   - entity_id:
       - sensor.centauri_carbon_percent_complete
