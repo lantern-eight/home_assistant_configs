@@ -191,6 +191,15 @@ actions:
 # The close automation restores from this scene when all doors are closed
 # again, so the room returns to whatever state it was in before the interruption.
 #
+# Off-light firmware color fix: scene.turn_on restores ON lights perfectly,
+# but for OFF lights it just calls light.turn_off — LIFX firmware retains
+# the last color set on the bulb (red/purple from the disruption). So after
+# scene.turn_on, the close automation pushes a neutral 4000K white into any
+# tracked light that ended up off via lifx.set_state(power: false). No
+# per-light helpers needed; adding a new light just means adding it to the
+# snapshot_entities list here AND the tracked_lights list in the close
+# automation.
+#
 # To wire up a new door later:
 #   1. Add its binary_sensor entity_id to triggers[0].entity_id AND to the
 #      all_doors variable in the actions below (keep these two in sync).
@@ -269,9 +278,6 @@ actions:
           - action: scene.create
             data:
               scene_id: house_state_pre_door_disruption
-              # TODO: Replace with the actual light entity_ids for the targets by the
-              # lifx.set_state action. scene.create needs entity_ids (not device_ids)
-              # find them in HA ▸ Settings ▸ Devices ▸ <LIFX device> ▸ Entities.
               snapshot_entities:
                 - light.kitchen_table_light
                 - light.<entity_1>s_lamp
@@ -315,22 +321,13 @@ actions:
 #   - Notify parent phones with the closing door's name on EVERY close
 #     (even if other tracked doors are still open).
 #   - Revert the LIFX lights to the pre-disruption state ONLY when ALL
-#     tracked doors are now closed. Uses the scene snapshot captured by the
-#     opens automation, so the room returns to whatever mood it was in
-#     before the first door opened.
+#     tracked doors are now closed. Uses scene.turn_on to restore from the
+#     snapshot, then pushes a neutral 4000K white into any tracked light
+#     that ended up off (so LIFX firmware forgets the disruption color).
 #
 # Intent: if one kid closes their door but the other is still up and out,
 # the lights STAY in disruption color — the room is still interrupted until
 # everyone is back in bed.
-#
-# Restore strategy: we DON'T use scene.turn_on. LIFX firmware stores the
-# most recently set color, and scene.turn_on would just call light.turn_off
-# on any light that was off in the snapshot — leaving the door-disruption
-# red/purple as the bulb's "remembered" color. Next manual on would then
-# come up red/purple. Instead we iterate the tracked lights and call
-# lifx.set_state per-light: it lets us push the snapshotted color/brightness
-# AND the snapshotted power state in one call, so off lights still get
-# their pre-disruption color stored in firmware for the next manual on.
 alias: Door Closes After Bedtime
 mode: parallel
 triggers:
@@ -379,9 +376,6 @@ actions:
               {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %}
               {{ open == 0 }}
         sequence:
-          # Per-light restore via lifx.set_state. See the header comment for
-          # why we don't use scene.turn_on.
-          #
           # tracked_lights MUST stay in sync with snapshot_entities in the
           # opens automation's scene.create call.
           - variables:
@@ -389,45 +383,27 @@ actions:
                 - light.kitchen_table_light
                 - light.<entity_1>s_lamp
                 - light.<entity_2>s_lamp
-              # Scene's 'entities' attribute is a dict keyed by entity_id with
-              # each entity's snapshotted state + attributes (state, brightness,
-              # hs_color, color_temp_kelvin, color_mode, ...).
-              snap: "{{ state_attr('scene.house_state_pre_door_disruption', 'entities') or {} }}"
 
-          - repeat:
-              for_each: "{{ tracked_lights }}"
-              sequence:
-                - variables:
-                    ent: "{{ repeat.item }}"
-                    es: "{{ snap.get(repeat.item, {}) }}"
-                    want_on: "{{ es.get('state') == 'on' }}"
-                    mode: "{{ es.get('color_mode') }}"
-                    hs: "{{ es.get('hs_color') }}"
-                    ct_k: "{{ es.get('color_temp_kelvin') }}"
-                    bri: "{{ es.get('brightness') }}"
-                - choose:
-                    # Light was in color-temp mode -> restore Kelvin.
-                    - conditions:
-                        - condition: template
-                          value_template: "{{ mode == 'color_temp' and ct_k not in [none, 'unknown'] }}"
-                      sequence:
-                        - action: lifx.set_state
-                          target:
-                            entity_id: "{{ ent }}"
-                          data:
-                            power: "{{ want_on }}"
-                            color_temp_kelvin: "{{ ct_k | int }}"
-                            brightness: "{{ bri | int(128) }}"
-                            transition: 0
-                  # Default: restore HS color (covers hs/rgb/xy modes, and
-                  # falls back to a neutral value if the snapshot was empty
-                  # because the light was unavailable at snapshot time).
-                  default:
-                    - action: lifx.set_state
-                      target:
-                        entity_id: "{{ ent }}"
-                      data:
-                        power: "{{ want_on }}"
-                        hs_color: "{{ hs if hs else [0, 0] }}"
-                        brightness: "{{ bri | int(128) }}"
-                        transition: 0
+          # A) Restore from the scene snapshot. ON lights get their full
+          #    color + brightness back; OFF lights get turned off (but LIFX
+          #    firmware still holds the disruption color at this point).
+          - action: scene.turn_on
+            target:
+              entity_id: scene.house_state_pre_door_disruption
+            data:
+              transition: 0
+
+          # B) Push a neutral 4000K white into every tracked light that is
+          #    now off. lifx.set_state with power: false updates the bulb's
+          #    firmware-stored color without turning it on, so the next
+          #    manual on shows neutral white instead of red/purple.
+          #    The is_state filter keeps on-lights untouched.
+          - action: lifx.set_state
+            target:
+              entity_id: >
+                {{ tracked_lights | select('is_state', 'off') | list }}
+            data:
+              power: false
+              color_temp_kelvin: 4000
+              brightness: 128
+              transition: 0

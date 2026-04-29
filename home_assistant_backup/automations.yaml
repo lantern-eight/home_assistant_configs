@@ -186,6 +186,9 @@
       data:
         image: '{{ notif_image }}'
     action: notify.boss_phones
+  - target:
+      entity_id: input_boolean.{{ base_name }}_half_notified
+    action: input_boolean.turn_off
   mode: parallel
 - id: '1769943079478'
   alias: Cache 3D Print Filename
@@ -208,23 +211,6 @@
     data:
       value: '{{ trigger.to_state.state }}'
     action: input_text.set_value
-  mode: parallel
-- id: '1770361925224'
-  alias: 3D Print Reset Halfway Flag
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.centauri_carbon_print_status
-    - sensor.centauri_carbon_2_print_status
-    to: printing
-    trigger: state
-  actions:
-  - target:
-      entity_id: |
-        input_boolean.{{ trigger.entity_id
-          | replace('sensor.','')
-          | replace('_print_status','_half_notified') }}
-    action: input_boolean.turn_off
   mode: parallel
 - id: '1770362666172'
   alias: 3D Print Halfway Notification
@@ -266,7 +252,7 @@
       data:
         image: '{{ notif_image }}'
     action: notify.boss_phones
-  mode: parallel
+  mode: single
 - id: '1770364950375'
   alias: 3D Print Failure Alert
   triggers:
@@ -562,40 +548,18 @@
           - light.kitchen_table_light
           - light.<entity_1>s_lamp
           - light.<entity_2>s_lamp
-          snap: '{{ state_attr(''scene.house_state_pre_door_disruption'', ''entities'')
-            or {} }}'
-      - repeat:
-          for_each: '{{ tracked_lights }}'
-          sequence:
-          - variables:
-              ent: '{{ repeat.item }}'
-              es: '{{ snap.get(repeat.item, {}) }}'
-              want_on: '{{ es.get(''state'') == ''on'' }}'
-              mode: '{{ es.get(''color_mode'') }}'
-              hs: '{{ es.get(''hs_color'') }}'
-              ct_k: '{{ es.get(''color_temp_kelvin'') }}'
-              bri: '{{ es.get(''brightness'') }}'
-          - choose:
-            - conditions:
-              - condition: template
-                value_template: '{{ mode == ''color_temp'' and ct_k not in [none,
-                  ''unknown''] }}'
-              sequence:
-              - action: lifx.set_state
-                target:
-                  entity_id: '{{ ent }}'
-                data:
-                  power: '{{ want_on }}'
-                  color_temp_kelvin: '{{ ct_k | int }}'
-                  brightness: '{{ bri | int(128) }}'
-                  transition: 0
-            default:
-            - action: lifx.set_state
-              target:
-                entity_id: '{{ ent }}'
-              data:
-                power: '{{ want_on }}'
-                hs_color: '{{ hs if hs else [0, 0] }}'
-                brightness: '{{ bri | int(128) }}'
-                transition: 0
+      - action: scene.turn_on
+        target:
+          entity_id: scene.house_state_pre_door_disruption
+        data:
+          transition: 0
+      - action: lifx.set_state
+        target:
+          entity_id: |
+            {{ tracked_lights | select('is_state', 'off') | list }}
+        data:
+          power: false
+          color_temp_kelvin: 4000
+          brightness: 128
+          transition: 0
   mode: parallel
