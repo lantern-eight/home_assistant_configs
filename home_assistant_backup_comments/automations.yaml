@@ -317,17 +317,15 @@ actions:
 # ----------------------
 # Door Closes After Bedtime (multi-door)
 # ----------------------
-# Sibling of the opens automation. Two behaviors, different scopes:
+# Sibling of the opens automation. Three behaviors:
 #   - Notify parent phones with the closing door's name on EVERY close
 #     (even if other tracked doors are still open).
+#   - If other doors are still open, switch the LIFX lights to a remaining
+#     open door's color (so the lights never show a closed door's color).
 #   - Revert the LIFX lights to the pre-disruption state ONLY when ALL
 #     tracked doors are now closed. Uses scene.turn_on to restore from the
 #     snapshot, then pushes a neutral 4000K white into any tracked light
 #     that ended up off (so LIFX firmware forgets the disruption color).
-#
-# Intent: if one kid closes their door but the other is still up and out,
-# the lights STAY in disruption color — the room is still interrupted until
-# everyone is back in bed.
 alias: Door Closes After Bedtime
 mode: parallel
 triggers:
@@ -357,6 +355,16 @@ actions:
           | regex_replace(find='s$', replace='') }}
 
       display_name: "{{ base_name | replace('_',' ') | title }}"
+
+      # Per-door LIFX color — same map as the opens automation. Needed so the
+      # "some doors still open" branch can switch to the remaining door's color.
+      door_colors:
+        <entity_3>:
+          rgb: [255, 0, 0]        # red
+          brightness_pct: 15
+        <entity_4>:
+          rgb: [128, 0, 128]      # purple
+          brightness_pct: 15
 
       notif_message: "{{ now().strftime('%-I:%M %p') }} {{ display_name }} 🚪🔒"
 
@@ -407,3 +415,25 @@ actions:
               color_temp_kelvin: 4000
               brightness: 128
               transition: 0
+
+    # Some doors are still open — switch the lights to a remaining open
+    # door's color so they no longer show the just-closed door's color.
+    default:
+      - variables:
+          remaining_base: >
+            {% set open_doors = all_doors | select('is_state', 'on') | list %}
+            {{ open_doors | first
+               | replace('binary_sensor.', '')
+               | replace('s_door_door', '') }}
+          remaining_rgb: "{{ door_colors[remaining_base].rgb }}"
+          remaining_brightness: "{{ door_colors[remaining_base].brightness_pct }}"
+      - action: lifx.set_state
+        data:
+          power: true
+          rgb_color: "{{ remaining_rgb }}"
+          brightness_pct: "{{ remaining_brightness }}"
+        target:
+          device_id:
+            - dfd...50b
+            - 921...86f
+            - 83e...943

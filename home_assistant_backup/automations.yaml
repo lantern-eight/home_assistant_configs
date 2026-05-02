@@ -533,6 +533,19 @@
           | replace('_door_door', '')
           | regex_replace(find='s$', replace='') }}
       display_name: '{{ base_name | replace(''_'','' '') | title }}'
+      door_colors:
+        <entity_3>:
+          rgb:
+          - 255
+          - 0
+          - 0
+          brightness_pct: 15
+        <entity_4>:
+          rgb:
+          - 128
+          - 0
+          - 128
+          brightness_pct: 15
       notif_message: '{{ now().strftime(''%-I:%M %p'') }} {{ display_name }} 🚪🔒'
   - data:
       message: '{{ notif_message }}'
@@ -562,4 +575,22 @@
           color_temp_kelvin: 4000
           brightness: 128
           transition: 0
+    default:
+    - variables:
+        remaining_base: |
+          {% set open_doors = all_doors | select('is_state', 'on') | list %} {{ open_doors | first
+             | replace('binary_sensor.', '')
+             | replace('s_door_door', '') }}
+        remaining_rgb: '{{ door_colors[remaining_base].rgb }}'
+        remaining_brightness: '{{ door_colors[remaining_base].brightness_pct }}'
+    - action: lifx.set_state
+      data:
+        power: true
+        rgb_color: '{{ remaining_rgb }}'
+        brightness_pct: '{{ remaining_brightness }}'
+      target:
+        device_id:
+        - dfd...50b
+        - 921...86f
+        - 83e...943
   mode: parallel
