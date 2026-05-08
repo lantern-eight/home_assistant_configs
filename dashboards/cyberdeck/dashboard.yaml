@@ -171,6 +171,13 @@ button_card_templates:
       custom_fields:
         info:
           - width: "100%"
+    card_mod:
+      style: |
+        ha-card {
+          flex: 0 1 220px !important;
+          min-width: 148px !important;
+          max-width: 280px !important;
+        }
 
   # ── segmented progress bar  (variables: pct_entity, status_entity) ──────────
   unit_progress_bar:
@@ -625,6 +632,27 @@ views:
                           overflow: hidden !important;
                           position: relative !important;
                           margin: 0 0 0 14px !important;
+                          flex: 1 1 0% !important;
+                          min-width: 0 !important;
+                          min-height: 0 !important;
+                          align-self: stretch !important;
+                          display: flex !important;
+                          flex-direction: column !important;
+                        }
+                        ha-card .card-content {
+                          flex: 1 1 auto !important;
+                          min-height: 0 !important;
+                          display: flex !important;
+                          flex-direction: column !important;
+                        }
+                        ha-card img,
+                        ha-card video,
+                        ha-card iframe {
+                          object-fit: cover !important;
+                          object-position: center !important;
+                          width: 100% !important;
+                          height: 100% !important;
+                          min-height: 0 !important;
                         }
                         ha-card::before {
                           content: '';
@@ -678,8 +706,11 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          flex: 0.6 !important;
+                          flex: 0 0 112px !important;
+                          width: 112px !important;
+                          max-width: 112px !important;
                           min-width: 0 !important;
+                          align-self: center !important;
                         }
                   # job info panel
                   - type: custom:button-card
@@ -933,6 +964,27 @@ views:
                           overflow: hidden !important;
                           position: relative !important;
                           margin: 0 0 0 14px !important;
+                          flex: 1 1 0% !important;
+                          min-width: 0 !important;
+                          min-height: 0 !important;
+                          align-self: stretch !important;
+                          display: flex !important;
+                          flex-direction: column !important;
+                        }
+                        ha-card .card-content {
+                          flex: 1 1 auto !important;
+                          min-height: 0 !important;
+                          display: flex !important;
+                          flex-direction: column !important;
+                        }
+                        ha-card img,
+                        ha-card video,
+                        ha-card iframe {
+                          object-fit: cover !important;
+                          object-position: center !important;
+                          width: 100% !important;
+                          height: 100% !important;
+                          min-height: 0 !important;
                         }
                         ha-card::before {
                           content: '';
@@ -986,8 +1038,11 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          flex: 0.6 !important;
+                          flex: 0 0 112px !important;
+                          width: 112px !important;
+                          max-width: 112px !important;
                           min-width: 0 !important;
+                          align-self: center !important;
                         }
                   - type: custom:button-card
                     entity: sensor.centauri_carbon_2_percent_complete
