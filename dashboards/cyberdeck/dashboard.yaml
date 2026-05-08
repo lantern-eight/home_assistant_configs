@@ -162,6 +162,12 @@ button_card_templates:
             </div>`;
         ]]]
     styles:
+      grid:
+        - grid-template-areas: '"info"'
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+        - justify-items: "center"
+        - align-items: "center"
       card:
         - background: "var(--cyberdeck-surface-raised)"
         - border: "none"
@@ -171,7 +177,9 @@ button_card_templates:
       custom_fields:
         info:
           - width: "100%"
+          - max-width: "100%"
           - justify-self: "center"
+          - text-align: "center"
     card_mod:
       style: |
         ha-card {
@@ -179,9 +187,6 @@ button_card_templates:
           min-width: 0 !important;
           width: 100% !important;
           max-width: none !important;
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
           box-sizing: border-box !important;
         }
 
@@ -712,6 +717,12 @@ views:
                                 </div>`;
                             ]]]
                         styles:
+                          grid:
+                            - grid-template-areas: '"cover"'
+                            - grid-template-columns: "1fr"
+                            - grid-template-rows: "auto"
+                            - justify-items: "center"
+                            - align-items: "center"
                           card:
                             - background: "transparent"
                             - border: "none"
@@ -723,12 +734,13 @@ views:
                           custom_fields:
                             cover:
                               - width: "100%"
+                              - max-width: "100%"
+                              - justify-self: "center"
                         card_mod:
                           style: |
                             ha-card {
-                              display: flex !important;
-                              justify-content: center !important;
-                              align-items: center !important;
+                              width: 100% !important;
+                              box-sizing: border-box !important;
                             }
                       - type: custom:button-card
                         entity: sensor.centauri_carbon_percent_complete
@@ -1056,6 +1068,12 @@ views:
                                 </div>`;
                             ]]]
                         styles:
+                          grid:
+                            - grid-template-areas: '"cover"'
+                            - grid-template-columns: "1fr"
+                            - grid-template-rows: "auto"
+                            - justify-items: "center"
+                            - align-items: "center"
                           card:
                             - background: "transparent"
                             - border: "none"
@@ -1067,12 +1085,13 @@ views:
                           custom_fields:
                             cover:
                               - width: "100%"
+                              - max-width: "100%"
+                              - justify-self: "center"
                         card_mod:
                           style: |
                             ha-card {
-                              display: flex !important;
-                              justify-content: center !important;
-                              align-items: center !important;
+                              width: 100% !important;
+                              box-sizing: border-box !important;
                             }
                       - type: custom:button-card
                         entity: sensor.centauri_carbon_2_percent_complete
