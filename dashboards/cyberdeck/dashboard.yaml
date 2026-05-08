@@ -568,6 +568,43 @@ views:
                             linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
                         }
+                  # cover image
+                  - type: custom:button-card
+                    entity: image.centauri_carbon_cover_image
+                    template: cyberdeck_base
+                    show_entity_picture: false
+                    custom_fields:
+                      cover: |
+                        [[[
+                          const e = states['image.centauri_carbon_cover_image'];
+                          if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                          const url = e.attributes.entity_picture;
+                          return `
+                            <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+                              <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                          box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                          background:#000;">
+                                <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:140px;" />
+                              </div>
+                            </div>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: "transparent"
+                        - border: "none"
+                        - padding: "4px"
+                        - box-shadow: "none"
+                        - display: "flex"
+                        - align-items: "center"
+                      custom_fields:
+                        cover:
+                          - width: "100%"
+                    card_mod:
+                      style: |
+                        ha-card {
+                          flex: 0.6 !important;
+                          min-width: 0 !important;
+                        }
                   # job info panel
                   - type: custom:button-card
                     entity: sensor.centauri_carbon_percent_complete
@@ -838,6 +875,43 @@ views:
                             linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
                             linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
+                        }
+                  # cover image
+                  - type: custom:button-card
+                    entity: image.centauri_carbon_2_cover_image
+                    template: cyberdeck_base
+                    show_entity_picture: false
+                    custom_fields:
+                      cover: |
+                        [[[
+                          const e = states['image.centauri_carbon_2_cover_image'];
+                          if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                          const url = e.attributes.entity_picture;
+                          return `
+                            <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+                              <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                          box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                          background:#000;">
+                                <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:140px;" />
+                              </div>
+                            </div>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: "transparent"
+                        - border: "none"
+                        - padding: "4px"
+                        - box-shadow: "none"
+                        - display: "flex"
+                        - align-items: "center"
+                      custom_fields:
+                        cover:
+                          - width: "100%"
+                    card_mod:
+                      style: |
+                        ha-card {
+                          flex: 0.6 !important;
+                          min-width: 0 !important;
                         }
                   - type: custom:button-card
                     entity: sensor.centauri_carbon_2_percent_complete
