@@ -302,9 +302,12 @@ views:
                       style: |
                         ha-card {
                           background: #000 !important;
-                          border: none !important;
+                          border: 1px solid rgba(0,229,255,0.58) !important;
                           border-radius: 4px !important;
-                          box-shadow: none !important;
+                          box-shadow:
+                            0 0 6px rgba(0,229,255,0.45),
+                            0 0 14px rgba(0,229,255,0.22),
+                            0 0 24px rgba(0,229,255,0.1) !important;
                           overflow: hidden !important;
                           position: relative !important;
                           margin: 0 0 0 14px !important;
@@ -313,17 +316,18 @@ views:
                           content: '';
                           position: absolute;
                           inset: 6px;
-                          border: 1px solid rgba(0,229,255,0.35);
+                          border: 2px solid rgba(0,229,255,0.72);
                           border-radius: 2px;
                           pointer-events: none;
                           z-index: 2;
+                          filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
                           mask-image:
-                            linear-gradient(#fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px)),
-                            linear-gradient(90deg, #fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px));
+                            linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                            linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           mask-composite: intersect;
                           -webkit-mask-image:
-                            linear-gradient(#fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px)),
-                            linear-gradient(90deg, #fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px));
+                            linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                            linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
                         }
                   # job info panel
@@ -540,9 +544,12 @@ views:
                       style: |
                         ha-card {
                           background: #000 !important;
-                          border: none !important;
+                          border: 1px solid rgba(0,229,255,0.58) !important;
                           border-radius: 4px !important;
-                          box-shadow: none !important;
+                          box-shadow:
+                            0 0 6px rgba(0,229,255,0.45),
+                            0 0 14px rgba(0,229,255,0.22),
+                            0 0 24px rgba(0,229,255,0.1) !important;
                           overflow: hidden !important;
                           position: relative !important;
                           margin: 0 0 0 14px !important;
@@ -551,17 +558,18 @@ views:
                           content: '';
                           position: absolute;
                           inset: 6px;
-                          border: 1px solid rgba(0,229,255,0.35);
+                          border: 2px solid rgba(0,229,255,0.72);
                           border-radius: 2px;
                           pointer-events: none;
                           z-index: 2;
+                          filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
                           mask-image:
-                            linear-gradient(#fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px)),
-                            linear-gradient(90deg, #fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px));
+                            linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                            linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           mask-composite: intersect;
                           -webkit-mask-image:
-                            linear-gradient(#fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px)),
-                            linear-gradient(90deg, #fff 18px, transparent 18px, transparent calc(100% - 18px), #fff calc(100% - 18px));
+                            linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                            linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
                         }
                   - type: custom:button-card
