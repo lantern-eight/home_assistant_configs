@@ -551,10 +551,26 @@ views:
           - type: custom:button-card
             entity: sensor.printer_farm_online_count
             template: cyberdeck_base
+            extra_styles: |
+              #container {
+                justify-items: start !important;
+                grid-template-columns: minmax(0,1fr) auto !important;
+              }
+              #custom_field_left {
+                justify-self: start !important;
+                width: 100% !important;
+                text-align: left !important;
+                min-width: 0 !important;
+              }
+              #custom_field_right {
+                position: absolute !important;
+                right: 16px !important;
+                top: 14px !important;
+                justify-self: end !important;
+              }
             custom_fields:
-              header: |
+              left: |
                 [[[
-                  const count = entity ? entity.state : '0';
                   const now = new Date();
                   const pad = n => String(n).padStart(2,'0');
                   let th = now.getHours();
@@ -566,40 +582,56 @@ views:
                   const ts = now.getFullYear() + '.' + pad(now.getMonth()+1) + '.' + pad(now.getDate())
                              + ' · ' + th + ':' + pad(tmin) + ':' + pad(tsec) + ' ' + ampm + ' LCL';
                   return `
-                    <div style="display:flex;flex-wrap:wrap;width:100%;box-sizing:border-box;
-                                align-items:flex-start;gap:12px;padding:14px 16px 10px;">
-                      <div style="flex:1 1 160px;min-width:0;">
-                        <div style="color:var(--cyberdeck-cyan);font-size:9px;letter-spacing:2.5px;opacity:0.92;">// PRINT_NODE.NETWORK</div>
-                        <div style="font-size:26px;font-weight:700;letter-spacing:3px;line-height:1.15;margin-top:2px;">
-                          <span style="display:inline-block;background:linear-gradient(90deg,#e91e8c 0%,#a855f7 38%,#6366f1 62%,#00e5ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;">
-                            FARM_CTL
-                          </span>
-                        </div>
-                        <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:1px;
-                                    margin-top:3px;">${ts}</div>
+                    <div style="box-sizing:border-box;min-width:0;">
+                      <div style="color:var(--cyberdeck-cyan);font-size:9px;letter-spacing:2.5px;opacity:0.92;">// PRINT_NODE.NETWORK</div>
+                      <div style="font-size:26px;font-weight:700;letter-spacing:3px;line-height:1.15;margin-top:2px;">
+                        <span style="display:inline-block;background:linear-gradient(90deg,#e91e8c 0%,#a855f7 38%,#6366f1 62%,#00e5ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;">
+                          FARM_CTL
+                        </span>
                       </div>
-                      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-                                  flex:0 1 auto;margin-left:auto;padding-top:4px;">
-                        <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
-                                     letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
-                                     border:1px solid rgba(0,255,136,0.75);color:var(--cyberdeck-green);
-                                     background:rgba(0,255,136,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,255,136,0.05);">${count} UP</span>
-                        <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
-                                     letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
-                                     border:1px solid rgba(0,229,255,0.75);color:var(--cyberdeck-cyan);
-                                     background:rgba(0,229,255,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,229,255,0.05);">LINK OK</span>
-                      </div>
+                      <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:1px;margin-top:3px;">${ts}</div>
+                    </div>`;
+                ]]]
+              right: |
+                [[[
+                  const count = entity ? entity.state : '0';
+                  return `
+                    <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;white-space:nowrap;">
+                      <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
+                                   letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
+                                   border:1px solid rgba(0,255,136,0.75);color:var(--cyberdeck-green);
+                                   background:rgba(0,255,136,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,255,136,0.05);">${count} UP</span>
+                      <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
+                                   letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
+                                   border:1px solid rgba(0,229,255,0.75);color:var(--cyberdeck-cyan);
+                                   background:rgba(0,229,255,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,229,255,0.05);">LINK OK</span>
                     </div>`;
                 ]]]
             styles:
+              grid:
+                - grid-template-areas: '"left right"'
+                - grid-template-columns: "minmax(0,1fr) auto"
+                - align-items: "start"
+                - column-gap: "12px"
               card:
                 - background: "var(--cyberdeck-bg)"
                 - border: "none"
                 - border-radius: "0"
                 - border-bottom: "1px solid rgba(0,229,255,0.08)"
+                - padding: "14px 16px 10px"
+                - position: "relative"
               custom_fields:
-                header:
+                left:
+                  - justify-self: "stretch"
+                  - text-align: "left"
+                  - min-width: "0"
                   - width: "100%"
+                right:
+                  - justify-self: "end"
+                  - align-self: "start"
+                  - position: "absolute"
+                  - right: "16px"
+                  - top: "14px"
 
           # ══════════════════════════════════════════════════════
           #  PRINT UNITS — order by `current_status` (reachable first)
