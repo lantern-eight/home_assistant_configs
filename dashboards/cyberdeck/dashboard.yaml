@@ -136,25 +136,25 @@ button_card_templates:
             : `<div style="color:var(--cyberdeck-text-dim);font-size:28px;font-weight:700;line-height:1.1;">—</div>`;
 
           return `
-            <div style="display:flex;flex-direction:column;gap:6px;padding:6px 10px;">
+            <div style="display:flex;flex-direction:column;gap:6px;padding:6px 10px;align-items:center;text-align:center;width:100%;box-sizing:border-box;">
               <div>
                 <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">JOB</div>
-                <div style="color:var(--cyberdeck-text);font-size:11px;line-height:1.3;word-break:break-all;">${fname}</div>
+                <div style="color:var(--cyberdeck-text);font-size:11px;line-height:1.3;word-break:break-word;">${fname}</div>
               </div>
               <div>
                 <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">PROGRESS</div>
                 ${pctLine}
               </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <div style="min-width:0;flex:1 1 auto;">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;">
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
                   <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">ETA</div>
                   <div style="color:var(--cyberdeck-cyan);font-size:13px;">${etaStr}</div>
                 </div>
-                <div style="min-width:0;flex:1 1 auto;">
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
                   <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">FIN.</div>
                   <div style="color:var(--cyberdeck-text);font-size:13px;">${finStr}</div>
                 </div>
-                <div style="min-width:0;flex:1 1 auto;">
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
                   <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">COST</div>
                   <div style="color:var(--cyberdeck-green);font-size:13px;">${costStr}</div>
                 </div>
@@ -167,16 +167,22 @@ button_card_templates:
         - border: "none"
         - border-radius: "4px"
         - padding: "0"
-        - min-height: "140px"
+        - min-height: "0"
       custom_fields:
         info:
           - width: "100%"
+          - justify-self: "center"
     card_mod:
       style: |
         ha-card {
-          flex: 0 1 220px !important;
-          min-width: 148px !important;
-          max-width: 280px !important;
+          flex: 1 1 0% !important;
+          min-width: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          box-sizing: border-box !important;
         }
 
   # ── segmented progress bar  (variables: pct_entity, status_entity) ──────────
@@ -610,10 +616,9 @@ views:
                     variables:
                       status_entity: sensor.centauri_carbon_current_status
 
-              # ── camera + job info ──
-              - type: horizontal-stack
+              # ── camera (full width), cover + job row below ──
+              - type: vertical-stack
                 cards:
-                  # camera feed with HUD corners
                   - type: picture-entity
                     entity: camera.centauri_carbon_chamber_camera
                     camera_view: live
@@ -631,11 +636,12 @@ views:
                             0 0 24px rgba(0,229,255,0.1) !important;
                           overflow: hidden !important;
                           position: relative !important;
-                          margin: 0 0 0 14px !important;
-                          flex: 1 1 0% !important;
+                          margin: 0 14px 10px 14px !important;
+                          width: calc(100% - 28px) !important;
+                          max-width: calc(100% - 28px) !important;
+                          box-sizing: border-box !important;
                           min-width: 0 !important;
-                          min-height: 0 !important;
-                          align-self: stretch !important;
+                          aspect-ratio: 16 / 9 !important;
                           display: flex !important;
                           flex-direction: column !important;
                         }
@@ -672,60 +678,71 @@ views:
                             linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
                         }
-                  # cover image
-                  - type: custom:button-card
-                    entity: image.centauri_carbon_cover_image
-                    template: cyberdeck_base
-                    show_entity_picture: false
-                    custom_fields:
-                      cover: |
-                        [[[
-                          const e = states['image.centauri_carbon_cover_image'];
-                          if (!e || !e.attributes || !e.attributes.entity_picture) return '';
-                          const url = e.attributes.entity_picture;
-                          return `
-                            <div style="display:flex;align-items:center;justify-content:center;height:100%;">
-                              <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
-                                          box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
-                                          background:#000;">
-                                <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:140px;" />
-                              </div>
-                            </div>`;
-                        ]]]
-                    styles:
-                      card:
-                        - background: "transparent"
-                        - border: "none"
-                        - padding: "4px"
-                        - box-shadow: "none"
-                        - display: "flex"
-                        - align-items: "center"
-                      custom_fields:
-                        cover:
-                          - width: "100%"
+                  - type: horizontal-stack
                     card_mod:
                       style: |
-                        ha-card {
-                          flex: 0 0 112px !important;
-                          width: 112px !important;
-                          max-width: 112px !important;
-                          min-width: 0 !important;
-                          align-self: center !important;
+                        #root {
+                          align-items: stretch !important;
+                          padding: 0 8px 4px 8px !important;
+                          box-sizing: border-box !important;
                         }
-                  # job info panel
-                  - type: custom:button-card
-                    entity: sensor.centauri_carbon_percent_complete
-                    template: unit_job_info
-                    variables:
-                      pct_entity: sensor.centauri_carbon_percent_complete
-                      file_entity: sensor.centauri_carbon_file_name
-                      eta_entity: sensor.centauri_carbon_remaining_print_time
-                      end_entity: sensor.centauri_carbon_end_time
-                      status_entity: sensor.centauri_carbon_current_status
-                      cost_entity: sensor.centauri_carbon_total_filament_cost
-                    styles:
-                      card:
-                        - margin: "0 14px 0 0 !important"
+                        #root > hui-card > ha-card {
+                          flex: 1 1 0% !important;
+                          min-width: 0 !important;
+                          max-width: none !important;
+                        }
+                    cards:
+                      - type: custom:button-card
+                        entity: image.centauri_carbon_cover_image
+                        template: cyberdeck_base
+                        show_entity_picture: false
+                        custom_fields:
+                          cover: |
+                            [[[
+                              const e = states['image.centauri_carbon_cover_image'];
+                              if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                              const url = e.attributes.entity_picture;
+                              return `
+                                <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
+                                  <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                              box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                              background:#000;max-width:min(200px,85%);">
+                                    <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
+                                  </div>
+                                </div>`;
+                            ]]]
+                        styles:
+                          card:
+                            - background: "transparent"
+                            - border: "none"
+                            - padding: "4px"
+                            - box-shadow: "none"
+                            - display: "flex"
+                            - align-items: "center"
+                            - justify-content: "center"
+                          custom_fields:
+                            cover:
+                              - width: "100%"
+                        card_mod:
+                          style: |
+                            ha-card {
+                              display: flex !important;
+                              justify-content: center !important;
+                              align-items: center !important;
+                            }
+                      - type: custom:button-card
+                        entity: sensor.centauri_carbon_percent_complete
+                        template: unit_job_info
+                        variables:
+                          pct_entity: sensor.centauri_carbon_percent_complete
+                          file_entity: sensor.centauri_carbon_file_name
+                          eta_entity: sensor.centauri_carbon_remaining_print_time
+                          end_entity: sensor.centauri_carbon_end_time
+                          status_entity: sensor.centauri_carbon_current_status
+                          cost_entity: sensor.centauri_carbon_total_filament_cost
+                        styles:
+                          card:
+                            - margin: "0 14px 0 0 !important"
 
               # ── segmented progress bar ──
               - type: custom:button-card
@@ -943,8 +960,8 @@ views:
                     variables:
                       status_entity: sensor.centauri_carbon_2_current_status
 
-              # ── camera + job info ──
-              - type: horizontal-stack
+              # ── camera (full width), cover + job row below ──
+              - type: vertical-stack
                 cards:
                   - type: picture-entity
                     entity: camera.centauri_carbon_2_chamber_camera
@@ -963,11 +980,12 @@ views:
                             0 0 24px rgba(0,229,255,0.1) !important;
                           overflow: hidden !important;
                           position: relative !important;
-                          margin: 0 0 0 14px !important;
-                          flex: 1 1 0% !important;
+                          margin: 0 14px 10px 14px !important;
+                          width: calc(100% - 28px) !important;
+                          max-width: calc(100% - 28px) !important;
+                          box-sizing: border-box !important;
                           min-width: 0 !important;
-                          min-height: 0 !important;
-                          align-self: stretch !important;
+                          aspect-ratio: 16 / 9 !important;
                           display: flex !important;
                           flex-direction: column !important;
                         }
@@ -1004,59 +1022,71 @@ views:
                             linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
                           -webkit-mask-composite: source-in;
                         }
-                  # cover image
-                  - type: custom:button-card
-                    entity: image.centauri_carbon_2_cover_image
-                    template: cyberdeck_base
-                    show_entity_picture: false
-                    custom_fields:
-                      cover: |
-                        [[[
-                          const e = states['image.centauri_carbon_2_cover_image'];
-                          if (!e || !e.attributes || !e.attributes.entity_picture) return '';
-                          const url = e.attributes.entity_picture;
-                          return `
-                            <div style="display:flex;align-items:center;justify-content:center;height:100%;">
-                              <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
-                                          box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
-                                          background:#000;">
-                                <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:140px;" />
-                              </div>
-                            </div>`;
-                        ]]]
-                    styles:
-                      card:
-                        - background: "transparent"
-                        - border: "none"
-                        - padding: "4px"
-                        - box-shadow: "none"
-                        - display: "flex"
-                        - align-items: "center"
-                      custom_fields:
-                        cover:
-                          - width: "100%"
+                  - type: horizontal-stack
                     card_mod:
                       style: |
-                        ha-card {
-                          flex: 0 0 112px !important;
-                          width: 112px !important;
-                          max-width: 112px !important;
-                          min-width: 0 !important;
-                          align-self: center !important;
+                        #root {
+                          align-items: stretch !important;
+                          padding: 0 8px 4px 8px !important;
+                          box-sizing: border-box !important;
                         }
-                  - type: custom:button-card
-                    entity: sensor.centauri_carbon_2_percent_complete
-                    template: unit_job_info
-                    variables:
-                      pct_entity: sensor.centauri_carbon_2_percent_complete
-                      file_entity: sensor.centauri_carbon_2_file_name
-                      eta_entity: sensor.centauri_carbon_2_remaining_print_time
-                      end_entity: sensor.centauri_carbon_2_end_time
-                      status_entity: sensor.centauri_carbon_2_current_status
-                      cost_entity: sensor.centauri_carbon_2_total_filament_cost
-                    styles:
-                      card:
-                        - margin: "0 14px 0 0 !important"
+                        #root > hui-card > ha-card {
+                          flex: 1 1 0% !important;
+                          min-width: 0 !important;
+                          max-width: none !important;
+                        }
+                    cards:
+                      - type: custom:button-card
+                        entity: image.centauri_carbon_2_cover_image
+                        template: cyberdeck_base
+                        show_entity_picture: false
+                        custom_fields:
+                          cover: |
+                            [[[
+                              const e = states['image.centauri_carbon_2_cover_image'];
+                              if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                              const url = e.attributes.entity_picture;
+                              return `
+                                <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
+                                  <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                              box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                              background:#000;max-width:min(200px,85%);">
+                                    <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
+                                  </div>
+                                </div>`;
+                            ]]]
+                        styles:
+                          card:
+                            - background: "transparent"
+                            - border: "none"
+                            - padding: "4px"
+                            - box-shadow: "none"
+                            - display: "flex"
+                            - align-items: "center"
+                            - justify-content: "center"
+                          custom_fields:
+                            cover:
+                              - width: "100%"
+                        card_mod:
+                          style: |
+                            ha-card {
+                              display: flex !important;
+                              justify-content: center !important;
+                              align-items: center !important;
+                            }
+                      - type: custom:button-card
+                        entity: sensor.centauri_carbon_2_percent_complete
+                        template: unit_job_info
+                        variables:
+                          pct_entity: sensor.centauri_carbon_2_percent_complete
+                          file_entity: sensor.centauri_carbon_2_file_name
+                          eta_entity: sensor.centauri_carbon_2_remaining_print_time
+                          end_entity: sensor.centauri_carbon_2_end_time
+                          status_entity: sensor.centauri_carbon_2_current_status
+                          cost_entity: sensor.centauri_carbon_2_total_filament_cost
+                        styles:
+                          card:
+                            - margin: "0 14px 0 0 !important"
 
               # ── segmented progress bar ──
               - type: custom:button-card
