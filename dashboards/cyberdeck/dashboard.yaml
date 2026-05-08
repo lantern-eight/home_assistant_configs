@@ -691,6 +691,91 @@ views:
                   - right: "16px"
                   - top: "14px"
 
+          # ── ambient room telemetry ──
+          - type: horizontal-stack
+            cards:
+              - type: custom:mini-graph-card
+                entities:
+                  - entity: sensor.office_temperature
+                    color: "#00e5ff"
+                name: AMBIENT.THERMAL
+                decimals: 0
+                icon: false
+                hours_to_show: 1
+                points_per_hour: 30
+                line_width: 2
+                height: 40
+                font_size: 65
+                show:
+                  name: true
+                  icon: false
+                  state: true
+                  labels: false
+                  points: false
+                  fill: true
+                  legend: false
+                  loading_indicator: false
+                color_thresholds:
+                  - value: 0
+                    color: "#00e5ff"
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: 1px solid rgba(0,229,255,0.16) !important;
+                      border-radius: 4px !important;
+                      box-shadow: none !important;
+                      margin: 8px 0 0 14px !important;
+                      overflow: hidden !important;
+                    }
+                    .header { padding: 6px 8px 0 !important; }
+                    .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                            letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                    .states { font-family: 'Share Tech Mono', monospace !important; }
+                    .state__value { color: var(--cyberdeck-cyan) !important;
+                      text-shadow: 0 0 14px rgba(0,229,255,0.45) !important; }
+                    .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+              - type: custom:mini-graph-card
+                entities:
+                  - entity: sensor.office_humidity
+                    color: "#e91e8c"
+                name: AMBIENT.VAPOR
+                icon: false
+                hours_to_show: 1
+                points_per_hour: 30
+                line_width: 2
+                height: 40
+                font_size: 65
+                show:
+                  name: true
+                  icon: false
+                  state: true
+                  labels: false
+                  points: false
+                  fill: true
+                  legend: false
+                  loading_indicator: false
+                color_thresholds:
+                  - value: 0
+                    color: "#e91e8c"
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: 1px solid rgba(233,30,140,0.16) !important;
+                      border-radius: 4px !important;
+                      box-shadow: none !important;
+                      margin: 8px 14px 0 0 !important;
+                      overflow: hidden !important;
+                    }
+                    .header { padding: 6px 8px 0 !important; }
+                    .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                            letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                    .states { font-family: 'Share Tech Mono', monospace !important; }
+                    .state__value { color: var(--cyberdeck-magenta) !important;
+                      text-shadow: 0 0 14px rgba(233,30,140,0.4) !important; }
+                    .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+
           # ══════════════════════════════════════════════════════
           #  PRINT UNITS — order by `current_status` (reachable first)
           # ══════════════════════════════════════════════════════
