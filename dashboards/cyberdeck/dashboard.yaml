@@ -316,6 +316,16 @@ button_card_templates:
   # ── spools strip (variables: printer = cc1 | cc2) ─────────────
   unit_spools:
     template: cyberdeck_base
+    extra_styles: |
+      #container {
+        justify-items: stretch !important;
+      }
+      #custom_field_spools {
+        justify-self: stretch !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+      }
     custom_fields:
       spools: |
         [[[
@@ -439,6 +449,10 @@ button_card_templates:
           return out;
         ]]]
     styles:
+      grid:
+        - grid-template-areas: "'spools'"
+        - grid-template-columns: "1fr"
+        - justify-items: "stretch"
       card:
         - background: "transparent"
         - border: "none"
@@ -449,6 +463,8 @@ button_card_templates:
       custom_fields:
         spools:
           - width: "100%"
+          - justify-self: "stretch"
+          - text-align: "left"
 
   # ── Filament inventory row (auto-entities + Spoolman) ───────
   filament_inventory_row:
