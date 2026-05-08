@@ -34,3 +34,4 @@ uv run python cyberdeck_sync.py -r
 - Entity IDs: CC1 uses `*.centauri_carbon_*`, CC2 uses `*.centauri_carbon_2_*`.
 - Theme variables: custom tokens are prefixed `--cyberdeck-` (e.g. `var(--cyberdeck-cyan)`).
 - The dashboard is registered in HA's `configuration.yaml` under `lovelace.dashboards.cyber-deck` (hyphen required in URL path).
+- **Open in browser:** `http://homeassistant.local:8123/cyber-deck/farm-ctl` (view path `farm-ctl` matches `dashboards/cyberdeck/dashboard.yaml` → `views[].path`).
