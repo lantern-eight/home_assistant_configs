@@ -82,7 +82,7 @@ button_card_templates:
             if (!isNaN(mins) && mins > 0) {
               const h = Math.floor(mins / 60);
               const m = Math.round(mins % 60);
-              etaStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':00';
+              etaStr = h > 0 ? (h + 'h ' + String(m).padStart(2,'0') + 'm') : (m + ' min');
             }
           }
 
@@ -90,8 +90,12 @@ button_card_templates:
           if (endE && endE.state && endE.state !== 'unknown' && endE.state !== 'unavailable') {
             try {
               const d = new Date(endE.state);
-              finStr = String(d.getHours()).padStart(2,'0') + ':' +
-                       String(d.getMinutes()).padStart(2,'0');
+              let fh = d.getHours();
+              const fm = d.getMinutes();
+              const ampm = fh >= 12 ? 'PM' : 'AM';
+              fh = fh % 12;
+              if (fh === 0) fh = 12;
+              finStr = fh + ':' + String(fm).padStart(2,'0') + ' ' + ampm;
             } catch(e) { finStr = '—'; }
           }
 
@@ -246,8 +250,14 @@ views:
                   const count = entity ? entity.state : '0';
                   const now = new Date();
                   const pad = n => String(n).padStart(2,'0');
+                  let th = now.getHours();
+                  const tmin = now.getMinutes();
+                  const tsec = now.getSeconds();
+                  const ampm = th >= 12 ? 'PM' : 'AM';
+                  th = th % 12;
+                  if (th === 0) th = 12;
                   const ts = now.getFullYear() + '.' + pad(now.getMonth()+1) + '.' + pad(now.getDate())
-                             + ' · ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()) + ' LCL';
+                             + ' · ' + th + ':' + pad(tmin) + ':' + pad(tsec) + ' ' + ampm + ' LCL';
                   return `
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;
                                 width:100%;padding:14px 16px 10px;">
