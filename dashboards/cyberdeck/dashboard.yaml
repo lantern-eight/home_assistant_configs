@@ -903,47 +903,8 @@ views:
                           - type: custom:mini-graph-card
                             entities:
                               - entity: sensor.centauri_carbon_nozzle_temperature
-                                color: "#e91e8c"
-                            name: NZZL
-                            icon: false
-                            hours_to_show: 1
-                            points_per_hour: 30
-                            line_width: 2
-                            height: 40
-                            font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
-                            color_thresholds:
-                              - value: 0
-                                color: "#e91e8c"
-                            card_mod:
-                              style: |
-                                ha-card {
-                                  background: var(--cyberdeck-surface-raised) !important;
-                                  border: 1px solid rgba(233,30,140,0.08) !important;
-                                  border-radius: 4px !important;
-                                  box-shadow: none !important;
-                                  overflow: hidden !important;
-                                }
-                                .header { padding: 6px 8px 0 !important; }
-                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
-                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
-                                .states { font-family: 'Share Tech Mono', monospace !important; }
-                                .state__value { color: var(--cyberdeck-magenta) !important;
-                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
-                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
-                          - type: custom:mini-graph-card
-                            entities:
-                              - entity: sensor.centauri_carbon_bed_temperature
                                 color: "#00ff88"
-                            name: BED
+                            name: NZZL
                             icon: false
                             hours_to_show: 1
                             points_per_hour: 30
@@ -969,7 +930,6 @@ views:
                                   border: 1px solid rgba(0, 255, 136, 0.12) !important;
                                   border-radius: 4px !important;
                                   box-shadow: none !important;
-                                  margin: 0 14px 0 0 !important;
                                   overflow: hidden !important;
                                 }
                                 .header { padding: 6px 8px 0 !important; }
@@ -978,6 +938,46 @@ views:
                                 .states { font-family: 'Share Tech Mono', monospace !important; }
                                 .state__value { color: var(--cyberdeck-green) !important;
                                   text-shadow: 0 0 14px rgba(0, 255, 136, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_bed_temperature
+                                color: "#e91e8c"
+                            name: BED
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e91e8c"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(233,30,140,0.08) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 14px 0 0 !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-magenta) !important;
+                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
 
                       # ── control buttons ──
@@ -1277,47 +1277,8 @@ views:
                           - type: custom:mini-graph-card
                             entities:
                               - entity: sensor.centauri_carbon_2_nozzle_temperature
-                                color: "#e91e8c"
-                            name: NZZL
-                            icon: false
-                            hours_to_show: 1
-                            points_per_hour: 30
-                            line_width: 2
-                            height: 40
-                            font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
-                            color_thresholds:
-                              - value: 0
-                                color: "#e91e8c"
-                            card_mod:
-                              style: |
-                                ha-card {
-                                  background: var(--cyberdeck-surface-raised) !important;
-                                  border: 1px solid rgba(233,30,140,0.08) !important;
-                                  border-radius: 4px !important;
-                                  box-shadow: none !important;
-                                  overflow: hidden !important;
-                                }
-                                .header { padding: 6px 8px 0 !important; }
-                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
-                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
-                                .states { font-family: 'Share Tech Mono', monospace !important; }
-                                .state__value { color: var(--cyberdeck-magenta) !important;
-                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
-                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
-                          - type: custom:mini-graph-card
-                            entities:
-                              - entity: sensor.centauri_carbon_2_bed_temperature
                                 color: "#00ff88"
-                            name: BED
+                            name: NZZL
                             icon: false
                             hours_to_show: 1
                             points_per_hour: 30
@@ -1343,7 +1304,6 @@ views:
                                   border: 1px solid rgba(0, 255, 136, 0.12) !important;
                                   border-radius: 4px !important;
                                   box-shadow: none !important;
-                                  margin: 0 14px 0 0 !important;
                                   overflow: hidden !important;
                                 }
                                 .header { padding: 6px 8px 0 !important; }
@@ -1352,6 +1312,46 @@ views:
                                 .states { font-family: 'Share Tech Mono', monospace !important; }
                                 .state__value { color: var(--cyberdeck-green) !important;
                                   text-shadow: 0 0 14px rgba(0, 255, 136, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_2_bed_temperature
+                                color: "#e91e8c"
+                            name: BED
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e91e8c"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(233,30,140,0.08) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 14px 0 0 !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-magenta) !important;
+                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
 
                       # ── control buttons ──
