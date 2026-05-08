@@ -76,6 +76,7 @@ Cyberdeck:
   cyberdeck-cyan: "#00e5ff"
   cyberdeck-green: "#00ff88"
   cyberdeck-yellow: "#ffd700"
+  cyberdeck-sunflower: "#e8a910"
   cyberdeck-red: "#ff003c"
   cyberdeck-text: "#e0e0e8"
   cyberdeck-text-dim: "#6a6a7a"
@@ -85,7 +86,7 @@ Cyberdeck:
   card-mod-theme: Cyberdeck
   card-mod-root-yaml: |
     .: |
-      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Share+Tech+Mono&display=swap');
       :host {
         --cyberdeck-bg: #07070d;
         --cyberdeck-surface: #0f1018;
@@ -94,6 +95,7 @@ Cyberdeck:
         --cyberdeck-cyan: #00e5ff;
         --cyberdeck-green: #00ff88;
         --cyberdeck-yellow: #ffd700;
+        --cyberdeck-sunflower: #e8a910;
         --cyberdeck-red: #ff003c;
         --cyberdeck-text: #e0e0e8;
         --cyberdeck-text-dim: #6a6a7a;
