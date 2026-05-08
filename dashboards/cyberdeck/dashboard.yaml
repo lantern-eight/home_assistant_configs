@@ -20,7 +20,7 @@ button_card_templates:
         - padding: "0"
         - overflow: "hidden"
 
-  # ── unit header row  (variables: unit, label, location, status_entity) ─
+  # ── unit header row  (variables: unit, label, status_entity) ─
   unit_header:
     template: cyberdeck_base
     custom_fields:
@@ -28,7 +28,6 @@ button_card_templates:
         [[[
           const u    = variables.unit      || 'U.??';
           const lbl  = variables.label     || '';
-          const loc  = variables.location  || '';
           const st   = states[variables.status_entity];
           const raw  = st ? st.state : 'unknown';
           const off  = (raw === 'unknown' || raw === 'unavailable');
@@ -41,7 +40,7 @@ button_card_templates:
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 6px;">
               <div>
                 <span style="color:var(--cyberdeck-cyan);font-size:13px;font-weight:700;">${u}</span>
-                <span style="color:var(--cyberdeck-text-dim);font-size:10px;margin-left:6px;letter-spacing:1px;">${lbl} · ${loc}</span>
+                <span style="color:var(--cyberdeck-text-dim);font-size:10px;margin-left:6px;letter-spacing:1px;">${lbl}</span>
               </div>
               <span style="border:1px solid ${dot};color:${dot};padding:2px 10px;font-size:10px;
                            border-radius:2px;box-shadow:${glow};letter-spacing:1px;">
@@ -287,8 +286,7 @@ views:
                 template: unit_header
                 variables:
                   unit: "U.01"
-                  label: "CC.01 · WORKSHOP"
-                  location: ""
+                  label: "CC.01"
                   status_entity: sensor.centauri_carbon_current_status
 
               # ── camera + job info ──
@@ -527,8 +525,7 @@ views:
                 template: unit_header
                 variables:
                   unit: "U.02"
-                  label: "CC.02 · GARAGE"
-                  location: ""
+                  label: "CC.02"
                   status_entity: sensor.centauri_carbon_2_current_status
 
               # ── camera + job info ──
