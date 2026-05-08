@@ -559,6 +559,43 @@ views:
     panel: true
     cards:
       - type: vertical-stack
+        card_mod:
+          style: |
+            :host {
+              position: relative;
+              overflow: hidden;
+              background: #070611;
+            }
+            :host::before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              z-index: 0;
+              pointer-events: none;
+              background-image:
+                linear-gradient(rgba(255,46,200,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,224,255,0.06) 1px, transparent 1px);
+              background-size: 32px 32px;
+              mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 85%);
+              -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 85%);
+            }
+            :host::after {
+              content: "";
+              position: absolute;
+              inset: 0;
+              z-index: 0;
+              pointer-events: none;
+              background:
+                radial-gradient(360px 320px at calc(100% + 40px) -80px, rgba(255,46,200,0.42) 0%, rgba(255,46,200,0.26) 42%, rgba(255,46,200,0.0) 78%),
+                radial-gradient(320px 300px at -90px 220px, rgba(0,224,255,0.34) 0%, rgba(0,224,255,0.2) 45%, rgba(0,224,255,0.0) 80%),
+                radial-gradient(300px 280px at calc(100% + 40px) calc(100% + 70px), rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%);
+              mix-blend-mode: screen;
+              opacity: 0.95;
+            }
+            #root {
+              position: relative;
+              z-index: 1;
+            }
         cards:
 
           # ══════════════════════════════════════════════════════
