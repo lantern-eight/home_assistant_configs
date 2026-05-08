@@ -193,6 +193,13 @@ button_card_templates:
   # ── segmented progress bar  (variables: pct_entity, status_entity) ──────────
   unit_progress_bar:
     template: cyberdeck_base
+    extra_styles: |
+      :host {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        display: block !important;
+      }
     custom_fields:
       bar: |
         [[[
@@ -204,7 +211,7 @@ button_card_templates:
           const segs = 40;
           const filled = activePrint ? Math.round(segs * pct / 100) : 0;
           let barOut =
-            '<div style="width:100%;max-width:100%;box-sizing:border-box;padding:6px 14px 8px;min-width:0;">' +
+            '<div style="width:100%;max-width:100%;box-sizing:border-box;padding:6px 0 8px;min-width:0;">' +
             '<div style="display:flex;align-items:center;gap:8px;width:100%;min-width:0;box-sizing:border-box;">' +
             '<span style="flex:0 0 auto;color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;opacity:0.9;">0</span>' +
             '<div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid rgba(0,229,255,0.45);' +
@@ -230,6 +237,11 @@ button_card_templates:
           return barOut;
         ]]]
     styles:
+      grid:
+        - grid-template-areas: '"bar"'
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+        - justify-items: "stretch"
       card:
         - background: "transparent"
         - border: "none"
@@ -256,6 +268,7 @@ button_card_templates:
           align-self: stretch !important;
           display: block !important;
           margin: 0 !important;
+          padding: 0 8px !important;
         }
 
   # ── control button  (variables: btn_label, btn_color, btn_glow) ──
@@ -757,12 +770,33 @@ views:
                             - margin: "0 14px 0 0 !important"
 
               # ── segmented progress bar ──
-              - type: custom:button-card
-                entity: sensor.centauri_carbon_percent_complete
-                template: unit_progress_bar
-                variables:
-                  pct_entity: sensor.centauri_carbon_percent_complete
-                  status_entity: sensor.centauri_carbon_current_status
+              - type: horizontal-stack
+                card_mod:
+                  style: |
+                    #root {
+                      width: 100% !important;
+                      min-width: 0 !important;
+                      box-sizing: border-box !important;
+                    }
+                    #root > hui-card {
+                      flex: 1 1 0% !important;
+                      min-width: 0 !important;
+                      width: 100% !important;
+                      max-width: 100% !important;
+                    }
+                    #root > hui-card > ha-card {
+                      width: 100% !important;
+                      max-width: 100% !important;
+                      min-width: 0 !important;
+                      box-sizing: border-box !important;
+                    }
+                cards:
+                  - type: custom:button-card
+                    entity: sensor.centauri_carbon_percent_complete
+                    template: unit_progress_bar
+                    variables:
+                      pct_entity: sensor.centauri_carbon_percent_complete
+                      status_entity: sensor.centauri_carbon_current_status
 
               # ── telemetry sparklines ──
               - type: horizontal-stack
@@ -1108,12 +1142,33 @@ views:
                             - margin: "0 14px 0 0 !important"
 
               # ── segmented progress bar ──
-              - type: custom:button-card
-                entity: sensor.centauri_carbon_2_percent_complete
-                template: unit_progress_bar
-                variables:
-                  pct_entity: sensor.centauri_carbon_2_percent_complete
-                  status_entity: sensor.centauri_carbon_2_current_status
+              - type: horizontal-stack
+                card_mod:
+                  style: |
+                    #root {
+                      width: 100% !important;
+                      min-width: 0 !important;
+                      box-sizing: border-box !important;
+                    }
+                    #root > hui-card {
+                      flex: 1 1 0% !important;
+                      min-width: 0 !important;
+                      width: 100% !important;
+                      max-width: 100% !important;
+                    }
+                    #root > hui-card > ha-card {
+                      width: 100% !important;
+                      max-width: 100% !important;
+                      min-width: 0 !important;
+                      box-sizing: border-box !important;
+                    }
+                cards:
+                  - type: custom:button-card
+                    entity: sensor.centauri_carbon_2_percent_complete
+                    template: unit_progress_bar
+                    variables:
+                      pct_entity: sensor.centauri_carbon_2_percent_complete
+                      status_entity: sensor.centauri_carbon_2_current_status
 
               # ── telemetry sparklines ──
               - type: horizontal-stack
