@@ -667,7 +667,7 @@ views:
                 - align-items: "start"
                 - column-gap: "12px"
               card:
-                - background: "var(--cyberdeck-bg)"
+                - background: "rgba(7, 6, 17, 0.45)"
                 - border: "none"
                 - border-radius: "0"
                 - border-bottom: "1px solid rgba(0,229,255,0.08)"
@@ -704,7 +704,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: var(--cyberdeck-surface) !important;
+                          background: rgba(7, 6, 17, 0.45) !important;
                           border: 1px solid rgba(0,229,255,0.12) !important;
                           border-radius: 6px !important;
                           margin: 8px 8px 4px !important;
@@ -1078,7 +1078,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: var(--cyberdeck-surface) !important;
+                          background: rgba(7, 6, 17, 0.45) !important;
                           border: 1px solid rgba(0,229,255,0.12) !important;
                           border-radius: 6px !important;
                           margin: 4px 8px !important;
