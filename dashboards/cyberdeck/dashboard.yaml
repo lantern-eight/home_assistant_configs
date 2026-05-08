@@ -1230,11 +1230,6 @@ views:
                 filter:
                   include:
                     - integration: "*spoolman*"
-                      sort:
-                        method: attribute
-                        attribute: remaining_weight
-                        numeric: true
-                        reverse: false
                       attributes:
                         archived: false
                       options:
@@ -1242,8 +1237,8 @@ views:
                         template: filament_inventory_row
                 sort:
                   method: attribute
-                  attribute: filament_color_hex
-                  ignore_case: true
+                  attribute: extra_hue_sort_key
+                  numeric: true
                   reverse: false
                 card:
                   type: grid
