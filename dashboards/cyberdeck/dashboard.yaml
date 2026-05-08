@@ -319,6 +319,15 @@ button_card_templates:
                 color: states['sensor.centauri_carbon_2_a4_color'],
                 grams: states['sensor.cc2_a4_spoolman_grams'] },
             ];
+
+            const activeE = states['sensor.centauri_carbon_2_active_filament_color'];
+            const activeColor = (activeE && activeE.state && activeE.state.startsWith('#'))
+                                ? activeE.state : null;
+            const uid = 'holo-' + Math.random().toString(36).slice(2,8);
+
+            out += '<div style="display:flex;gap:14px;align-items:stretch;">';
+            out += '<div style="flex:1;min-width:0;">';
+
             let any = false;
             for (const s of slots) {
               const n = s.name ? s.name.state : '';
@@ -327,13 +336,73 @@ button_card_templates:
               const c = (s.color && s.color.state && s.color.state.startsWith('#'))
                         ? s.color.state : 'var(--cyberdeck-magenta)';
               const g = s.grams ? parseFloat(s.grams.state) || 0 : 0;
-              out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></span>
+              const isActive = activeColor && c.toLowerCase() === activeColor.toLowerCase();
+              const highlight = isActive
+                ? 'border:1px solid rgba(0,229,255,0.5);border-radius:3px;padding:2px 6px;margin:-2px -6px;background:rgba(0,229,255,0.06);'
+                : '';
+              out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;${highlight}">
+                <span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;${isActive ? 'box-shadow:0 0 6px '+c+',0 0 12px '+c+'66;' : ''}"></span>
                 <span style="color:var(--cyberdeck-text);font-size:11px;flex:1;">${n.toUpperCase()}</span>
                 <span style="color:var(--cyberdeck-text-dim);font-size:11px;">${g > 0 ? g.toFixed(0)+'g' : '—'}</span>
+                ${isActive ? '<span style="color:var(--cyberdeck-cyan);font-size:8px;letter-spacing:1px;flex-shrink:0;">▸FEED</span>' : ''}
               </div>`;
             }
             if (!any) out += '<div style="color:var(--cyberdeck-text-dim);font-size:11px;">—</div>';
+            out += '</div>';
+
+            if (activeColor) {
+              out += `
+                <style>
+                  @keyframes ${uid}-pulse {
+                    0%, 100% { opacity:0.7; transform:scale(1); }
+                    50% { opacity:1; transform:scale(1.08); }
+                  }
+                  @keyframes ${uid}-ring {
+                    0% { opacity:0.3; transform:scale(0.85); }
+                    50% { opacity:0.7; transform:scale(1.1); }
+                    100% { opacity:0.3; transform:scale(0.85); }
+                  }
+                  @keyframes ${uid}-scan {
+                    0% { transform:translateY(-100%); }
+                    100% { transform:translateY(100%); }
+                  }
+                </style>
+                <div style="flex:0 0 90px;display:flex;flex-direction:column;align-items:center;
+                            justify-content:center;padding:4px 0;">
+                  <div style="color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;
+                              margin-bottom:6px;text-align:center;">ACTIVE<br>FEED</div>
+                  <div style="position:relative;width:52px;height:52px;">
+                    <div style="position:absolute;inset:0;border-radius:50%;
+                                border:1px solid rgba(0,229,255,0.2);"></div>
+                    <div style="position:absolute;inset:4px;border-radius:50%;
+                                border:1px dashed rgba(0,229,255,0.3);
+                                animation:${uid}-ring 3s ease-in-out infinite;"></div>
+                    <div style="position:absolute;inset:10px;border-radius:50%;
+                                background:${activeColor};
+                                box-shadow:0 0 10px ${activeColor},0 0 25px ${activeColor}88,0 0 50px ${activeColor}44,inset 0 0 15px rgba(255,255,255,0.15);
+                                animation:${uid}-pulse 2s ease-in-out infinite;
+                                overflow:hidden;">
+                      <div style="position:absolute;inset:0;
+                                  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);
+                                  pointer-events:none;"></div>
+                      <div style="position:absolute;inset:0;overflow:hidden;border-radius:50%;">
+                        <div style="position:absolute;left:0;right:0;height:200%;
+                                    background:linear-gradient(transparent 40%,rgba(255,255,255,0.12) 50%,transparent 60%);
+                                    animation:${uid}-scan 2.5s linear infinite;"></div>
+                      </div>
+                    </div>
+                    <div style="position:absolute;inset:8px;border-radius:50%;
+                                border:1px solid ${activeColor}88;
+                                box-shadow:0 0 6px ${activeColor}44;
+                                pointer-events:none;"></div>
+                  </div>
+                  <div style="color:${activeColor};font-size:9px;font-weight:700;
+                              letter-spacing:1px;margin-top:5px;
+                              text-shadow:0 0 8px ${activeColor}88;">
+                    ${activeColor.toUpperCase()}</div>
+                </div>`;
+            }
+            out += '</div>';
           }
           out += '</div>';
           return out;
