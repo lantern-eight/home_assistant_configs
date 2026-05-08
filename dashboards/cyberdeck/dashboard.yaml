@@ -588,7 +588,12 @@ views:
               background:
                 radial-gradient(360px 320px at calc(100% + 40px) -80px, rgba(255,46,200,0.42) 0%, rgba(255,46,200,0.26) 42%, rgba(255,46,200,0.0) 78%),
                 radial-gradient(320px 300px at -90px 220px, rgba(0,224,255,0.34) 0%, rgba(0,224,255,0.2) 45%, rgba(0,224,255,0.0) 80%),
-                radial-gradient(300px 280px at calc(100% + 40px) calc(100% + 70px), rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%);
+                radial-gradient(300px 280px at calc(100% + 40px) calc(100% + 70px), rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%),
+                radial-gradient(340px 300px at -110px 52%, rgba(255,46,200,0.24) 0%, rgba(255,46,200,0.13) 45%, rgba(255,46,200,0.0) 82%),
+                radial-gradient(360px 320px at calc(100% + 70px) 62%, rgba(0,224,255,0.25) 0%, rgba(0,224,255,0.14) 46%, rgba(0,224,255,0.0) 84%),
+                radial-gradient(300px 280px at -90px 78%, rgba(0,224,255,0.2) 0%, rgba(0,224,255,0.1) 45%, rgba(0,224,255,0.0) 84%),
+                radial-gradient(360px 320px at calc(100% + 60px) 88%, rgba(182,255,60,0.28) 0%, rgba(182,255,60,0.16) 44%, rgba(182,255,60,0.0) 84%),
+                radial-gradient(320px 300px at 22% 96%, rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%);
               mix-blend-mode: screen;
               opacity: 0.95;
             }
