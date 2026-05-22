@@ -12,6 +12,18 @@ import yaml
 
 from utils import LOGGER
 
+_BLUE = '\033[1;34m'
+_RESET = '\033[0m'
+
+
+def _status(msg: str) -> None:
+  '''Print a blue status line to stdout (no-op if stdout is not a TTY).'''
+  if sys.stdout.isatty():
+    print(f'{_BLUE}=> {msg}{_RESET}')
+  else:
+    print(f'=> {msg}')
+
+
 USAGE = (
   'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
   '  -b, --backup     Run the SMB pull only (no sanitize)\n'
@@ -289,6 +301,7 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
 
 def _run_backup() -> None:
   '''Pull HA config from the SMB share into DEST. Does NOT sanitize.'''
+  _status('Starting SMB backup from Home Assistant')
   if not SMB_SERVER or not SMB_SHARE:
     LOGGER.error(
       'Set smb_server and smb_share in config.yaml (copy from config.example.yaml) '
@@ -299,6 +312,7 @@ def _run_backup() -> None:
   if SMB_PATH:
     smb_root = rf'{smb_root}\{SMB_PATH.strip('/').replace('/', chr(92))}'
 
+  _status(f'Connecting to SMB share \\\\{SMB_SERVER}\\{SMB_SHARE}')
   smbclient.ClientConfig(username=SMB_USER or None, password=SMB_PASSWORD or None)
   LOGGER.debug(
     f'SMB_SERVER=\'{SMB_SERVER}\', type={type(SMB_SERVER)}',
@@ -315,12 +329,14 @@ def _run_backup() -> None:
   )
 
   if os.path.exists(DEST):
+    _status(f'Removing existing backup directory: {DEST}')
     LOGGER.info('Removing existing backup directory', extra={'path': DEST})
     shutil.rmtree(DEST)
 
   root_len = len(smb_root.rstrip('\\')) + 1  # +1 for trailing backslash
 
   files_copied = 0
+  _status('Walking SMB share and copying files...')
   LOGGER.info('Starting walk of SMB share', extra={'smb_root': smb_root})
   for directory_path, directory_names, file_names in smbclient.walk(smb_root):
     # Prune ignored directories (modify in-place)
@@ -355,6 +371,7 @@ def _run_backup() -> None:
         )
 
   smbclient.reset_connection_cache()
+  _status(f'Backup complete — {files_copied} files copied to {os.path.abspath(DEST)}')
   LOGGER.info(
     'Backup finished; connection cache reset',
     extra={'files_copied': files_copied, 'dest': os.path.abspath(DEST)},
@@ -370,6 +387,7 @@ def _run_sanitize() -> None:
   <entity_N> in a file are left alone, and any unredacted occurrences pick
   up the SAME placeholder as before instead of drifting.
   '''
+  _status('Starting sanitize / redaction pass')
   entity_map: dict = {'ids': {}, 'names': {}}
   if ENTITY_MAP_PATH.exists():
     entity_map = load_entity_map(ENTITY_MAP_PATH)
@@ -382,12 +400,16 @@ def _run_sanitize() -> None:
       },
     )
 
+  _status(f'Redacting backup files in {DEST}')
   _process_backup_files(DEST, REDACT_NAMES, entity_map)
   if os.path.isdir(COMMENTS_DIR):
+    _status(f'Redacting comments files in {COMMENTS_DIR}')
     _process_backup_files(COMMENTS_DIR, REDACT_NAMES, entity_map)
 
   if entity_map['ids'] or entity_map['names']:
+    _status(f'Saving entity map to {ENTITY_MAP_PATH}')
     save_entity_map(entity_map, ENTITY_MAP_PATH)
+  _status('Sanitize complete')
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -465,25 +487,31 @@ def main(argv: list[str] | None = None) -> None:
       mode = requested
 
   if mode == 'restore':
+    _status('Mode: restore — reversing redactions using entity_map.yaml')
     if not ENTITY_MAP_PATH.exists():
       LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
       sys.exit(1)
     entity_map = load_entity_map(ENTITY_MAP_PATH)
+    _status(f'Restoring backup files in {DEST}')
     _restore_backup_files(DEST, entity_map)
     if os.path.isdir(COMMENTS_DIR):
+      _status(f'Restoring comments files in {COMMENTS_DIR}')
       _restore_backup_files(COMMENTS_DIR, entity_map)
+    _status('Restore complete')
     LOGGER.info('Restore complete')
     return
 
   if mode == 'backup':
+    _status('Mode: backup only')
     _run_backup()
     return
 
   if mode == 'sanitize':
+    _status('Mode: sanitize only')
     _run_sanitize()
     return
 
-  # Default: backup followed by sanitize.
+  _status('Mode: backup + sanitize (default)')
   _run_backup()
   _run_sanitize()
 
