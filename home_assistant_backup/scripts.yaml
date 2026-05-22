@@ -33,7 +33,7 @@ update_spoolman_from_filament_name:
           {% set w = s.remaining_weight | float(0) %}
           {% if w > 0 %}
             {% set ns.items = ns.items
-                + [dict(s, _jitter=range(0, 1000000) | random)] %}
+                + [dict(s, _jitter=range(0, 99999) | random)] %}
           {% endif %}
         {% endfor %} {{ (ns.items | sort(attribute='_jitter'))
               | sort(attribute='remaining_weight') }}
