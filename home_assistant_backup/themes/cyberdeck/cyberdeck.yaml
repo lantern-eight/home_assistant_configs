@@ -1,0 +1,114 @@
+Cyberdeck:
+  # ── Core HA variables ──
+  primary-color: "#00e5ff"
+  accent-color: "#e91e8c"
+  primary-background-color: "#07070d"
+  secondary-background-color: "#0f1018"
+  card-background-color: "#0f1018"
+  primary-text-color: "#e0e0e8"
+  secondary-text-color: "#6a6a7a"
+  disabled-text-color: "#3a3a4a"
+  text-primary-color: "#e0e0e8"
+
+  # ── HA Card chrome ──
+  ha-card-background: "#0f1018"
+  ha-card-border-color: "rgba(0, 229, 255, 0.12)"
+  ha-card-border-radius: "4px"
+  ha-card-border-width: "1px"
+  ha-card-box-shadow: "none"
+  ha-card-header-color: "#e0e0e8"
+  ha-card-header-font-size: "14px"
+
+  # ── Sidebar ──
+  sidebar-background-color: "#07070d"
+  sidebar-text-color: "#e0e0e8"
+  sidebar-icon-color: "#00e5ff"
+  sidebar-selected-icon-color: "#e91e8c"
+  sidebar-selected-text-color: "#e91e8c"
+
+  # ── App header / toolbar ──
+  app-header-background-color: "#07070d"
+  app-header-text-color: "#e0e0e8"
+  app-header-edit-background-color: "#0f1018"
+  app-header-edit-text-color: "#e91e8c"
+
+  # ── States ──
+  state-active-color: "#00e5ff"
+  state-icon-active-color: "#00e5ff"
+  state-icon-color: "#6a6a7a"
+  state-on-color: "#00e5ff"
+  state-off-color: "#3a3a4a"
+
+  # ── Toggles ──
+  switch-checked-color: "#00e5ff"
+  switch-unchecked-button-color: "#2a2a3a"
+  switch-unchecked-track-color: "#1a1a2a"
+  switch-checked-track-color: "#00e5ff44"
+
+  # ── Divider / scrollbar ──
+  divider-color: "rgba(0, 229, 255, 0.08)"
+  scrollbar-thumb-color: "#00e5ff44"
+
+  # ── Slider / input ──
+  paper-slider-active-color: "#00e5ff"
+  paper-slider-knob-color: "#00e5ff"
+  paper-slider-container-color: "#1a1a2a"
+
+  # ── Dialog / popup ──
+  paper-dialog-background-color: "#0f1018"
+  paper-dialog-color: "#e0e0e8"
+
+  # ── Labels / badges ──
+  label-badge-background-color: "#0f1018"
+  label-badge-text-color: "#e0e0e8"
+  label-badge-red: "#ff003c"
+
+  # ── Logbook / history ──
+  paper-item-icon-color: "#00e5ff"
+
+  # ══════════════════════════════════════════════════════
+  # Custom cyberdeck tokens (referenced by dashboard cards)
+  # ══════════════════════════════════════════════════════
+  cyberdeck-bg: "#07070d"
+  cyberdeck-surface: "#0f1018"
+  cyberdeck-surface-raised: "#161622"
+  cyberdeck-magenta: "#e91e8c"
+  cyberdeck-cyan: "#00e5ff"
+  cyberdeck-green: "#00ff88"
+  cyberdeck-yellow: "#ffd700"
+  cyberdeck-sunflower: "#e8a910"
+  cyberdeck-red: "#ff003c"
+  cyberdeck-text: "#e0e0e8"
+  cyberdeck-text-dim: "#6a6a7a"
+  cyberdeck-font: "'Share Tech Mono', monospace"
+
+  # ── card-mod global injection ──
+  card-mod-theme: Cyberdeck
+  card-mod-root-yaml: |
+    .: |
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Share+Tech+Mono&display=swap');
+      :host {
+        --cyberdeck-bg: #07070d;
+        --cyberdeck-surface: #0f1018;
+        --cyberdeck-surface-raised: #161622;
+        --cyberdeck-magenta: #e91e8c;
+        --cyberdeck-cyan: #00e5ff;
+        --cyberdeck-green: #00ff88;
+        --cyberdeck-yellow: #ffd700;
+        --cyberdeck-sunflower: #e8a910;
+        --cyberdeck-red: #ff003c;
+        --cyberdeck-text: #e0e0e8;
+        --cyberdeck-text-dim: #6a6a7a;
+        --cyberdeck-font: 'Share Tech Mono', monospace;
+      }
+  card-mod-view-yaml: |
+    .: |
+      hui-panel-view {
+        background: var(--cyberdeck-bg, #07070d) !important;
+      }
+  card-mod-card-yaml: |
+    .: |
+      ha-card {
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 0.5px;
+      }

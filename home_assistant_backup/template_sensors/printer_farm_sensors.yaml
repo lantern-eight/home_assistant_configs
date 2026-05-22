@@ -1,0 +1,137 @@
+# Cyberdeck Dashboard — Template Sensors
+# Auto-included by: template: !include_dir_merge_list template_sensors
+
+- sensor:
+    - name: "Printer Farm Online Count"
+      unique_id: printer_farm_online_count
+      state: >
+        {% set printers = [
+          'sensor.centauri_carbon_current_status',
+          'sensor.centauri_carbon_2_current_status'
+        ] %}
+        {{ printers | map('states')
+           | reject('in', ['unknown','unavailable'])
+           | list | count }}
+
+    - name: "CC2 A1 Spoolman Grams"
+      unique_id: cc2_a1_spoolman_grams
+      unit_of_measurement: "g"
+      state: >
+        {% set slot_name = states('sensor.centauri_carbon_2_a1_name') %}
+        {% if slot_name in ['unknown','unavailable',''] %}
+          unknown
+        {% else %}
+          {% set match = states.sensor
+            | selectattr('entity_id', 'search', 'spoolman')
+            | selectattr('attributes.filament_name', 'defined')
+            | selectattr('attributes.filament_name', 'eq', slot_name)
+            | rejectattr('attributes.archived', 'eq', true)
+            | sort(attribute='attributes.remaining_weight', reverse=true)
+            | list %}
+          {{ match[0].attributes.remaining_weight | float(0) | round(1)
+             if match | length > 0 else 'unknown' }}
+        {% endif %}
+      attributes:
+        slot_name: "{{ states('sensor.centauri_carbon_2_a1_name') }}"
+        slot_color: "{{ states('sensor.centauri_carbon_2_a1_color') }}"
+
+    - name: "CC2 A2 Spoolman Grams"
+      unique_id: cc2_a2_spoolman_grams
+      unit_of_measurement: "g"
+      state: >
+        {% set slot_name = states('sensor.centauri_carbon_2_a2_name') %}
+        {% if slot_name in ['unknown','unavailable',''] %}
+          unknown
+        {% else %}
+          {% set match = states.sensor
+            | selectattr('entity_id', 'search', 'spoolman')
+            | selectattr('attributes.filament_name', 'defined')
+            | selectattr('attributes.filament_name', 'eq', slot_name)
+            | rejectattr('attributes.archived', 'eq', true)
+            | sort(attribute='attributes.remaining_weight', reverse=true)
+            | list %}
+          {{ match[0].attributes.remaining_weight | float(0) | round(1)
+             if match | length > 0 else 'unknown' }}
+        {% endif %}
+      attributes:
+        slot_name: "{{ states('sensor.centauri_carbon_2_a2_name') }}"
+        slot_color: "{{ states('sensor.centauri_carbon_2_a2_color') }}"
+
+    - name: "CC2 A3 Spoolman Grams"
+      unique_id: cc2_a3_spoolman_grams
+      unit_of_measurement: "g"
+      state: >
+        {% set slot_name = states('sensor.centauri_carbon_2_a3_name') %}
+        {% if slot_name in ['unknown','unavailable',''] %}
+          unknown
+        {% else %}
+          {% set match = states.sensor
+            | selectattr('entity_id', 'search', 'spoolman')
+            | selectattr('attributes.filament_name', 'defined')
+            | selectattr('attributes.filament_name', 'eq', slot_name)
+            | rejectattr('attributes.archived', 'eq', true)
+            | sort(attribute='attributes.remaining_weight', reverse=true)
+            | list %}
+          {{ match[0].attributes.remaining_weight | float(0) | round(1)
+             if match | length > 0 else 'unknown' }}
+        {% endif %}
+      attributes:
+        slot_name: "{{ states('sensor.centauri_carbon_2_a3_name') }}"
+        slot_color: "{{ states('sensor.centauri_carbon_2_a3_color') }}"
+
+    - name: "CC2 A4 Spoolman Grams"
+      unique_id: cc2_a4_spoolman_grams
+      unit_of_measurement: "g"
+      state: >
+        {% set slot_name = states('sensor.centauri_carbon_2_a4_name') %}
+        {% if slot_name in ['unknown','unavailable',''] %}
+          unknown
+        {% else %}
+          {% set match = states.sensor
+            | selectattr('entity_id', 'search', 'spoolman')
+            | selectattr('attributes.filament_name', 'defined')
+            | selectattr('attributes.filament_name', 'eq', slot_name)
+            | rejectattr('attributes.archived', 'eq', true)
+            | sort(attribute='attributes.remaining_weight', reverse=true)
+            | list %}
+          {{ match[0].attributes.remaining_weight | float(0) | round(1)
+             if match | length > 0 else 'unknown' }}
+        {% endif %}
+      attributes:
+        slot_name: "{{ states('sensor.centauri_carbon_2_a4_name') }}"
+        slot_color: "{{ states('sensor.centauri_carbon_2_a4_color') }}"
+
+    - name: "CC1 Loaded Filament Name"
+      unique_id: cc1_loaded_filament_name
+      state: >
+        {% set raw = states('input_text.centauri_carbon_last_file') %}
+        {% if raw in ['unknown','unavailable',''] %}
+          Unknown
+        {% else %}
+          {% set base = raw | replace('.gcode','') %}
+          {% set parts = base.split('_') %}
+          {% if parts | length >= 2 %}
+            {{ parts[1] | replace('-', ' ') | title }}
+          {% else %}
+            {{ base }}
+          {% endif %}
+        {% endif %}
+
+    - name: "CC1 Spoolman Grams"
+      unique_id: cc1_spoolman_grams
+      unit_of_measurement: "g"
+      state: >
+        {% set fil_name = states('sensor.cc1_loaded_filament_name') %}
+        {% if fil_name in ['unknown','unavailable','Unknown',''] %}
+          unknown
+        {% else %}
+          {% set match = states.sensor
+            | selectattr('entity_id', 'search', 'spoolman')
+            | selectattr('attributes.filament_name', 'defined')
+            | selectattr('attributes.filament_name', 'eq', fil_name)
+            | rejectattr('attributes.archived', 'eq', true)
+            | sort(attribute='attributes.remaining_weight', reverse=true)
+            | list %}
+          {{ match[0].attributes.remaining_weight | float(0) | round(1)
+             if match | length > 0 else 'unknown' }}
+        {% endif %}

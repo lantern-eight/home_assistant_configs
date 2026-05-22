@@ -10,6 +10,17 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+# Cyberdeck printer farm dashboard (YAML mode)
+lovelace:
+  mode: storage
+  dashboards:
+    cyber-deck:
+      mode: yaml
+      title: Farm Control
+      icon: mdi:printer-3d
+      show_in_sidebar: true
+      filename: dashboards/cyberdeck/dashboard.yaml
+
 # ---------------------------
 # Custom added by me below this line
 # ---------------------------

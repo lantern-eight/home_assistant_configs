@@ -1,0 +1,1663 @@
+# ═══════════════════════════════════════════════════════════════════
+#  CYBERDECK  —  Printer Farm Control Dashboard
+#  Neon-cyberpunk HUD for Elegoo Centauri Carbon printers
+# ═══════════════════════════════════════════════════════════════════
+
+button_card_templates:
+
+  # ── base card reset ──────────────────────────────────────────
+  cyberdeck_base:
+    show_name: false
+    show_icon: false
+    show_state: false
+    styles:
+      card:
+        - background: "var(--cyberdeck-surface)"
+        - border: "1px solid rgba(0,229,255,0.12)"
+        - border-radius: "4px"
+        - box-shadow: "none"
+        - font-family: "'Share Tech Mono', monospace"
+        - padding: "0"
+        - overflow: "hidden"
+
+  # ── unit label  (variables: unit, label) ────────────────────────
+  unit_label:
+    show_name: true
+    show_icon: false
+    show_state: false
+    name: |
+      [[[
+        const u   = variables.unit  || 'U.??';
+        const lbl = variables.label || '';
+        return `<span style="display:inline-block;border:1px solid rgba(0,229,255,0.55);
+                     background:rgba(10,28,42,0.92);border-radius:6px;padding:7px 14px;margin-right:10px;
+                     color:#f2f6ff;font-size:13px;font-weight:700;line-height:1;
+                     font-family:'JetBrains Mono','Fira Code','IBM Plex Mono','Share Tech Mono',monospace;
+                     letter-spacing:1px;font-variant-numeric:slashed-zero;">${u}</span><span style="color:var(--cyberdeck-text-dim);font-size:10px;letter-spacing:1px;">${lbl}</span>`;
+      ]]]
+    styles:
+      card:
+        - background: "transparent"
+        - border: "none"
+        - border-radius: "0"
+        - padding: "6px 0 6px 6px"
+        - margin: "0"
+        - box-shadow: "none"
+      name:
+        - justify-self: "start"
+        - white-space: "nowrap"
+        - padding: "0"
+
+  # ── unit status pill  (variables: status_entity) ───────────────
+  unit_status_pill:
+    template: cyberdeck_base
+    custom_fields:
+      content: |
+        [[[
+          const st   = states[variables.status_entity];
+          const raw  = st ? st.state : 'unknown';
+          const off  = (raw === 'unknown' || raw === 'unavailable');
+          const up   = (raw === 'printing');
+          const idle = (raw === 'idle' || raw === 'ready' || raw === 'standby');
+          const disp = off ? 'OFFLINE' : raw.replace(/_/g,' ').toUpperCase();
+          const dot  = off ? 'var(--cyberdeck-text-dim)' : up ? 'var(--cyberdeck-magenta)' : idle ? 'var(--cyberdeck-cyan)' : 'var(--cyberdeck-yellow)';
+          const glow = up ? '0 0 8px var(--cyberdeck-magenta)' : 'none';
+          return `
+            <div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 12px 6px 0;white-space:nowrap;">
+              <span style="border:1px solid ${dot};color:${dot};padding:2px 10px;font-size:10px;
+                           border-radius:2px;box-shadow:${glow};letter-spacing:1px;">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;
+                             background:${dot};margin-right:5px;vertical-align:middle;"></span>${disp}
+              </span>
+            </div>`;
+        ]]]
+    styles:
+      card:
+        - background: "transparent"
+        - border: "none"
+        - border-radius: "0"
+        - padding: "0"
+        - margin: "0"
+        - box-shadow: "none"
+
+  # ── job info panel  (variables: pct_entity, file_entity, eta_entity, end_entity, status_entity, cost_entity) ─
+  unit_job_info:
+    template: cyberdeck_base
+    custom_fields:
+      info: |
+        [[[
+          const pctE  = states[variables.pct_entity];
+          const fileE = states[variables.file_entity];
+          const etaE  = states[variables.eta_entity];
+          const endE  = states[variables.end_entity];
+          const costE = variables.cost_entity ? states[variables.cost_entity] : null;
+          const stE   = variables.status_entity ? states[variables.status_entity] : null;
+          const rawSt = stE ? String(stE.state).toLowerCase() : '';
+          const activePrint = rawSt === 'printing' || rawSt === 'paused';
+
+          const pct  = pctE  ? parseFloat(pctE.state)  || 0 : 0;
+          const file = fileE ? fileE.state : '—';
+          const fname = (file && file !== 'unknown' && file !== 'unavailable')
+                        ? file.replace('.gcode','').replace(/_/g,' ').toUpperCase().substring(0,22)
+                        : '—';
+
+          let etaStr = '—';
+          if (etaE && etaE.state && etaE.state !== 'unknown' && etaE.state !== 'unavailable') {
+            const mins = parseFloat(etaE.state);
+            if (!isNaN(mins) && mins > 0) {
+              const h = Math.floor(mins / 60);
+              const m = Math.round(mins % 60);
+              etaStr = h > 0 ? (h + 'h ' + String(m).padStart(2,'0') + 'm') : (m + ' min');
+            }
+          }
+
+          let finStr = '—';
+          if (endE && endE.state && endE.state !== 'unknown' && endE.state !== 'unavailable') {
+            try {
+              const d = new Date(endE.state);
+              let fh = d.getHours();
+              const fm = d.getMinutes();
+              const ampm = fh >= 12 ? 'PM' : 'AM';
+              fh = fh % 12;
+              if (fh === 0) fh = 12;
+              finStr = fh + ':' + String(fm).padStart(2,'0') + ' ' + ampm;
+            } catch(e) { finStr = '—'; }
+          }
+
+          let costStr = '—';
+          if (costE && costE.state && costE.state !== 'unknown' && costE.state !== 'unavailable') {
+            const cv = parseFloat(costE.state);
+            if (!isNaN(cv)) costStr = '$' + cv.toFixed(2);
+          }
+
+          const pctLine = activePrint
+            ? `<div style="color:var(--cyberdeck-magenta);font-size:28px;font-weight:700;line-height:1.1;
+                        text-shadow:0 0 14px rgba(233,30,140,0.4);">${pct.toFixed(1)}<span style="font-size:14px;opacity:0.7;">%</span></div>`
+            : `<div style="color:var(--cyberdeck-text-dim);font-size:28px;font-weight:700;line-height:1.1;">—</div>`;
+
+          return `
+            <div style="display:flex;flex-direction:column;gap:6px;padding:6px 10px;align-items:center;text-align:center;width:100%;box-sizing:border-box;">
+              <div>
+                <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">JOB</div>
+                <div style="color:var(--cyberdeck-text);font-size:11px;line-height:1.3;word-break:break-word;">${fname}</div>
+              </div>
+              <div>
+                <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">PROGRESS</div>
+                ${pctLine}
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;">
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
+                  <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">ETA</div>
+                  <div style="color:var(--cyberdeck-cyan);font-size:13px;">${etaStr}</div>
+                </div>
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
+                  <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">FIN.</div>
+                  <div style="color:var(--cyberdeck-text);font-size:13px;">${finStr}</div>
+                </div>
+                <div style="min-width:0;flex:0 1 auto;text-align:center;">
+                  <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">COST</div>
+                  <div style="color:var(--cyberdeck-green);font-size:13px;">${costStr}</div>
+                </div>
+              </div>
+            </div>`;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: '"info"'
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+        - justify-items: "center"
+        - align-items: "center"
+      card:
+        - background: "var(--cyberdeck-surface-raised)"
+        - border: "none"
+        - border-radius: "4px"
+        - padding: "0"
+        - min-height: "0"
+      custom_fields:
+        info:
+          - width: "100%"
+          - max-width: "100%"
+          - justify-self: "center"
+          - text-align: "center"
+    card_mod:
+      style: |
+        ha-card {
+          flex: 1 1 0% !important;
+          min-width: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
+          box-sizing: border-box !important;
+        }
+
+  # ── segmented progress bar  (variables: pct_entity, status_entity) ──────────
+  unit_progress_bar:
+    template: cyberdeck_base
+    extra_styles: |
+      :host {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        display: block !important;
+      }
+    custom_fields:
+      bar: |
+        [[[
+          const pctE = states[variables.pct_entity];
+          const stE  = variables.status_entity ? states[variables.status_entity] : null;
+          const rawSt = stE ? String(stE.state).toLowerCase() : '';
+          const activePrint = rawSt === 'printing' || rawSt === 'paused';
+          const pct  = pctE ? parseFloat(pctE.state) || 0 : 0;
+          const segs = 40;
+          const filled = activePrint ? Math.round(segs * pct / 100) : 0;
+          let barOut =
+            '<div style="width:100%;max-width:100%;box-sizing:border-box;padding:6px 0 8px;min-width:0;">' +
+            '<div style="display:flex;align-items:center;gap:8px;width:100%;min-width:0;box-sizing:border-box;">' +
+            '<span style="flex:0 0 auto;color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;opacity:0.9;">0</span>' +
+            '<div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid rgba(0,229,255,0.45);' +
+            'border-radius:3px;background:rgba(0,229,255,0.06);padding:3px 4px;' +
+            'box-shadow:inset 0 0 10px rgba(0,0,0,0.35);">' +
+            '<div style="display:flex;gap:2px;width:100%;min-width:0;box-sizing:border-box;">';
+          for (let i = 0; i < segs; i++) {
+            let c;
+            if (i < filled) {
+              const ratio = i / segs;
+              if (ratio < 0.5) c = 'var(--cyberdeck-cyan)';
+              else if (ratio < 0.8) c = 'var(--cyberdeck-magenta)';
+              else c = 'var(--cyberdeck-green)';
+            } else {
+              c = 'var(--cyberdeck-surface-raised)';
+            }
+            barOut += `<div style="flex:1 1 0;min-width:2px;height:6px;background:${c};border-radius:1px;
+                                  ${i < filled ? 'box-shadow:0 0 4px '+c+';' : ''}"></div>`;
+          }
+          barOut += '</div></div>' +
+            '<span style="flex:0 0 auto;color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;opacity:0.9;">100</span>' +
+            '</div></div>';
+          return barOut;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: '"bar"'
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+        - justify-items: "stretch"
+      card:
+        - background: "transparent"
+        - border: "none"
+        - padding: "0"
+        - box-shadow: "none"
+        - width: "100%"
+        - min-width: "0"
+        - max-width: "100%"
+        - align-self: "stretch"
+      custom_fields:
+        bar:
+          - width: "100%"
+          - min-width: "0"
+          - max-width: "100%"
+          - justify-self: "stretch"
+          - box-sizing: "border-box"
+    card_mod:
+      style: |
+        ha-card {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+          align-self: stretch !important;
+          display: block !important;
+          margin: 0 !important;
+          padding: 0 8px !important;
+        }
+
+  # ── control button  (variables: btn_label, btn_color, btn_glow) ──
+  control_btn:
+    show_name: true
+    show_icon: false
+    show_state: false
+    styles:
+      card:
+        - background: "transparent"
+        - border: "1px solid var(--btn-color)"
+        - border-radius: "4px"
+        - padding: "8px 4px"
+        - font-family: "'Share Tech Mono', monospace"
+        - box-shadow: "none"
+        - box-sizing: "border-box"
+        - "--btn-color": "[[[ return variables.btn_color || 'var(--cyberdeck-cyan)'; ]]]"
+      name:
+        - color: "[[[ return variables.btn_color || 'var(--cyberdeck-cyan)'; ]]]"
+        - font-size: "11px"
+        - font-weight: "700"
+        - letter-spacing: "1px"
+        - font-family: "'Share Tech Mono', monospace"
+        - overflow: "hidden"
+        - white-space: "nowrap"
+        - text-overflow: "ellipsis"
+        - text-align: "center"
+        - max-width: "100%"
+    card_mod:
+      style: |
+        ha-card {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
+        }
+    state:
+      - value: "unavailable"
+        styles:
+          card:
+            - opacity: "0.3"
+            - pointer-events: "none"
+
+  # ── spools strip (variables: printer = cc1 | cc2) ─────────────
+  unit_spools:
+    template: cyberdeck_base
+    extra_styles: |
+      #container {
+        justify-items: stretch !important;
+      }
+      #custom_field_spools {
+        justify-self: stretch !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+      }
+    custom_fields:
+      spools: |
+        [[[
+          const printer = variables.printer || 'cc1';
+          let out = '<div style="padding:10px 14px 12px;border-top:1px solid rgba(0,229,255,0.08);">';
+          out += '<div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;margin-bottom:8px;">SPOOLS.LOADED</div>';
+          if (printer === 'cc1') {
+            const cc1Name = states['sensor.cc1_loaded_filament_name'];
+            const cc1Grams = states['sensor.cc1_spoolman_grams'];
+            if (cc1Name && cc1Name.state && !['unknown','unavailable'].includes(cc1Name.state)) {
+              const g = cc1Grams ? parseFloat(cc1Grams.state) || 0 : 0;
+              out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--cyberdeck-cyan);flex-shrink:0;"></span>
+                <span style="color:var(--cyberdeck-text);font-size:11px;flex:1;">${cc1Name.state.toUpperCase()}</span>
+                <span style="color:var(--cyberdeck-text-dim);font-size:11px;">${g > 0 ? g.toFixed(0)+'g' : '—'}</span>
+              </div>`;
+            } else {
+              out += '<div style="color:var(--cyberdeck-text-dim);font-size:11px;">—</div>';
+            }
+          } else {
+            const slots = [
+              { name: states['sensor.centauri_carbon_2_a1_name'],
+                color: states['sensor.centauri_carbon_2_a1_color'],
+                grams: states['sensor.cc2_a1_spoolman_grams'] },
+              { name: states['sensor.centauri_carbon_2_a2_name'],
+                color: states['sensor.centauri_carbon_2_a2_color'],
+                grams: states['sensor.cc2_a2_spoolman_grams'] },
+              { name: states['sensor.centauri_carbon_2_a3_name'],
+                color: states['sensor.centauri_carbon_2_a3_color'],
+                grams: states['sensor.cc2_a3_spoolman_grams'] },
+              { name: states['sensor.centauri_carbon_2_a4_name'],
+                color: states['sensor.centauri_carbon_2_a4_color'],
+                grams: states['sensor.cc2_a4_spoolman_grams'] },
+            ];
+
+            const activeE = states['sensor.centauri_carbon_2_active_filament_color'];
+            const activeColor = (activeE && activeE.state && activeE.state.startsWith('#'))
+                                ? activeE.state : null;
+            const uid = 'holo-' + Math.random().toString(36).slice(2,8);
+
+            out += '<div style="display:flex;gap:14px;align-items:stretch;">';
+            out += '<div style="flex:1;min-width:0;">';
+
+            let any = false;
+            for (const s of slots) {
+              const n = s.name ? s.name.state : '';
+              if (!n || ['unknown','unavailable'].includes(n)) continue;
+              any = true;
+              const c = (s.color && s.color.state && s.color.state.startsWith('#'))
+                        ? s.color.state : 'var(--cyberdeck-magenta)';
+              const g = s.grams ? parseFloat(s.grams.state) || 0 : 0;
+              const isActive = activeColor && c.toLowerCase() === activeColor.toLowerCase();
+              const highlight = isActive
+                ? 'border:1px solid rgba(0,229,255,0.5);border-radius:3px;padding:2px 6px;margin:-2px -6px;background:rgba(0,229,255,0.06);'
+                : '';
+              out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;${highlight}">
+                <span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;${isActive ? 'box-shadow:0 0 6px '+c+',0 0 12px '+c+'66;' : ''}"></span>
+                <span style="color:var(--cyberdeck-text);font-size:11px;flex:1;">${n.toUpperCase()}</span>
+                <span style="color:var(--cyberdeck-text-dim);font-size:11px;">${g > 0 ? g.toFixed(0)+'g' : '—'}</span>
+                ${isActive ? '<span style="color:var(--cyberdeck-cyan);font-size:8px;letter-spacing:1px;flex-shrink:0;">▸FEED</span>' : ''}
+              </div>`;
+            }
+            if (!any) out += '<div style="color:var(--cyberdeck-text-dim);font-size:11px;">—</div>';
+            out += '</div>';
+
+            if (activeColor) {
+              out += `
+                <style>
+                  @keyframes ${uid}-pulse {
+                    0%, 100% { opacity:0.7; transform:scale(1); }
+                    50% { opacity:1; transform:scale(1.08); }
+                  }
+                  @keyframes ${uid}-ring {
+                    0% { opacity:0.3; transform:scale(0.85); }
+                    50% { opacity:0.7; transform:scale(1.1); }
+                    100% { opacity:0.3; transform:scale(0.85); }
+                  }
+                  @keyframes ${uid}-scan {
+                    0% { transform:translateY(-100%); }
+                    100% { transform:translateY(100%); }
+                  }
+                </style>
+                <div style="flex:0 0 90px;display:flex;flex-direction:column;align-items:center;
+                            justify-content:center;padding:4px 0;">
+                  <div style="color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;
+                              margin-bottom:6px;text-align:center;">ACTIVE<br>FEED</div>
+                  <div style="position:relative;width:52px;height:52px;">
+                    <div style="position:absolute;inset:0;border-radius:50%;
+                                border:1px solid rgba(0,229,255,0.2);"></div>
+                    <div style="position:absolute;inset:4px;border-radius:50%;
+                                border:1px dashed rgba(0,229,255,0.3);
+                                animation:${uid}-ring 3s ease-in-out infinite;"></div>
+                    <div style="position:absolute;inset:10px;border-radius:50%;
+                                background:${activeColor};
+                                box-shadow:0 0 10px ${activeColor},0 0 25px ${activeColor}88,0 0 50px ${activeColor}44,inset 0 0 15px rgba(255,255,255,0.15);
+                                animation:${uid}-pulse 2s ease-in-out infinite;
+                                overflow:hidden;">
+                      <div style="position:absolute;inset:0;
+                                  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);
+                                  pointer-events:none;"></div>
+                      <div style="position:absolute;inset:0;overflow:hidden;border-radius:50%;">
+                        <div style="position:absolute;left:0;right:0;height:200%;
+                                    background:linear-gradient(transparent 40%,rgba(255,255,255,0.12) 50%,transparent 60%);
+                                    animation:${uid}-scan 2.5s linear infinite;"></div>
+                      </div>
+                    </div>
+                    <div style="position:absolute;inset:8px;border-radius:50%;
+                                border:1px solid ${activeColor}88;
+                                box-shadow:0 0 6px ${activeColor}44;
+                                pointer-events:none;"></div>
+                  </div>
+                  <div style="color:${activeColor};font-size:9px;font-weight:700;
+                              letter-spacing:1px;margin-top:5px;
+                              text-shadow:0 0 8px ${activeColor}88;">
+                    ${activeColor.toUpperCase()}</div>
+                </div>`;
+            }
+            out += '</div>';
+          }
+          out += '</div>';
+          return out;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: "'spools'"
+        - grid-template-columns: "1fr"
+        - justify-items: "stretch"
+      card:
+        - background: "transparent"
+        - border: "none"
+        - border-radius: "0"
+        - padding: "0"
+        - margin: "0"
+        - box-shadow: "none"
+      custom_fields:
+        spools:
+          - width: "100%"
+          - justify-self: "stretch"
+          - text-align: "left"
+
+  # ── Filament inventory row (auto-entities + Spoolman) ───────
+  filament_inventory_row:
+    template: cyberdeck_base
+    show_name: false
+    show_icon: false
+    show_state: false
+    tap_action:
+      action: more-info
+    custom_fields:
+      row: |
+        [[[
+          const ent = entity;
+          if (!ent) return '';
+          const a = ent.attributes || {};
+          const name = (a.filament_name || 'Unknown').toString();
+          let rawHex = (a.filament_color_hex || '00e5ff').toString().trim();
+          if (rawHex.startsWith('#')) rawHex = rawHex.slice(1);
+          if (!/^[0-9a-fA-F]{6}$/.test(rawHex)) rawHex = '00e5ff';
+          const col = '#' + rawHex.toLowerCase();
+          const used = parseFloat(a.used_percentage);
+          const remPct = isNaN(used) ? 0 : Math.max(0, Math.min(100, 100 - used));
+          const rw = parseFloat(a.remaining_weight);
+          const loc = a.location ? String(a.location) : '';
+          const gramsStr = !isNaN(rw) ? rw.toFixed(2) + ' g' : '—';
+          const sub = loc ? (gramsStr + ' · ' + loc) : gramsStr;
+          const segs = 20;
+          const filled = Math.round(segs * remPct / 100);
+          const curE = states['input_number.current_spool_id'];
+          const curId = curE && curE.state !== undefined && curE.state !== 'unknown' && curE.state !== 'unavailable'
+            ? String(curE.state) : null;
+          const myId = a.id !== undefined && a.id !== null ? String(a.id) : '';
+          const isCurrent = curId !== null && myId !== '' && curId === myId;
+          const badge = isCurrent
+            ? '<span style="border:1px solid var(--cyberdeck-green);color:var(--cyberdeck-green);padding:1px 6px;font-size:8px;border-radius:2px;letter-spacing:1px;flex-shrink:0;">LOADED</span>'
+            : '';
+          let segsHtml = '<div style="display:flex;gap:2px;width:100%;min-width:0;box-sizing:border-box;">';
+          for (let i = 0; i < segs; i++) {
+            const on = i < filled;
+            const bg = on ? col : 'var(--cyberdeck-surface-raised)';
+            const gl = on ? ('box-shadow:0 0 4px ' + col + ', 0 0 10px ' + col + '44;') : '';
+            segsHtml += '<div style="flex:1 1 0;min-width:2px;height:6px;background:' + bg + ';border-radius:1px;' + gl + '"></div>';
+          }
+          segsHtml += '</div>';
+          return `
+            <div style="display:flex;min-height:80px;">
+              <div style="width:3px;flex-shrink:0;background:linear-gradient(180deg,${col},${col}88 60%,transparent);
+                          border-radius:2px 0 0 2px;box-shadow:0 0 6px ${col}44;"></div>
+              <div style="flex:1;min-width:0;padding:8px 10px 10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                  <span style="color:var(--cyberdeck-text);font-size:12px;font-weight:700;letter-spacing:0.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${name}</span>
+                  ${badge}
+                </div>
+                <div style="color:var(--cyberdeck-text-dim);font-size:10px;margin-bottom:8px;line-height:1.3;">${sub}</div>
+                <div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0;">
+                  <div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid ${col}55;border-radius:3px;background:rgba(0,229,255,0.04);padding:3px 4px;box-shadow:inset 0 0 10px rgba(0,0,0,0.35);">
+                    ${segsHtml}
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;">
+                  <span style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">REM.</span>
+                  <span style="color:${col};font-size:15px;font-weight:700;line-height:1;text-shadow:0 0 12px ${col}88;">${remPct.toFixed(1)}<span style="font-size:11px;opacity:0.8;">%</span></span>
+                </div>
+              </div>
+            </div>`;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: "'row'"
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+      card:
+        - background: "var(--cyberdeck-surface-raised)"
+        - border: "1px solid rgba(0,229,255,0.12)"
+        - border-radius: "4px"
+        - padding: "0"
+        - margin: "0 0 6px 0"
+        - box-shadow: "none"
+        - overflow: "hidden"
+      custom_fields:
+        row:
+          - width: "100%"
+
+# ═══════════════════════════════════════════════════════════════════
+#  VIEW
+# ═══════════════════════════════════════════════════════════════════
+
+views:
+  - title: FARM_CTL
+    path: farm-ctl
+    theme: Cyberdeck
+    panel: true
+    cards:
+      - type: vertical-stack
+        card_mod:
+          style: |
+            :host {
+              position: relative;
+              overflow: hidden;
+              background: #070611;
+            }
+            :host::before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              z-index: 0;
+              pointer-events: none;
+              background-image:
+                linear-gradient(rgba(255,46,200,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,224,255,0.06) 1px, transparent 1px);
+              background-size: 32px 32px;
+              mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 85%);
+              -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 85%);
+            }
+            :host::after {
+              content: "";
+              position: absolute;
+              inset: 0;
+              z-index: 0;
+              pointer-events: none;
+              background:
+                radial-gradient(360px 320px at calc(100% + 40px) -80px, rgba(255,46,200,0.42) 0%, rgba(255,46,200,0.26) 42%, rgba(255,46,200,0.0) 78%),
+                radial-gradient(320px 300px at -90px 220px, rgba(0,224,255,0.34) 0%, rgba(0,224,255,0.2) 45%, rgba(0,224,255,0.0) 80%),
+                radial-gradient(300px 280px at calc(100% + 40px) calc(100% + 70px), rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%),
+                radial-gradient(340px 300px at -110px 52%, rgba(255,46,200,0.24) 0%, rgba(255,46,200,0.13) 45%, rgba(255,46,200,0.0) 82%),
+                radial-gradient(360px 320px at calc(100% + 70px) 62%, rgba(0,224,255,0.25) 0%, rgba(0,224,255,0.14) 46%, rgba(0,224,255,0.0) 84%),
+                radial-gradient(300px 280px at -90px 78%, rgba(0,224,255,0.2) 0%, rgba(0,224,255,0.1) 45%, rgba(0,224,255,0.0) 84%),
+                radial-gradient(360px 320px at calc(100% + 60px) 88%, rgba(182,255,60,0.28) 0%, rgba(182,255,60,0.16) 44%, rgba(182,255,60,0.0) 84%),
+                radial-gradient(320px 300px at 22% 96%, rgba(182,255,60,0.22) 0%, rgba(182,255,60,0.1) 44%, rgba(182,255,60,0.0) 82%);
+              mix-blend-mode: screen;
+              opacity: 0.95;
+            }
+            #root {
+              position: relative;
+              z-index: 1;
+            }
+        cards:
+
+          # ══════════════════════════════════════════════════════
+          #  HEADER BAR
+          # ══════════════════════════════════════════════════════
+          - type: custom:button-card
+            entity: sensor.printer_farm_online_count
+            template: cyberdeck_base
+            extra_styles: |
+              #container {
+                justify-items: start !important;
+                grid-template-columns: minmax(0,1fr) auto !important;
+              }
+              #custom_field_left {
+                justify-self: start !important;
+                width: 100% !important;
+                text-align: left !important;
+                min-width: 0 !important;
+              }
+              #custom_field_right {
+                position: absolute !important;
+                right: 16px !important;
+                top: 14px !important;
+                justify-self: end !important;
+              }
+            custom_fields:
+              left: |
+                [[[
+                  const now = new Date();
+                  const pad = n => String(n).padStart(2,'0');
+                  let th = now.getHours();
+                  const tmin = now.getMinutes();
+                  const tsec = now.getSeconds();
+                  const ampm = th >= 12 ? 'PM' : 'AM';
+                  th = th % 12;
+                  if (th === 0) th = 12;
+                  const ts = now.getFullYear() + '.' + pad(now.getMonth()+1) + '.' + pad(now.getDate())
+                             + ' · ' + th + ':' + pad(tmin) + ':' + pad(tsec) + ' ' + ampm + ' LCL';
+                  return `
+                    <div style="box-sizing:border-box;min-width:0;">
+                      <div style="color:var(--cyberdeck-cyan);font-size:9px;letter-spacing:2.5px;opacity:0.92;">// PRINT_NODE.NETWORK</div>
+                      <div style="font-size:26px;font-weight:700;letter-spacing:3px;line-height:1.15;margin-top:2px;">
+                        <span style="display:inline-block;background:linear-gradient(90deg,#e91e8c 0%,#a855f7 38%,#6366f1 62%,#00e5ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;">
+                          FARM_CTL
+                        </span>
+                      </div>
+                      <div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:1px;margin-top:3px;">${ts}</div>
+                    </div>`;
+                ]]]
+              right: |
+                [[[
+                  const count = entity ? entity.state : '0';
+                  return `
+                    <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;white-space:nowrap;">
+                      <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
+                                   letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
+                                   border:1px solid rgba(0,255,136,0.75);color:var(--cyberdeck-green);
+                                   background:rgba(0,255,136,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,255,136,0.05);">${count} UP</span>
+                      <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
+                                   letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
+                                   border:1px solid rgba(0,229,255,0.75);color:var(--cyberdeck-cyan);
+                                   background:rgba(0,229,255,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,229,255,0.05);">LINK OK</span>
+                    </div>`;
+                ]]]
+            styles:
+              grid:
+                - grid-template-areas: '"left right"'
+                - grid-template-columns: "minmax(0,1fr) auto"
+                - align-items: "start"
+                - column-gap: "12px"
+              card:
+                - background: "rgba(7, 6, 17, 0.45)"
+                - border: "none"
+                - border-radius: "0"
+                - border-bottom: "1px solid rgba(0,229,255,0.08)"
+                - padding: "14px 16px 10px"
+                - position: "relative"
+              custom_fields:
+                left:
+                  - justify-self: "stretch"
+                  - text-align: "left"
+                  - min-width: "0"
+                  - width: "100%"
+                right:
+                  - justify-self: "end"
+                  - align-self: "start"
+                  - position: "absolute"
+                  - right: "16px"
+                  - top: "14px"
+
+          # ── ambient room telemetry ──
+          - type: horizontal-stack
+            cards:
+              - type: custom:mini-graph-card
+                entities:
+                  - entity: sensor.office_temperature
+                    color: "#00e5ff"
+                name: AMBIENT.THERMAL
+                decimals: 0
+                icon: false
+                hours_to_show: 1
+                points_per_hour: 30
+                line_width: 2
+                height: 40
+                font_size: 65
+                show:
+                  name: true
+                  icon: false
+                  state: true
+                  labels: false
+                  points: false
+                  fill: true
+                  legend: false
+                  loading_indicator: false
+                color_thresholds:
+                  - value: 0
+                    color: "#00e5ff"
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: 1px solid rgba(0,229,255,0.16) !important;
+                      border-radius: 4px !important;
+                      box-shadow: none !important;
+                      margin: 8px 0 0 14px !important;
+                      overflow: hidden !important;
+                    }
+                    .header { padding: 6px 8px 0 !important; }
+                    .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                            letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                    .states { font-family: 'Share Tech Mono', monospace !important; }
+                    .state__value { color: var(--cyberdeck-cyan) !important;
+                      text-shadow: 0 0 14px rgba(0,229,255,0.45) !important; }
+                    .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+              - type: custom:mini-graph-card
+                entities:
+                  - entity: sensor.office_humidity
+                    color: "#e91e8c"
+                name: AMBIENT.VAPOR
+                icon: false
+                hours_to_show: 1
+                points_per_hour: 30
+                line_width: 2
+                height: 40
+                font_size: 65
+                show:
+                  name: true
+                  icon: false
+                  state: true
+                  labels: false
+                  points: false
+                  fill: true
+                  legend: false
+                  loading_indicator: false
+                color_thresholds:
+                  - value: 0
+                    color: "#e91e8c"
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: 1px solid rgba(233,30,140,0.16) !important;
+                      border-radius: 4px !important;
+                      box-shadow: none !important;
+                      margin: 8px 14px 0 0 !important;
+                      overflow: hidden !important;
+                    }
+                    .header { padding: 6px 8px 0 !important; }
+                    .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                            letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                    .states { font-family: 'Share Tech Mono', monospace !important; }
+                    .state__value { color: var(--cyberdeck-magenta) !important;
+                      text-shadow: 0 0 14px rgba(233,30,140,0.4) !important; }
+                    .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+
+          # ══════════════════════════════════════════════════════
+          #  PRINT UNITS — order by `current_status` (reachable first)
+          # ══════════════════════════════════════════════════════
+          - type: custom:auto-entities
+            card:
+              type: vertical-stack
+            card_param: cards
+            sort:
+              method: state
+              ignore_case: true
+            filter:
+              include:
+                - entity_id: sensor.centauri_carbon_current_status
+                  options:
+                    type: custom:stack-in-card
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(7, 6, 17, 0.45) !important;
+                          border: 1px solid rgba(0,229,255,0.12) !important;
+                          border-radius: 6px !important;
+                          margin: 8px 8px 4px !important;
+                          overflow: hidden !important;
+                          {% if is_state('sensor.centauri_carbon_current_status','unavailable') or
+                                is_state('sensor.centauri_carbon_current_status','unknown') %}
+                            opacity: 0.45;
+                          {% endif %}
+                        }
+                    cards:
+                      # ── unit label + status pill ──
+                      - type: horizontal-stack
+                        cards:
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_current_status
+                            template: unit_label
+                            variables:
+                              unit: "U.01"
+                              label: "CC.01"
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_current_status
+                            template: unit_status_pill
+                            variables:
+                              status_entity: sensor.centauri_carbon_current_status
+
+                      # ── camera (full width), cover + job row below ──
+                      - type: vertical-stack
+                        cards:
+                          - type: picture-entity
+                            entity: camera.centauri_carbon_chamber_camera
+                            camera_view: live
+                            show_name: false
+                            show_state: false
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: #000 !important;
+                                  border: 1px solid rgba(0,229,255,0.58) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow:
+                                    0 0 6px rgba(0,229,255,0.45),
+                                    0 0 14px rgba(0,229,255,0.22),
+                                    0 0 24px rgba(0,229,255,0.1) !important;
+                                  overflow: hidden !important;
+                                  position: relative !important;
+                                  margin: 0 14px 10px 14px !important;
+                                  width: calc(100% - 28px) !important;
+                                  max-width: calc(100% - 28px) !important;
+                                  box-sizing: border-box !important;
+                                  min-width: 0 !important;
+                                  aspect-ratio: 16 / 9 !important;
+                                  display: flex !important;
+                                  flex-direction: column !important;
+                                }
+                                ha-card .card-content {
+                                  flex: 1 1 auto !important;
+                                  min-height: 0 !important;
+                                  display: flex !important;
+                                  flex-direction: column !important;
+                                }
+                                ha-card img,
+                                ha-card video,
+                                ha-card iframe {
+                                  object-fit: cover !important;
+                                  object-position: center !important;
+                                  width: 100% !important;
+                                  height: 100% !important;
+                                  min-height: 0 !important;
+                                }
+                                ha-card::before {
+                                  content: '';
+                                  position: absolute;
+                                  inset: 6px;
+                                  border: 2px solid rgba(0,229,255,0.72);
+                                  border-radius: 2px;
+                                  pointer-events: none;
+                                  z-index: 2;
+                                  filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
+                                  mask-image:
+                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
+                                  mask-composite: intersect;
+                                  -webkit-mask-image:
+                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
+                                  -webkit-mask-composite: source-in;
+                                }
+                          - type: horizontal-stack
+                            card_mod:
+                              style: |
+                                #root {
+                                  align-items: stretch !important;
+                                  padding: 0 8px 4px 8px !important;
+                                  box-sizing: border-box !important;
+                                }
+                                #root > hui-card > ha-card {
+                                  flex: 1 1 0% !important;
+                                  min-width: 0 !important;
+                                  max-width: none !important;
+                                }
+                            cards:
+                              - type: custom:button-card
+                                entity: image.centauri_carbon_cover_image
+                                template: cyberdeck_base
+                                show_entity_picture: false
+                                custom_fields:
+                                  cover: |
+                                    [[[
+                                      const e = states['image.centauri_carbon_cover_image'];
+                                      if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                                      const url = e.attributes.entity_picture;
+                                      return `
+                                        <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
+                                          <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                                      box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                                      background:#000;max-width:min(200px,85%);">
+                                            <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
+                                          </div>
+                                        </div>`;
+                                    ]]]
+                                styles:
+                                  grid:
+                                    - grid-template-areas: '"cover"'
+                                    - grid-template-columns: "1fr"
+                                    - grid-template-rows: "auto"
+                                    - justify-items: "center"
+                                    - align-items: "center"
+                                  card:
+                                    - background: "transparent"
+                                    - border: "none"
+                                    - padding: "4px"
+                                    - box-shadow: "none"
+                                    - display: "flex"
+                                    - align-items: "center"
+                                    - justify-content: "center"
+                                  custom_fields:
+                                    cover:
+                                      - width: "100%"
+                                      - max-width: "100%"
+                                      - justify-self: "center"
+                                card_mod:
+                                  style: |
+                                    ha-card {
+                                      width: 100% !important;
+                                      box-sizing: border-box !important;
+                                    }
+                              - type: custom:button-card
+                                entity: sensor.centauri_carbon_percent_complete
+                                template: unit_job_info
+                                variables:
+                                  pct_entity: sensor.centauri_carbon_percent_complete
+                                  file_entity: sensor.centauri_carbon_file_name
+                                  eta_entity: sensor.centauri_carbon_remaining_print_time
+                                  end_entity: sensor.centauri_carbon_end_time
+                                  status_entity: sensor.centauri_carbon_current_status
+                                  cost_entity: sensor.centauri_carbon_total_filament_cost
+                                styles:
+                                  card:
+                                    - margin: "0 14px 0 0 !important"
+
+                      # ── segmented progress bar ──
+                      - type: horizontal-stack
+                        card_mod:
+                          style: |
+                            #root {
+                              width: 100% !important;
+                              min-width: 0 !important;
+                              box-sizing: border-box !important;
+                            }
+                            #root > hui-card {
+                              flex: 1 1 0% !important;
+                              min-width: 0 !important;
+                              width: 100% !important;
+                              max-width: 100% !important;
+                            }
+                            #root > hui-card > ha-card {
+                              width: 100% !important;
+                              max-width: 100% !important;
+                              min-width: 0 !important;
+                              box-sizing: border-box !important;
+                            }
+                        cards:
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_percent_complete
+                            template: unit_progress_bar
+                            variables:
+                              pct_entity: sensor.centauri_carbon_percent_complete
+                              status_entity: sensor.centauri_carbon_current_status
+
+                      # ── telemetry sparklines ──
+                      - type: horizontal-stack
+                        cards:
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_box_temp
+                                color: "#e8a910"
+                            name: CHMBR
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e8a910"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(232, 169, 16, 0.12) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 0 0 14px !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-sunflower) !important;
+                                  text-shadow: 0 0 14px rgba(232, 169, 16, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_nozzle_temperature
+                                color: "#00ff88"
+                            name: NZZL
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#00ff88"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(0, 255, 136, 0.12) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-green) !important;
+                                  text-shadow: 0 0 14px rgba(0, 255, 136, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_bed_temperature
+                                color: "#e91e8c"
+                            name: BED
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e91e8c"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(233,30,140,0.08) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 14px 0 0 !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-magenta) !important;
+                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+
+                      # ── control buttons ──
+                      - type: grid
+                        columns: 3
+                        square: false
+                        card_mod:
+                          style: |
+                            ha-card {
+                              padding: 0 10px 10px !important;
+                              box-sizing: border-box !important;
+                            }
+                            hui-grid-card {
+                              gap: 12px !important;
+                              column-gap: 12px !important;
+                              row-gap: 12px !important;
+                            }
+                        cards:
+                          - type: custom:button-card
+                            entity: button.centauri_carbon_pause_print
+                            name: HOLD
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-cyan)"
+                            tap_action:
+                              action: call-service
+                              service: button.press
+                              service_data:
+                                entity_id: button.centauri_carbon_pause_print
+                          - type: custom:button-card
+                            entity: button.centauri_carbon_stop_print
+                            name: ABORT
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-red)"
+                            tap_action:
+                              action: call-service
+                              service: button.press
+                              service_data:
+                                entity_id: button.centauri_carbon_stop_print
+                              confirmation:
+                                text: "ABORT print on CC1?"
+                          - type: custom:button-card
+                            entity: light.centauri_carbon_chamber_light
+                            name: LAMP
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-yellow)"
+                            tap_action:
+                              action: toggle
+
+                      # ── spools loaded ──
+                      - type: custom:button-card
+                        entity: sensor.cc1_spoolman_grams
+                        template: unit_spools
+                        variables:
+                          printer: cc1
+                - entity_id: sensor.centauri_carbon_2_current_status
+                  options:
+                    type: custom:stack-in-card
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(7, 6, 17, 0.45) !important;
+                          border: 1px solid rgba(0,229,255,0.12) !important;
+                          border-radius: 6px !important;
+                          margin: 4px 8px !important;
+                          overflow: hidden !important;
+                          {% if is_state('sensor.centauri_carbon_2_current_status','unavailable') or
+                                is_state('sensor.centauri_carbon_2_current_status','unknown') %}
+                            opacity: 0.45;
+                          {% endif %}
+                        }
+                    cards:
+                      # ── unit label + status pill ──
+                      - type: horizontal-stack
+                        cards:
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_2_current_status
+                            template: unit_label
+                            variables:
+                              unit: "U.02"
+                              label: "CC.02"
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_2_current_status
+                            template: unit_status_pill
+                            variables:
+                              status_entity: sensor.centauri_carbon_2_current_status
+
+                      # ── camera (full width), cover + job row below ──
+                      - type: vertical-stack
+                        cards:
+                          - type: picture-entity
+                            entity: camera.centauri_carbon_2_chamber_camera
+                            camera_view: live
+                            show_name: false
+                            show_state: false
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: #000 !important;
+                                  border: 1px solid rgba(0,229,255,0.58) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow:
+                                    0 0 6px rgba(0,229,255,0.45),
+                                    0 0 14px rgba(0,229,255,0.22),
+                                    0 0 24px rgba(0,229,255,0.1) !important;
+                                  overflow: hidden !important;
+                                  position: relative !important;
+                                  margin: 0 14px 10px 14px !important;
+                                  width: calc(100% - 28px) !important;
+                                  max-width: calc(100% - 28px) !important;
+                                  box-sizing: border-box !important;
+                                  min-width: 0 !important;
+                                  aspect-ratio: 16 / 9 !important;
+                                  display: flex !important;
+                                  flex-direction: column !important;
+                                }
+                                ha-card .card-content {
+                                  flex: 1 1 auto !important;
+                                  min-height: 0 !important;
+                                  display: flex !important;
+                                  flex-direction: column !important;
+                                }
+                                ha-card img,
+                                ha-card video,
+                                ha-card iframe {
+                                  object-fit: cover !important;
+                                  object-position: center !important;
+                                  width: 100% !important;
+                                  height: 100% !important;
+                                  min-height: 0 !important;
+                                }
+                                ha-card::before {
+                                  content: '';
+                                  position: absolute;
+                                  inset: 6px;
+                                  border: 2px solid rgba(0,229,255,0.72);
+                                  border-radius: 2px;
+                                  pointer-events: none;
+                                  z-index: 2;
+                                  filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
+                                  mask-image:
+                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
+                                  mask-composite: intersect;
+                                  -webkit-mask-image:
+                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
+                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
+                                  -webkit-mask-composite: source-in;
+                                }
+                          - type: horizontal-stack
+                            card_mod:
+                              style: |
+                                #root {
+                                  align-items: stretch !important;
+                                  padding: 0 8px 4px 8px !important;
+                                  box-sizing: border-box !important;
+                                }
+                                #root > hui-card > ha-card {
+                                  flex: 1 1 0% !important;
+                                  min-width: 0 !important;
+                                  max-width: none !important;
+                                }
+                            cards:
+                              - type: custom:button-card
+                                entity: image.centauri_carbon_2_cover_image
+                                template: cyberdeck_base
+                                show_entity_picture: false
+                                custom_fields:
+                                  cover: |
+                                    [[[
+                                      const e = states['image.centauri_carbon_2_cover_image'];
+                                      if (!e || !e.attributes || !e.attributes.entity_picture) return '';
+                                      const url = e.attributes.entity_picture;
+                                      return `
+                                        <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
+                                          <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
+                                                      box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
+                                                      background:#000;max-width:min(200px,85%);">
+                                            <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
+                                          </div>
+                                        </div>`;
+                                    ]]]
+                                styles:
+                                  grid:
+                                    - grid-template-areas: '"cover"'
+                                    - grid-template-columns: "1fr"
+                                    - grid-template-rows: "auto"
+                                    - justify-items: "center"
+                                    - align-items: "center"
+                                  card:
+                                    - background: "transparent"
+                                    - border: "none"
+                                    - padding: "4px"
+                                    - box-shadow: "none"
+                                    - display: "flex"
+                                    - align-items: "center"
+                                    - justify-content: "center"
+                                  custom_fields:
+                                    cover:
+                                      - width: "100%"
+                                      - max-width: "100%"
+                                      - justify-self: "center"
+                                card_mod:
+                                  style: |
+                                    ha-card {
+                                      width: 100% !important;
+                                      box-sizing: border-box !important;
+                                    }
+                              - type: custom:button-card
+                                entity: sensor.centauri_carbon_2_percent_complete
+                                template: unit_job_info
+                                variables:
+                                  pct_entity: sensor.centauri_carbon_2_percent_complete
+                                  file_entity: sensor.centauri_carbon_2_file_name
+                                  eta_entity: sensor.centauri_carbon_2_remaining_print_time
+                                  end_entity: sensor.centauri_carbon_2_end_time
+                                  status_entity: sensor.centauri_carbon_2_current_status
+                                  cost_entity: sensor.centauri_carbon_2_total_filament_cost
+                                styles:
+                                  card:
+                                    - margin: "0 14px 0 0 !important"
+
+                      # ── segmented progress bar ──
+                      - type: horizontal-stack
+                        card_mod:
+                          style: |
+                            #root {
+                              width: 100% !important;
+                              min-width: 0 !important;
+                              box-sizing: border-box !important;
+                            }
+                            #root > hui-card {
+                              flex: 1 1 0% !important;
+                              min-width: 0 !important;
+                              width: 100% !important;
+                              max-width: 100% !important;
+                            }
+                            #root > hui-card > ha-card {
+                              width: 100% !important;
+                              max-width: 100% !important;
+                              min-width: 0 !important;
+                              box-sizing: border-box !important;
+                            }
+                        cards:
+                          - type: custom:button-card
+                            entity: sensor.centauri_carbon_2_percent_complete
+                            template: unit_progress_bar
+                            variables:
+                              pct_entity: sensor.centauri_carbon_2_percent_complete
+                              status_entity: sensor.centauri_carbon_2_current_status
+
+                      # ── telemetry sparklines ──
+                      - type: horizontal-stack
+                        cards:
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_2_box_temp
+                                color: "#e8a910"
+                            name: CHMBR
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e8a910"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(232, 169, 16, 0.12) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 0 0 14px !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-sunflower) !important;
+                                  text-shadow: 0 0 14px rgba(232, 169, 16, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_2_nozzle_temperature
+                                color: "#00ff88"
+                            name: NZZL
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#00ff88"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(0, 255, 136, 0.12) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-green) !important;
+                                  text-shadow: 0 0 14px rgba(0, 255, 136, 0.45) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+                          - type: custom:mini-graph-card
+                            entities:
+                              - entity: sensor.centauri_carbon_2_bed_temperature
+                                color: "#e91e8c"
+                            name: BED
+                            icon: false
+                            hours_to_show: 1
+                            points_per_hour: 30
+                            line_width: 2
+                            height: 40
+                            font_size: 65
+                            show:
+                              name: true
+                              icon: false
+                              state: true
+                              labels: false
+                              points: false
+                              fill: true
+                              legend: false
+                              loading_indicator: false
+                            color_thresholds:
+                              - value: 0
+                                color: "#e91e8c"
+                            card_mod:
+                              style: |
+                                ha-card {
+                                  background: var(--cyberdeck-surface-raised) !important;
+                                  border: 1px solid rgba(233,30,140,0.08) !important;
+                                  border-radius: 4px !important;
+                                  box-shadow: none !important;
+                                  margin: 0 14px 0 0 !important;
+                                  overflow: hidden !important;
+                                }
+                                .header { padding: 6px 8px 0 !important; }
+                                .name { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important;
+                                        letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
+                                .states { font-family: 'Share Tech Mono', monospace !important; }
+                                .state__value { color: var(--cyberdeck-magenta) !important;
+                                  text-shadow: 0 0 14px rgba(233, 30, 140, 0.4) !important; }
+                                .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
+
+                      # ── control buttons ──
+                      - type: grid
+                        columns: 3
+                        square: false
+                        card_mod:
+                          style: |
+                            ha-card {
+                              padding: 0 10px 10px !important;
+                              box-sizing: border-box !important;
+                            }
+                            hui-grid-card {
+                              gap: 12px !important;
+                              column-gap: 12px !important;
+                              row-gap: 12px !important;
+                            }
+                        cards:
+                          - type: custom:button-card
+                            entity: button.centauri_carbon_2_pause_print
+                            name: HOLD
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-cyan)"
+                            tap_action:
+                              action: call-service
+                              service: button.press
+                              service_data:
+                                entity_id: button.centauri_carbon_2_pause_print
+                          - type: custom:button-card
+                            entity: button.centauri_carbon_2_stop_print
+                            name: ABORT
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-red)"
+                            tap_action:
+                              action: call-service
+                              service: button.press
+                              service_data:
+                                entity_id: button.centauri_carbon_2_stop_print
+                              confirmation:
+                                text: "ABORT print on CC2?"
+                          - type: custom:button-card
+                            entity: light.centauri_carbon_2_chamber_light
+                            name: LAMP
+                            template: control_btn
+                            variables:
+                              btn_color: "var(--cyberdeck-yellow)"
+                            tap_action:
+                              action: toggle
+
+                      # ── spools loaded ──
+                      - type: custom:button-card
+                        entity: sensor.cc2_a1_spoolman_grams
+                        template: unit_spools
+                        variables:
+                          printer: cc2
+
+          # ══════════════════════════════════════════════════════
+          #  FILAMENT INVENTORY (all Spoolman spools — segmented bars)
+          # ══════════════════════════════════════════════════════
+          - type: custom:stack-in-card
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--cyberdeck-surface) !important;
+                  border: 1px solid rgba(0,229,255,0.12) !important;
+                  border-radius: 6px !important;
+                  margin: 4px 8px 4px !important;
+                  overflow: hidden !important;
+                }
+            cards:
+              - type: custom:button-card
+                show_name: false
+                show_icon: false
+                show_state: false
+                custom_fields:
+                  label: |
+                    [[[
+                      return `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 4px;">
+                          <span style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">FILAMENT.INVENTORY</span>
+                          <span style="color:var(--cyberdeck-cyan);font-size:9px;letter-spacing:2px;">SPOOLMAN</span>
+                        </div>`;
+                    ]]]
+                styles:
+                  card:
+                    - background: "transparent"
+                    - border: "none"
+                    - padding: "0"
+                    - box-shadow: "none"
+                  custom_fields:
+                    label:
+                      - width: "100%"
+              - type: custom:auto-entities
+                filter:
+                  include:
+                    - integration: "*spoolman*"
+                      attributes:
+                        archived: false
+                      options:
+                        type: custom:button-card
+                        template: filament_inventory_row
+                sort:
+                  method: attribute
+                  attribute: extra_hue_sort_key
+                  numeric: true
+                  reverse: false
+                card:
+                  type: grid
+                  columns: 2
+                  square: false
+                card_param: cards
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      padding: 0 8px 10px !important;
+                      font-family: 'Share Tech Mono', monospace !important;
+                      --primary-text-color: var(--cyberdeck-text) !important;
+                      --secondary-text-color: var(--cyberdeck-text-dim) !important;
+                    }
+
+          # ══════════════════════════════════════════════════════
+          #  RECENT ACTIVITY (simplified event log)
+          # ══════════════════════════════════════════════════════
+          - type: custom:stack-in-card
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--cyberdeck-surface) !important;
+                  border: 1px solid rgba(0,229,255,0.12) !important;
+                  border-radius: 6px !important;
+                  margin: 4px 8px 16px !important;
+                  overflow: hidden !important;
+                }
+            cards:
+              - type: custom:button-card
+                show_name: false
+                show_icon: false
+                show_state: false
+                custom_fields:
+                  label: |
+                    [[[
+                      return `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 4px;">
+                          <span style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;">EVENT.LOG</span>
+                          <span style="color:var(--cyberdeck-green);font-size:9px;letter-spacing:1px;">
+                            <span style="display:inline-block;width:5px;height:5px;border-radius:50%;
+                                         background:var(--cyberdeck-green);margin-right:4px;vertical-align:middle;"></span>LIVE
+                          </span>
+                        </div>`;
+                    ]]]
+                styles:
+                  card:
+                    - background: "transparent"
+                    - border: "none"
+                    - padding: "0"
+                    - box-shadow: "none"
+                  custom_fields:
+                    label:
+                      - width: "100%"
+              - type: logbook
+                entities:
+                  - sensor.centauri_carbon_current_status
+                  - sensor.centauri_carbon_print_status
+                  - sensor.centauri_carbon_2_current_status
+                  - sensor.centauri_carbon_2_print_status
+                hours_to_show: 24
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: transparent !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      font-family: 'Share Tech Mono', monospace !important;
+                      font-size: 11px !important;
+                      --primary-text-color: var(--cyberdeck-text) !important;
+                      --secondary-text-color: var(--cyberdeck-text-dim) !important;
+                    }
