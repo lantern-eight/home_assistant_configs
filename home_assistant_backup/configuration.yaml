@@ -35,6 +35,29 @@ notify:
       - service: mobile_app_<entity_9>
       - service: mobile_app_<entity_7>
 
+# Thermal Comfort - dew point, heat index, humidex, etc.
+# https://github.com/dolezsa/thermal_comfort
+# Each entry needs a temp + humidity sensor pair from the same location.
+thermal_comfort:
+  - custom_icons: true
+    sensor:
+      - name: Basement
+        temperature_sensor: sensor.basement_temperature
+        humidity_sensor: sensor.basement_humidity
+        unique_id: F45...D28
+      - name: Living Room
+        temperature_sensor: sensor.living_room_thermostat_current_temperature
+        humidity_sensor: sensor.living_room_thermostat_current_humidity
+        unique_id: F47...8E7
+      - name: Main Suite
+        temperature_sensor: sensor.everything_presence_one_601670_temperature
+        humidity_sensor: sensor.everything_presence_one_601670_humidity
+        unique_id: BCA...984
+      - name: Backyard
+        temperature_sensor: sensor.<entity_10>_temperature
+        humidity_sensor: sensor.<entity_10>_humidity
+        unique_id: F50...433
+
 # Spoolman
 rest_command:
   spoolman_find_spools_by_name:
