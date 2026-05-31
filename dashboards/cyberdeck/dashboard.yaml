@@ -696,7 +696,7 @@ views:
             cards:
               - type: custom:mini-graph-card
                 entities:
-                  - entity: sensor.office_temperature
+                  - entity: sensor.basement_temperature
                     color: "#00e5ff"
                 name: AMBIENT.THERMAL
                 decimals: 0
@@ -737,7 +737,7 @@ views:
                     .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
               - type: custom:mini-graph-card
                 entities:
-                  - entity: sensor.office_humidity
+                  - entity: sensor.basement_humidity
                     color: "#e91e8c"
                 name: AMBIENT.VAPOR
                 icon: false
