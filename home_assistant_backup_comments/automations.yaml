@@ -282,6 +282,7 @@ actions:
                 - light.kitchen_table_light
                 - light.<entity_1>s_lamp
                 - light.<entity_2>s_lamp
+                - light.<entity_11>_ceiling_light
 
   # 3. Run the bedtime-disruption actions concurrently.
   - parallel:
@@ -307,6 +308,7 @@ actions:
             - dfd...50b
             - 921...86f
             - 83e...943
+            - d9e...17d
 
       # Notify parent phones with the per-door message.
       - data:
@@ -391,6 +393,7 @@ actions:
                 - light.kitchen_table_light
                 - light.<entity_1>s_lamp
                 - light.<entity_2>s_lamp
+                - light.<entity_11>_ceiling_light
 
           # A) Restore from the scene snapshot. ON lights get their full
           #    color + brightness back; OFF lights get turned off (but LIFX
@@ -437,3 +440,4 @@ actions:
             - dfd...50b
             - 921...86f
             - 83e...943
+            - d9e...17d

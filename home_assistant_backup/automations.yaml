@@ -479,6 +479,7 @@
           - light.kitchen_table_light
           - light.<entity_1>s_lamp
           - light.<entity_2>s_lamp
+          - light.<entity_11>_ceiling_light
   - parallel:
     - type: turn_off
       device_id: 165...267
@@ -497,6 +498,7 @@
         - dfd...50b
         - 921...86f
         - 83e...943
+        - d9e...17d
     - data:
         message: '{{ notif_message }}'
       action: notify.boss_phones
@@ -561,6 +563,7 @@
           - light.kitchen_table_light
           - light.<entity_1>s_lamp
           - light.<entity_2>s_lamp
+          - light.<entity_11>_ceiling_light
       - action: scene.turn_on
         target:
           entity_id: scene.house_state_pre_door_disruption
@@ -593,4 +596,5 @@
         - dfd...50b
         - 921...86f
         - 83e...943
+        - d9e...17d
   mode: parallel
