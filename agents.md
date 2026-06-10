@@ -1,5 +1,43 @@
 # Agent instructions
 
+## Home Assistant config backup and automations
+
+Relevant when working under `home_assistant_backup/**` or `home_assistant_backup_comments/**`.
+
+### Where to edit
+
+**Only make changes in `home_assistant_backup_comments/`.** HA strips YAML comments on save, so this directory is the comment-preserved source of truth. Do not edit `home_assistant_backup/` directly — it is overwritten on every SMB pull.
+
+### Syncing from Home Assistant
+
+```bash
+# Pull from HA + redact (default)
+uv run python home_assistant_backup.py
+
+# Pull only, no redaction
+uv run python home_assistant_backup.py -b
+
+# Redact only, no pull
+uv run python home_assistant_backup.py -s
+
+# Reverse redaction before pushing to HA
+uv run python home_assistant_backup.py -r
+```
+
+Do not push to HA unless the user explicitly asks.
+
+### Redaction: names and IDs
+
+`config.yaml` and `entity_map.yaml` are gitignored. They drive the sanitize pass differently:
+
+| | **Custom names** (`entity_map.names`) | **Device/entity IDs** (`entity_map.ids`) |
+|---|---|---|
+| **What triggers redaction** | Names listed in `config.yaml` → `redact_names` | Any 32-char hex string found in a file |
+| **Role of `entity_map.yaml`** | Reuse `<entity_N>` placeholders across runs; restore with `-r` | Record `abc...def` ↔ full ID mapping; restore with `-r` |
+| **Configured in `config.yaml`?** | Yes — add each name to `redact_names` | No — IDs are auto-discovered |
+
+**Adding an ID**: no config step. If a full 32-char hex ID appears in a comments file, sanitize shortens it to `first3...last3` and saves the mapping in `entity_map.ids`. Pre-populating `entity_map.ids` does not shorten anything — the full ID must be present in the file when sanitize runs.
+
 ## Cyberdeck printer farm dashboard
 
 Relevant when working under `dashboards/cyberdeck/**` (sync and development workflow for the Cyberdeck printer farm dashboard).
