@@ -48,21 +48,24 @@ actions:
         image: "{{ notif_image }}"
     action: notify.boss_phones
 
-  # 3. Reset the halfway notification boolean so the next print works correctly
+  # 3. Reset per-print latches so the next job works correctly
   - target:
-      entity_id: "input_boolean.{{ base_name }}_half_notified"
+      entity_id:
+        - "input_boolean.{{ base_name }}_half_notified"
+        - "input_boolean.{{ base_name }}_light_on_for_print"
     action: input_boolean.turn_off
 
 
 # ----------------------
 # 3D Print Complete Notification
 # ----------------------
-# Also re-arms the halfway notification latch for the next print. We deliberately
-# do NOT reset the latch on `to: printing` — the CC2's print_status bounces
+# Also re-arms the halfway and print-light latches for the next print. We deliberately
+# do NOT reset these latches on `to: printing` — the CC2's print_status bounces
 # Printing↔Idle during multi-color filament swaps, and a mid-print reset combined
-# with any sensor jitter on percent_complete leads to duplicate halfway notifications.
-# Resetting at job-end (here + in the Failure handler) means the latch stays armed
-# from the moment the halfway notification fires until the print actually ends.
+# with any sensor jitter on percent_complete leads to duplicate halfway notifications
+# (and would re-turn on the chamber light after a filament swap if you had turned it
+# off mid-print). Resetting at job-end (here + in the Failure handler) means each latch
+# stays armed from the moment it fires until the print actually ends.
 alias: 3D Print Complete Notification
 mode: parallel
 triggers:
@@ -96,10 +99,59 @@ actions:
         image: "{{ notif_image }}"
     action: notify.boss_phones
 
-  # 3. Reset the halfway notification latch so the next print works correctly
+  # 3. Reset per-print latches so the next job works correctly
   - target:
-      entity_id: "input_boolean.{{ base_name }}_half_notified"
+      entity_id:
+        - "input_boolean.{{ base_name }}_half_notified"
+        - "input_boolean.{{ base_name }}_light_on_for_print"
     action: input_boolean.turn_off
+
+
+# ----------------------
+# 3D Printer Light On, On Start
+# ----------------------
+# Turn the chamber light on once per print job, not on every print_status bounce to
+# `printing`. CC2 in particular bounces Printing↔Idle during multi-color filament
+# swaps, which re-fired the old automation and turned the light back on even if you
+# had turned it off mid-print.
+#
+# Same latch pattern as the halfway notification: one input_boolean per printer,
+# flipped on after the first light.turn_on, reset only at job end (Complete + Failure
+# handlers above). Deliberately NOT reset on `to: printing`.
+#
+# mode: single (NOT parallel) — same race-prevention rationale as halfway.
+#
+# Required helpers (create in HA Settings → Devices & Services → Helpers):
+#   - input_boolean.centauri_carbon_light_on_for_print
+#   - input_boolean.centauri_carbon_2_light_on_for_print
+alias: 3D Printer Light On, On Start
+mode: single
+triggers:
+  - entity_id:
+      - sensor.centauri_carbon_print_status
+      - sensor.centauri_carbon_2_print_status
+    to: printing
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {% set base_name = trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '') %}
+      {{ states('input_boolean.' ~ base_name ~ '_light_on_for_print') == 'off' }}
+actions:
+  - target:
+      entity_id: >
+        light.{{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '_chamber_light') }}
+    action: light.turn_on
+  - target:
+      entity_id: >
+        input_boolean.{{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '_light_on_for_print') }}
+    action: input_boolean.turn_on
 
 
 # ----------------------
