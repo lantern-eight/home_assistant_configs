@@ -52,7 +52,7 @@ actions:
   - target:
       entity_id:
         - "input_boolean.{{ base_name }}_half_notified"
-        - "input_boolean.{{ base_name }}_light_on_for_job"
+        - "input_boolean.{{ base_name }}_light_on_for_print"
     action: input_boolean.turn_off
 
 
@@ -103,7 +103,7 @@ actions:
   - target:
       entity_id:
         - "input_boolean.{{ base_name }}_half_notified"
-        - "input_boolean.{{ base_name }}_light_on_for_job"
+        - "input_boolean.{{ base_name }}_light_on_for_print"
     action: input_boolean.turn_off
 
 
@@ -122,8 +122,8 @@ actions:
 # mode: single (NOT parallel) — same race-prevention rationale as halfway.
 #
 # Required helpers (create in HA Settings → Devices & Services → Helpers):
-#   - input_boolean.centauri_carbon_light_on_for_job
-#   - input_boolean.centauri_carbon_2_light_on_for_job
+#   - input_boolean.centauri_carbon_light_on_for_print
+#   - input_boolean.centauri_carbon_2_light_on_for_print
 alias: 3D Printer Light On, On Start
 mode: single
 triggers:
@@ -138,7 +138,7 @@ conditions:
       {% set base_name = trigger.entity_id
           | replace('sensor.', '')
           | replace('_print_status', '') %}
-      {{ states('input_boolean.' ~ base_name ~ '_light_on_for_job') == 'off' }}
+      {{ states('input_boolean.' ~ base_name ~ '_light_on_for_print') == 'off' }}
 actions:
   - target:
       entity_id: >
@@ -150,7 +150,7 @@ actions:
       entity_id: >
         input_boolean.{{ trigger.entity_id
           | replace('sensor.', '')
-          | replace('_print_status', '_light_on_for_job') }}
+          | replace('_print_status', '_light_on_for_print') }}
     action: input_boolean.turn_on
 
 
