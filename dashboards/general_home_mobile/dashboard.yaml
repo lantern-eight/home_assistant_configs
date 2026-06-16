@@ -422,44 +422,41 @@ views:
                       navigation_path: /lovelace/0
 
       # -----------------------------------------------------------------------
-      # Bottom Nav Bar (Bubble Card)
+      # Bottom Nav Bar (navbar-card — Material Design 3 style)
       # -----------------------------------------------------------------------
       - type: grid
         column_span: 1
         cards:
-          - type: custom:bubble-card
-            card_type: bottom-bar
-            styles: |
-              .bubble-bottom-bar {
-                --bubble-bottom-bar-background: var(--card-background-color, var(--ha-card-background));
-                backdrop-filter: blur(10px);
-              }
-            buttons:
-              - name: Home
-                icon: mdi:home
+          - type: custom:navbar-card
+            desktop:
+              position: bottom
+              show_labels: true
+            mobile:
+              show_labels: true
+            routes:
+              - url: /general-home/home
+                icon: mdi:home-outline
+                icon_selected: mdi:home
+                label: Home
+              - icon: mdi:view-grid-outline
+                icon_selected: mdi:view-grid
+                label: Rooms
                 tap_action:
                   action: navigate
-                  navigation_path: /general-home/home
-              - name: Rooms
-                icon: mdi:floor-plan
+                  navigation_path: '#rooms'
+              - url: /general-home/climate
+                icon: mdi:thermometer-low
+                icon_selected: mdi:thermometer
+                label: Climate
+              - url: /general-home/security
+                icon: mdi:shield-lock-outline
+                icon_selected: mdi:shield-lock
+                label: Security
+              - icon: mdi:dots-horizontal
+                label: More
                 tap_action:
                   action: navigate
-                  navigation_path: "#rooms"
-              - name: Climate
-                icon: mdi:thermometer
-                tap_action:
-                  action: navigate
-                  navigation_path: /general-home/climate
-              - name: Security
-                icon: mdi:shield-home
-                tap_action:
-                  action: navigate
-                  navigation_path: /general-home/security
-              - name: More
-                icon: mdi:dots-horizontal
-                tap_action:
-                  action: navigate
-                  navigation_path: "#more"
+                  navigation_path: '#more'
 
   # ===========================================================================
   # CLIMATE — Sub-view for thermostat controls
