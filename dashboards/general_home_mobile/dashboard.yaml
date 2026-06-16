@@ -8,7 +8,7 @@
 #
 # HACS cards: clock-weather-card, calendar-card-pro, bubble-card,
 #   mushroom, apexcharts-card, card-mod, stack-in-card, mini-graph-card,
-#   material-you-utilities, kiosk-mode
+#   material-you-utilities, kiosk-mode, auto-entities
 #
 # HA helpers:
 #   - input_boolean.cond_bedtime_doors
@@ -594,6 +594,14 @@ views:
                       action: navigate
                       navigation_path: /general-home/all-alerts
                   - type: custom:mushroom-template-card
+                    primary: "Automations"
+                    secondary: "Enable or disable automations"
+                    icon: mdi:robot-outline
+                    icon_color: purple
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/automations
+                  - type: custom:mushroom-template-card
                     primary: "3D Printer Farm"
                     secondary: "Cyberdeck dashboard"
                     icon: mdi:printer-3d
@@ -850,3 +858,32 @@ views:
                   const attrs = entity.attributes;
                   if (!attrs.time || !attrs.uv_index) return [];
                   return attrs.time.map((t, i) => [new Date(t).getTime(), attrs.uv_index[i]]);
+
+  # ===========================================================================
+  # AUTOMATIONS — Sub-view listing all automations with enable/disable toggles
+  # ===========================================================================
+  - title: Automations
+    path: automations
+    icon: mdi:robot-outline
+    subview: true
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:mushroom-title-card
+            title: "Automations"
+            subtitle: "Use the switch to enable or disable"
+            icon: mdi:robot-outline
+
+          - type: custom:auto-entities
+            card:
+              type: entities
+            sort:
+              method: friendly_name
+              ignore_case: true
+            filter:
+              include:
+                - domain: automation
+            show_empty: false
