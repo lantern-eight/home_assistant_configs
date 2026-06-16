@@ -207,14 +207,10 @@ views:
               # Thermostat headline
               - type: custom:mushroom-climate-card
                 entity: climate.living_room_thermostat
-                name: "Indoor Climate"
+                name: "Climate"
+                icon_type: none
                 show_temperature_control: false
-                hvac_modes:
-                  - heat
-                  - cool
-                  - heat_cool
-                  - "off"
-                collapsible_controls: true
+                collapsible_controls: false
                 tap_action:
                   action: navigate
                   navigation_path: /general-home/climate
@@ -252,64 +248,253 @@ views:
                       margin-top: -8px;
                     }
 
-              # Air quality metrics row
+              # Air quality metrics row (5-dot severity indicator)
               - type: horizontal-stack
                 cards:
-                  - type: custom:mushroom-entity-card
+                  - type: custom:button-card
                     entity: sensor.basement_humidity
-                    name: "Humidity"
-                    icon: mdi:water-percent
-                    icon_color: blue
-                    layout: vertical
+                    name: Humidity
+                    show_state: false
+                    show_icon: false
+                    show_name: true
                     tap_action:
                       action: more-info
-                    card_mod:
-                      style: |
-                        ha-card { box-shadow: none !important; }
-                  - type: custom:mushroom-entity-card
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 0;
+                          if (val < 60 && val > 30) level = 1;
+                          else if (val <= 30 || val >= 60) level = 2;
+                          if (val < 25 || val > 65) level = 3;
+                          if (val < 20 || val > 70) level = 4;
+                          if (val < 15 || val > 80) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(0)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">%</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
+                  - type: custom:button-card
                     entity: sensor.basement_carbon_dioxide
-                    name: "CO₂"
-                    icon: mdi:molecule-co2
-                    icon_color: green
-                    layout: vertical
+                    name: CO₂
+                    show_state: false
+                    show_icon: false
+                    show_name: true
                     tap_action:
                       action: more-info
-                    card_mod:
-                      style: |
-                        ha-card { box-shadow: none !important; }
-                  - type: custom:mushroom-entity-card
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 0;
+                          if (val > 400) level = 1;
+                          if (val > 600) level = 2;
+                          if (val > 800) level = 3;
+                          if (val > 1000) level = 4;
+                          if (val > 1500) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(1)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">ppm</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
+                  - type: custom:button-card
                     entity: sensor.basement_volatile_organic_compounds_parts
-                    name: "VOC"
-                    icon: mdi:chemical-weapon
-                    icon_color: amber
-                    layout: vertical
+                    name: Chemicals
+                    show_state: false
+                    show_icon: false
+                    show_name: true
                     tap_action:
                       action: more-info
-                    card_mod:
-                      style: |
-                        ha-card { box-shadow: none !important; }
-                  - type: custom:mushroom-entity-card
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 0;
+                          if (val > 65) level = 1;
+                          if (val > 150) level = 2;
+                          if (val > 250) level = 3;
+                          if (val > 500) level = 4;
+                          if (val > 1000) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(1)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">ppb</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
+                  - type: custom:button-card
                     entity: sensor.basement_pm2_5
-                    name: "PM2.5"
-                    icon: mdi:blur
-                    icon_color: orange
-                    layout: vertical
+                    name: PM2.5
+                    show_state: false
+                    show_icon: false
+                    show_name: true
                     tap_action:
                       action: more-info
-                    card_mod:
-                      style: |
-                        ha-card { box-shadow: none !important; }
-                  - type: custom:mushroom-entity-card
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 1;
+                          if (val > 12) level = 2;
+                          if (val > 25) level = 3;
+                          if (val > 35) level = 4;
+                          if (val > 55) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(1)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">µg/m³</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
+                  - type: custom:button-card
                     entity: sensor.basement_radon
-                    name: "Radon"
-                    icon: mdi:radioactive
-                    icon_color: deep-purple
-                    layout: vertical
+                    name: Radon
+                    show_state: false
+                    show_icon: false
+                    show_name: true
                     tap_action:
                       action: more-info
-                    card_mod:
-                      style: |
-                        ha-card { box-shadow: none !important; }
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 0;
+                          if (val > 0) level = 1;
+                          if (val > 50) level = 2;
+                          if (val > 100) level = 3;
+                          if (val > 150) level = 4;
+                          if (val > 200) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(0)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">Bq/m³</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
 
       # -----------------------------------------------------------------------
       # Calendar
@@ -538,7 +723,7 @@ views:
                 secondary_info: last-changed
 
   # ===========================================================================
-  # ALL ALERTS — Sub-view for all conditional cards
+  # ALL ALERTS — Sub-view listing every conditional card (always visible)
   # ===========================================================================
   - title: All Alerts
     path: all-alerts
@@ -547,91 +732,121 @@ views:
     type: sections
     max_columns: 1
     sections:
-      # Active alerts (sorted by priority via template sensor)
       - type: grid
         column_span: 1
         cards:
-          - type: custom:mushroom-title-card
-            title: "Active"
-            subtitle: "Currently triggered conditional cards"
-            icon: mdi:alert-circle
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+              - type: custom:mushroom-title-card
+                title: "Bedtime Doors"
+                subtitle: "Monitoring active"
+                icon: mdi:door-open
+                card_mod:
+                  style: |
+                    ha-card {
+                      --card-primary-font-size: 16px;
+                      --card-secondary-font-size: 12px;
+                      padding-bottom: 0 !important;
+                    }
+              - type: entities
+                entities:
+                  - entity: binary_sensor.<entity_3>s_door_door
+                    name: "<entity_3>'s Door"
+                    icon: mdi:door
+                    secondary_info: last-changed
+                  - entity: binary_sensor.<entity_4>s_door_door
+                    name: "<entity_4>'s Door"
+                    icon: mdi:door
+                    secondary_info: last-changed
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-top: none !important;
+                      box-shadow: none !important;
+                      padding-top: 0;
+                    }
 
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: input_boolean.cond_bedtime_doors
-                state: "on"
-            card:
-              type: entities
-              title: "Bedtime Doors"
-              entities:
-                - entity: binary_sensor.<entity_3>s_door_door
-                  name: "<entity_3>'s Door"
-                  icon: mdi:door
-                  secondary_info: last-changed
-                - entity: binary_sensor.<entity_4>s_door_door
-                  name: "<entity_4>'s Door"
-                  icon: mdi:door
-                  secondary_info: last-changed
-
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: input_boolean.cond_uv_index
-                state: "on"
-            card:
-              type: custom:apexcharts-card
-              header:
-                title: "UV Index Today"
-                show: true
-              graph_span: 12h
-              span:
-                start: day
-                offset: "+7h"
-              yaxis:
-                - min: 0
-                  max: ~12
-              series:
-                - entity: sensor.<entity_10>_uv_index
-                  name: "Measured"
-                  type: area
-                  color: "#FF9800"
-                  extend_to: now
-                  group_by:
-                    func: avg
-                    duration: 30min
-
-      # Hidden / inactive alerts
-      - type: grid
-        column_span: 1
-        cards:
-          - type: custom:mushroom-title-card
-            title: "Inactive"
-            subtitle: "Currently hidden conditional cards"
-            icon: mdi:eye-off
-
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: input_boolean.cond_bedtime_doors
-                state: "off"
-            card:
-              type: custom:mushroom-entity-card
-              entity: input_boolean.cond_bedtime_doors
-              name: "Bedtime Doors"
-              icon: mdi:door-closed-lock
-              secondary_info: "Active 7:30 PM – 7:00 AM"
-              layout: horizontal
-
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: input_boolean.cond_uv_index
-                state: "off"
-            card:
-              type: custom:mushroom-entity-card
-              entity: input_boolean.cond_uv_index
-              name: "UV Index Chart"
-              icon: mdi:weather-sunny-alert
-              secondary_info: "Active 7:00 AM – 3:00 PM"
-              layout: horizontal
+          - type: custom:apexcharts-card
+            header:
+              title: "UV Index Today"
+              show: true
+              show_states: true
+              colorize_states: true
+            graph_span: 12h
+            span:
+              start: day
+              offset: "+7h"
+            now:
+              show: true
+              label: "Now"
+            yaxis:
+              - min: 0
+                max: ~12
+                apex_config:
+                  tickAmount: 4
+            apex_config:
+              chart:
+                height: 180
+              fill:
+                type: gradient
+                gradient:
+                  type: vertical
+                  shadeIntensity: 0.5
+                  opacityFrom: 0.7
+                  opacityTo: 0.2
+              annotations:
+                yaxis:
+                  - y: 0
+                    y2: 3
+                    fillColor: "#4CAF50"
+                    opacity: 0.1
+                    label:
+                      text: "Low"
+                      style:
+                        fontSize: "10px"
+                  - y: 3
+                    y2: 6
+                    fillColor: "#FFC107"
+                    opacity: 0.1
+                    label:
+                      text: "Moderate"
+                      style:
+                        fontSize: "10px"
+                  - y: 6
+                    y2: 8
+                    fillColor: "#FF9800"
+                    opacity: 0.1
+                    label:
+                      text: "High"
+                      style:
+                        fontSize: "10px"
+                  - y: 8
+                    y2: 15
+                    fillColor: "#F44336"
+                    opacity: 0.1
+                    label:
+                      text: "Very High"
+                      style:
+                        fontSize: "10px"
+            series:
+              - entity: sensor.<entity_10>_uv_index
+                name: "Measured"
+                type: area
+                color: "#FF9800"
+                stroke_width: 2
+                extend_to: now
+                group_by:
+                  func: avg
+                  duration: 30min
+              - entity: sensor.openmeteo_hourly_uv_forecast
+                name: "Forecast"
+                type: line
+                color: "#FF9800"
+                opacity: 0.5
+                stroke_width: 2
+                stroke_dash: 4
+                data_generator: |
+                  const attrs = entity.attributes;
+                  if (!attrs.time || !attrs.uv_index) return [];
+                  return attrs.time.map((t, i) => [new Date(t).getTime(), attrs.uv_index[i]]);
