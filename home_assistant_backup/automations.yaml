@@ -86,7 +86,7 @@
       entity_id: light.<entity_4>s_room
     data:
       color_temp_kelvin: 5205
-      brightness_pct: 52
+      brightness_pct: 100
   mode: single
 - id: '1766854701215'
   alias: Kitchen Light Morning
@@ -175,9 +175,12 @@
           | replace('sensor.', '')
           | replace('_print_status', '')
         }}
-      notif_title: '{{ base_name | replace(''_'','' '') | title }} Print done! 🎉'
+      notif_title: '{{ base_name | replace(''_'','' '') | title }} Print Done 👍'
       notif_message: |
-        Finished: {{ now().strftime('%-I:%M %p') | lower }}
+        Printed: {{ states('input_text.' ~ base_name ~ '_last_file')
+            | replace('_',' ')
+            | replace('.gcode','')
+            | default('Unknown file', true) }}
       notif_image: |
         /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
   - data:
@@ -187,7 +190,9 @@
         image: '{{ notif_image }}'
     action: notify.boss_phones
   - target:
-      entity_id: input_boolean.{{ base_name }}_half_notified
+      entity_id:
+      - input_boolean.{{ base_name }}_half_notified
+      - input_boolean.{{ base_name }}_light_on_for_print
     action: input_boolean.turn_off
   mode: parallel
 - id: '1769943079478'
@@ -290,26 +295,40 @@
         image: '{{ notif_image }}'
     action: notify.boss_phones
   - target:
-      entity_id: input_boolean.{{ base_name }}_half_notified
+      entity_id:
+      - input_boolean.{{ base_name }}_half_notified
+      - input_boolean.{{ base_name }}_light_on_for_print
     action: input_boolean.turn_off
   mode: parallel
 - id: '1770365431207'
   alias: 3D Printer Light On, On Start
-  description: ''
   triggers:
   - entity_id:
     - sensor.centauri_carbon_print_status
     - sensor.centauri_carbon_2_print_status
     to: printing
     trigger: state
+  conditions:
+  - condition: template
+    value_template: |
+      {% set base_name = trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '') %}
+      {{ states('input_boolean.' ~ base_name ~ '_light_on_for_print') == 'off' }}
   actions:
   - target:
       entity_id: |
         light.{{ trigger.entity_id
-          | replace('sensor.','')
-          | replace('_print_status','_chamber_light') }}
+          | replace('sensor.', '')
+          | replace('_print_status', '_chamber_light') }}
     action: light.turn_on
-  mode: parallel
+  - target:
+      entity_id: |
+        input_boolean.{{ trigger.entity_id
+          | replace('sensor.', '')
+          | replace('_print_status', '_light_on_for_print') }}
+    action: input_boolean.turn_on
+  mode: single
 - id: '1774417251044'
   alias: CC1 Spoolman Update
   triggers:
@@ -598,3 +617,39 @@
         - 83e...943
         - d9e...17d
   mode: parallel
+- id: cond_bedtime_doors_on
+  alias: 'Cond: Bedtime Doors ON'
+  trigger:
+  - platform: time
+    at: '19:30:00'
+  action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cond_bedtime_doors
+- id: cond_bedtime_doors_off
+  alias: 'Cond: Bedtime Doors OFF'
+  trigger:
+  - platform: time
+    at: 07:00:00
+  action:
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cond_bedtime_doors
+- id: cond_uv_index_on
+  alias: 'Cond: UV Index ON'
+  trigger:
+  - platform: time
+    at: 07:00:00
+  action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cond_uv_index
+- id: cond_uv_index_off
+  alias: 'Cond: UV Index OFF'
+  trigger:
+  - platform: time
+    at: '15:00:00'
+  action:
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cond_uv_index

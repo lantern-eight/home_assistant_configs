@@ -3,6 +3,7 @@ and the _restore_backup_files round-trip."""
 
 import os
 import tempfile
+from pathlib import Path
 
 import yaml
 
@@ -11,7 +12,7 @@ from home_assistant_backup import (
     _restore_backup_files,
     _run_sanitize,
     load_entity_map,
-    redact_names_in_text,
+    redact_entities_in_text,
     save_entity_map,
     shorten_ids,
 )
@@ -39,7 +40,7 @@ class TestEntityMapSaveLoad:
     def test_round_trip(self):
         entity_map = {
             "ids": {"abc...678": "abcdef01234567890abcdef012345678"},
-            "names": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
+            "entities": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
@@ -53,21 +54,21 @@ class TestEntityMapSaveLoad:
             with open(path, "w") as f:
                 f.write("")
             loaded = load_entity_map(path)
-        assert loaded == {"ids": {}, "names": {}}
+        assert loaded == {"ids": {}, "entities": {}}
 
     def test_load_partial_keys(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
             with open(path, "w") as f:
-                yaml.dump({"names": {"<entity_1>": "Alice"}}, f)
+                yaml.dump({"entities": {"<entity_1>": "Alice"}}, f)
             loaded = load_entity_map(path)
         assert loaded["ids"] == {}
-        assert loaded["names"] == {"<entity_1>": "Alice"}
+        assert loaded["entities"] == {"<entity_1>": "Alice"}
 
     def test_saved_file_is_valid_yaml(self):
         entity_map = {
             "ids": {"abc...678": "abcdef01234567890abcdef012345678"},
-            "names": {"<entity_1>": "Alice"},
+            "entities": {"<entity_1>": "Alice"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "entity_map.yaml")
@@ -75,11 +76,11 @@ class TestEntityMapSaveLoad:
             with open(path) as f:
                 raw = yaml.safe_load(f)
         assert raw["ids"]["abc...678"] == "abcdef01234567890abcdef012345678"
-        assert raw["names"]["<entity_1>"] == "Alice"
+        assert raw["entities"]["<entity_1>"] == "Alice"
 
 
 # ---------------------------------------------------------------------------
-# entity_map accumulation in shorten_ids / redact_names_in_text
+# entity_map accumulation in shorten_ids / redact_entities_in_text
 # ---------------------------------------------------------------------------
 
 class TestEntityMapAccumulation:
@@ -101,13 +102,13 @@ class TestEntityMapAccumulation:
     def test_shorten_ids_no_map_when_none(self):
         shorten_ids("abcdef01234567890abcdef012345678")
 
-    def test_redact_names_populates_name_map(self):
-        name_map = {}
-        redact_names_in_text("Hello Alice and Bob", ["Alice", "Bob"], name_map)
-        assert name_map == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
+    def test_redact_entities_populates_entities_map(self):
+        entities_map = {}
+        redact_entities_in_text("Hello Alice and Bob", ["Alice", "Bob"], entities_map)
+        assert entities_map == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
 
-    def test_redact_names_no_map_when_none(self):
-        redact_names_in_text("Hello Alice", ["Alice"])
+    def test_redact_entities_no_map_when_none(self):
+        redact_entities_in_text("Hello Alice", ["Alice"])
 
     def test_process_backup_files_populates_entity_map(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -115,11 +116,11 @@ class TestEntityMapAccumulation:
             content = f"unique_id: {hex_id}\nalias: Wake up Alice\n"
             _write_file(tmp, "auto.yaml", content)
 
-            entity_map = {"ids": {}, "names": {}}
+            entity_map = {"ids": {}, "entities": {}}
             _process_backup_files(tmp, ["Alice"], entity_map)
 
             assert entity_map["ids"]["aab...344"] == hex_id
-            assert entity_map["names"]["<entity_1>"] == "Alice"
+            assert entity_map["entities"]["<entity_1>"] == "Alice"
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +130,7 @@ class TestEntityMapAccumulation:
 class TestRestoreBackupFiles:
 
     def test_restores_names(self):
-        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
+        entity_map = {"ids": {}, "entities": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "auto.yaml", "alias: <entity_1>'s Routine\n")
             _restore_backup_files(tmp, entity_map)
@@ -137,7 +138,7 @@ class TestRestoreBackupFiles:
 
     def test_restores_ids(self):
         full_id = "abcdef01234567890abcdef012345678"
-        entity_map = {"ids": {"abc...678": full_id}, "names": {}}
+        entity_map = {"ids": {"abc...678": full_id}, "entities": {}}
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "auto.yaml", "unique_id: abc...678\n")
             _restore_backup_files(tmp, entity_map)
@@ -147,7 +148,7 @@ class TestRestoreBackupFiles:
         full_id = "aabbccdd11223344aabbccdd11223344"
         entity_map = {
             "ids": {"aab...344": full_id},
-            "names": {"<entity_1>": "Alice"},
+            "entities": {"<entity_1>": "Alice"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             content = "unique_id: aab...344\nalias: <entity_1> Morning\n"
@@ -162,7 +163,7 @@ class TestRestoreBackupFiles:
     def test_restores_multiple_names(self):
         entity_map = {
             "ids": {},
-            "names": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
+            "entities": {"<entity_1>": "Alice", "<entity_2>": "Bob"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             content = "<entity_1> and <entity_2> went home\n"
@@ -171,14 +172,14 @@ class TestRestoreBackupFiles:
             assert _read_file(path) == "Alice and Bob went home\n"
 
     def test_restores_across_subdirectories(self):
-        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
+        entity_map = {"ids": {}, "entities": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "sub/deep/auto.yaml", "alias: <entity_1>\n")
             _restore_backup_files(tmp, entity_map)
             assert _read_file(path) == "alias: Alice\n"
 
     def test_skips_non_processable_extensions(self):
-        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
+        entity_map = {"ids": {}, "entities": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             content = "name = '<entity_1>'\n"
             path = _write_file(tmp, "script.py", content)
@@ -186,7 +187,7 @@ class TestRestoreBackupFiles:
             assert _read_file(path) == content
 
     def test_no_match_leaves_file_unchanged(self):
-        entity_map = {"ids": {}, "names": {"<entity_1>": "Alice"}}
+        entity_map = {"ids": {}, "entities": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             content = "plain: value\n"
             path = _write_file(tmp, "plain.yaml", content)
@@ -194,7 +195,7 @@ class TestRestoreBackupFiles:
             assert _read_file(path) == content
 
     def test_empty_entity_map(self):
-        entity_map = {"ids": {}, "names": {}}
+        entity_map = {"ids": {}, "entities": {}}
         with tempfile.TemporaryDirectory() as tmp:
             content = "alias: test\n"
             path = _write_file(tmp, "auto.yaml", content)
@@ -202,7 +203,7 @@ class TestRestoreBackupFiles:
             assert _read_file(path) == content
 
     def test_empty_directory(self):
-        entity_map = {"ids": {"abc...678": "x" * 32}, "names": {"<entity_1>": "Alice"}}
+        entity_map = {"ids": {"abc...678": "x" * 32}, "entities": {"<entity_1>": "Alice"}}
         with tempfile.TemporaryDirectory() as tmp:
             _restore_backup_files(tmp, entity_map)
 
@@ -221,7 +222,7 @@ class TestProcessThenRestore:
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "auto.yaml", original)
 
-            entity_map = {"ids": {}, "names": {}}
+            entity_map = {"ids": {}, "entities": {}}
             _process_backup_files(tmp, ["Alice"], entity_map)
 
             redacted = _read_file(path)
@@ -241,7 +242,7 @@ class TestProcessThenRestore:
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "scripts.yaml", original)
 
-            entity_map = {"ids": {}, "names": {}}
+            entity_map = {"ids": {}, "entities": {}}
             _process_backup_files(tmp, [], entity_map)
             _restore_backup_files(tmp, entity_map)
 
@@ -256,7 +257,7 @@ class TestProcessThenRestore:
             path = _write_file(tmp, "config.yaml", original)
             map_path = os.path.join(tmp, "entity_map.yaml")
 
-            entity_map = {"ids": {}, "names": {}}
+            entity_map = {"ids": {}, "entities": {}}
             _process_backup_files(tmp, ["Bob"], entity_map)
             save_entity_map(entity_map, map_path)
 
@@ -269,48 +270,48 @@ class TestProcessThenRestore:
 
 
 # ---------------------------------------------------------------------------
-# redact_names_in_text placeholder reuse (stable partial-sanitize)
+# redact_entities_in_text placeholder reuse (stable partial-sanitize)
 # ---------------------------------------------------------------------------
 
 class TestRedactNamesReuse:
 
     def test_reuses_existing_placeholder_for_known_name(self):
-        """A name already in name_map keeps its placeholder."""
-        name_map = {"<entity_3>": "Zavala"}
-        redact_names_in_text("Hello Zavala", ["Zavala"], name_map)
+        """A name already in entities_map keeps its placeholder."""
+        entities_map = {"<entity_3>": "Zavala"}
+        redact_entities_in_text("Hello Zavala", ["Zavala"], entities_map)
         # Map unchanged: still <entity_3>, no <entity_1> created.
-        assert name_map == {"<entity_3>": "Zavala"}
+        assert entities_map == {"<entity_3>": "Zavala"}
 
     def test_assigns_next_free_index_skipping_used(self):
-        """New names skip indices already taken by entries in name_map."""
-        name_map = {"<entity_1>": "Alice", "<entity_3>": "Zavala"}
-        redact_names_in_text("Bob and Dan", ["Bob", "Dan"], name_map)
+        """New names skip indices already taken by entries in entities_map."""
+        entities_map = {"<entity_1>": "Alice", "<entity_3>": "Zavala"}
+        redact_entities_in_text("Bob and Dan", ["Bob", "Dan"], entities_map)
         # 1 and 3 are used; Bob takes 2, Dan takes 4.
-        assert name_map["<entity_1>"] == "Alice"
-        assert name_map["<entity_2>"] == "Bob"
-        assert name_map["<entity_3>"] == "Zavala"
-        assert name_map["<entity_4>"] == "Dan"
+        assert entities_map["<entity_1>"] == "Alice"
+        assert entities_map["<entity_2>"] == "Bob"
+        assert entities_map["<entity_3>"] == "Zavala"
+        assert entities_map["<entity_4>"] == "Dan"
 
     def test_case_insensitive_reuse(self):
-        """Existing placeholder is reused even if redact_names casing differs."""
-        name_map = {"<entity_5>": "Zavala"}
-        result = redact_names_in_text("hi zavala and ZAVALA", ["zavala"], name_map)
+        """Existing placeholder is reused even if redact_entities casing differs."""
+        entities_map = {"<entity_5>": "Zavala"}
+        result = redact_entities_in_text("hi zavala and ZAVALA", ["zavala"], entities_map)
         assert "<entity_5>" in result
         assert "zavala" not in result.lower().replace("<entity_5>", "")
-        assert name_map == {"<entity_5>": "Zavala"}
+        assert entities_map == {"<entity_5>": "Zavala"}
 
-    def test_stable_after_reordering_redact_names(self):
-        """Reordering the redact_names list does NOT renumber placeholders."""
-        name_map = {"<entity_1>": "Alice", "<entity_2>": "Bob"}
+    def test_stable_after_reordering_redact_entities(self):
+        """Reordering the redact_entities list does NOT renumber placeholders."""
+        entities_map = {"<entity_1>": "Alice", "<entity_2>": "Bob"}
         # Original order was [Alice, Bob]; new run uses [Bob, Alice].
-        redact_names_in_text("Alice met Bob", ["Bob", "Alice"], name_map)
+        redact_entities_in_text("Alice met Bob", ["Bob", "Alice"], entities_map)
         # Still <entity_1>: Alice and <entity_2>: Bob (not swapped).
-        assert name_map == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
+        assert entities_map == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
 
     def test_replaces_using_reused_placeholder(self):
         """The actual content replacement uses the reused placeholder."""
-        name_map = {"<entity_3>": "Zavala"}
-        result = redact_names_in_text("alias: Zavala's room", ["Zavala"], name_map)
+        entities_map = {"<entity_3>": "Zavala"}
+        result = redact_entities_in_text("alias: Zavala's room", ["Zavala"], entities_map)
         assert result == "alias: <entity_3>'s room"
 
 
@@ -327,7 +328,7 @@ class TestPartialSanitization:
             content = "alias: <entity_3>'s door\nmessage: Zavala opened the door\n"
             path = _write_file(tmp, "auto.yaml", content)
 
-            entity_map = {"ids": {}, "names": {"<entity_3>": "Zavala"}}
+            entity_map = {"ids": {}, "entities": {"<entity_3>": "Zavala"}}
             _process_backup_files(tmp, ["Zavala"], entity_map)
 
             result = _read_file(path)
@@ -335,16 +336,16 @@ class TestPartialSanitization:
             assert "Zavala" not in result
             assert result.count("<entity_3>") == 2
             # Map unchanged — same placeholder, no new entry.
-            assert entity_map["names"] == {"<entity_3>": "Zavala"}
+            assert entity_map["entities"] == {"<entity_3>": "Zavala"}
 
     def test_uses_existing_map_for_consistent_placeholders(self):
-        """A name in redact_names re-uses its existing placeholder rather than
+        """A string in redact_entities re-uses its existing placeholder rather than
         being assigned a new one based on list position."""
         with tempfile.TemporaryDirectory() as tmp:
             path = _write_file(tmp, "auto.yaml", "alias: Zavala's door\n")
             # Map has Zavala at <entity_3>, even though it'd be index 1
-            # if we just enumerated redact_names.
-            entity_map = {"ids": {}, "names": {"<entity_3>": "Zavala"}}
+            # if we just enumerated redact_entities.
+            entity_map = {"ids": {}, "entities": {"<entity_3>": "Zavala"}}
             _process_backup_files(tmp, ["Zavala"], entity_map)
             assert _read_file(path) == "alias: <entity_3>'s door\n"
 
@@ -355,7 +356,7 @@ class TestPartialSanitization:
             path = _write_file(tmp, "auto.yaml", content)
             mtime_before = os.path.getmtime(path)
 
-            entity_map = {"ids": {}, "names": {"<entity_3>": "Zavala"}}
+            entity_map = {"ids": {}, "entities": {"<entity_3>": "Zavala"}}
             _process_backup_files(tmp, ["Zavala"], entity_map)
 
             assert _read_file(path) == content
@@ -364,8 +365,31 @@ class TestPartialSanitization:
 
 
 # ---------------------------------------------------------------------------
-# _run_sanitize: loads existing entity_map, processes both dirs, saves merged
+# _run_sanitize: loads existing entity_map, processes sanitize dirs, saves merged
 # ---------------------------------------------------------------------------
+
+def _patch_sanitize_dirs(
+  monkeypatch,
+  *,
+  dest,
+  entity_map_path,
+  redact_entities,
+  comments=None,
+  dashboards=None,
+) -> None:
+  '''Point sanitize/restore at temp dirs; omit comments/dashboards to skip them.'''
+  base = Path(dest).parent
+  monkeypatch.setattr('home_assistant_backup.DEST', str(dest))
+  monkeypatch.setattr(
+    'home_assistant_backup.COMMENTS_DIR',
+    str(comments if comments is not None else base / 'missing_comments'),
+  )
+  monkeypatch.setattr(
+    'home_assistant_backup.DASHBOARDS_DIR',
+    str(dashboards if dashboards is not None else base / 'missing_dashboards'),
+  )
+  monkeypatch.setattr('home_assistant_backup.ENTITY_MAP_PATH', entity_map_path)
+  monkeypatch.setattr('home_assistant_backup.REDACT_ENTITIES', redact_entities)
 
 class TestRunSanitize:
 
@@ -378,16 +402,19 @@ class TestRunSanitize:
         comments.mkdir()
 
         # Pre-existing map with Zavala pinned to <entity_3>.
-        save_entity_map({"ids": {}, "names": {"<entity_3>": "Zavala"}}, map_path)
+        save_entity_map({"ids": {}, "entities": {"<entity_3>": "Zavala"}}, map_path)
         (dest / "auto.yaml").write_text(
             "alias: Zavala's door\nmessage: <entity_3> opened it\n"
         )
         (comments / "ref.yaml").write_text("note: Zavala's room\n")
 
-        monkeypatch.setattr("home_assistant_backup.DEST", str(dest))
-        monkeypatch.setattr("home_assistant_backup.COMMENTS_DIR", str(comments))
-        monkeypatch.setattr("home_assistant_backup.ENTITY_MAP_PATH", map_path)
-        monkeypatch.setattr("home_assistant_backup.REDACT_NAMES", ["Zavala"])
+        _patch_sanitize_dirs(
+            monkeypatch,
+            dest=dest,
+            comments=comments,
+            entity_map_path=map_path,
+            redact_entities=["Zavala"],
+        )
 
         _run_sanitize()
 
@@ -397,7 +424,7 @@ class TestRunSanitize:
         assert (comments / "ref.yaml").read_text() == "note: <entity_3>'s room\n"
         # Map preserved; no <entity_1> created.
         final = load_entity_map(map_path)
-        assert final["names"] == {"<entity_3>": "Zavala"}
+        assert final["entities"] == {"<entity_3>": "Zavala"}
 
     def test_works_without_existing_map(self, monkeypatch, tmp_path):
         """First-time sanitize (no entity_map.yaml yet) works and writes one."""
@@ -406,18 +433,18 @@ class TestRunSanitize:
         dest.mkdir()
         (dest / "auto.yaml").write_text("alias: Alice's morning\n")
 
-        monkeypatch.setattr("home_assistant_backup.DEST", str(dest))
-        monkeypatch.setattr(
-            "home_assistant_backup.COMMENTS_DIR", str(tmp_path / "missing")
+        _patch_sanitize_dirs(
+            monkeypatch,
+            dest=dest,
+            entity_map_path=map_path,
+            redact_entities=["Alice"],
         )
-        monkeypatch.setattr("home_assistant_backup.ENTITY_MAP_PATH", map_path)
-        monkeypatch.setattr("home_assistant_backup.REDACT_NAMES", ["Alice"])
 
         _run_sanitize()
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
         assert map_path.exists()
-        assert load_entity_map(map_path)["names"] == {"<entity_1>": "Alice"}
+        assert load_entity_map(map_path)["entities"] == {"<entity_1>": "Alice"}
 
     def test_skips_missing_comments_dir(self, monkeypatch, tmp_path):
         """Sanitize should not error if COMMENTS_DIR doesn't exist."""
@@ -426,36 +453,49 @@ class TestRunSanitize:
         dest.mkdir()
         (dest / "auto.yaml").write_text("alias: Alice's morning\n")
 
-        monkeypatch.setattr("home_assistant_backup.DEST", str(dest))
-        monkeypatch.setattr(
-            "home_assistant_backup.COMMENTS_DIR", str(tmp_path / "does_not_exist")
+        _patch_sanitize_dirs(
+            monkeypatch,
+            dest=dest,
+            comments=tmp_path / "does_not_exist",
+            entity_map_path=map_path,
+            redact_entities=["Alice"],
         )
-        monkeypatch.setattr("home_assistant_backup.ENTITY_MAP_PATH", map_path)
-        monkeypatch.setattr("home_assistant_backup.REDACT_NAMES", ["Alice"])
 
         # Should not raise.
         _run_sanitize()
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
 
-    def test_processes_both_dirs_with_separate_files(self, monkeypatch, tmp_path):
-        """Sanitize accumulates findings across both DEST and COMMENTS_DIR."""
+    def test_processes_all_sanitize_dirs(self, monkeypatch, tmp_path):
+        """Sanitize accumulates findings across DEST, COMMENTS_DIR, and dashboards/."""
         dest = tmp_path / "backup"
         comments = tmp_path / "comments"
+        dashboards = tmp_path / "dashboards"
         map_path = tmp_path / "entity_map.yaml"
         dest.mkdir()
         comments.mkdir()
+        dashboards.mkdir()
 
         (dest / "auto.yaml").write_text("alias: Alice morning\n")
         (comments / "ref.yaml").write_text("note: Bob evening\n")
+        (dashboards / "view.yaml").write_text("title: Carol dashboard\n")
 
-        monkeypatch.setattr("home_assistant_backup.DEST", str(dest))
-        monkeypatch.setattr("home_assistant_backup.COMMENTS_DIR", str(comments))
-        monkeypatch.setattr("home_assistant_backup.ENTITY_MAP_PATH", map_path)
-        monkeypatch.setattr("home_assistant_backup.REDACT_NAMES", ["Alice", "Bob"])
+        _patch_sanitize_dirs(
+            monkeypatch,
+            dest=dest,
+            comments=comments,
+            dashboards=dashboards,
+            entity_map_path=map_path,
+            redact_entities=["Alice", "Bob", "Carol"],
+        )
 
         _run_sanitize()
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1> morning\n"
         assert (comments / "ref.yaml").read_text() == "note: <entity_2> evening\n"
+        assert (dashboards / "view.yaml").read_text() == "title: <entity_3> dashboard\n"
         final = load_entity_map(map_path)
-        assert final["names"] == {"<entity_1>": "Alice", "<entity_2>": "Bob"}
+        assert final["entities"] == {
+            "<entity_1>": "Alice",
+            "<entity_2>": "Bob",
+            "<entity_3>": "Carol",
+        }

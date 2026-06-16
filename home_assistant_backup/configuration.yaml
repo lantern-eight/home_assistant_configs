@@ -10,16 +10,24 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-# Cyberdeck printer farm dashboard (YAML mode)
+# Dashboards
 lovelace:
   mode: storage
   dashboards:
+    # Cyberdeck printer farm dashboard (YAML mode)
     cyber-deck:
       mode: yaml
       title: Farm Control
       icon: mdi:printer-3d
       show_in_sidebar: true
       filename: dashboards/cyberdeck/dashboard.yaml
+    # General Home Mobile dashboard (YAML mode)
+    general-home:
+      mode: yaml
+      title: Home
+      icon: mdi:home
+      show_in_sidebar: true
+      filename: dashboards/general_home_mobile/dashboard.yaml
 
 # ---------------------------
 # Custom added by me below this line
@@ -64,3 +72,35 @@ rest_command:
     url: "http://<entity_12>/api/v1/spool?filament.name={{ filament_name | urlencode }}&allow_archived=false"
     method: GET
     content_type: "application/json"
+
+# =============================================================================
+# HA configuration.yaml additions for the General Home Mobile dashboard
+# =============================================================================
+# Merge these blocks into your HA configuration.yaml, then restart.
+# =============================================================================
+
+# --- 3. REST sensor for UV forecast ---
+rest:
+  - resource: !secret openmeteo_uv_url
+    scan_interval: 86400
+    sensor:
+      - name: "OpenMeteo Hourly UV Forecast"
+        unique_id: openmeteo_hourly_uv_forecast
+        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
+        unit_of_measurement: "UV index"
+        icon: mdi:sun-wireless
+        json_attributes_path: "$.hourly"
+        json_attributes:
+          - time
+          - uv_index
+
+# --- 4. Input boolean helpers ---
+# Create in Settings > Devices & Services > Helpers, or add to configuration.yaml:
+#
+input_boolean:
+  cond_bedtime_doors:
+    name: "Conditional: Bedtime Doors"
+    icon: mdi:door-open
+  cond_uv_index:
+    name: "Conditional: UV Index"
+    icon: mdi:weather-sunny-alert

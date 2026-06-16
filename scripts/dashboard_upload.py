@@ -11,15 +11,16 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-  'Usage: uv run python dashboard_upload.py [-d] [-l LEVEL] [-n] [-h]\n'
+  'Usage: uv run python scripts/dashboard_upload.py [-d] [-l LEVEL] [-n] [-h]\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
   '  -n, --no-reload  Skip HA lovelace reload after upload\n'
   '  -h, --help       Show this help'
 )
 
-CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
-DASHBOARD_DIR = Path(__file__).resolve().parent / 'dashboards' / 'Material-Design-3-Dynamic-Mobile-Dashboard'
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = REPO_ROOT / 'config.yaml'
+DASHBOARD_DIR = REPO_ROOT / 'dashboards' / 'Material-Design-3-Dynamic-Mobile-Dashboard'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
 UPLOAD_FILES = [

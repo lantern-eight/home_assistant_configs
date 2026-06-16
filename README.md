@@ -36,7 +36,7 @@ long-lived access token for the HA REST API. Both `config.yaml` and
 | `smb_share` | SMB share name (usually `config`) |
 | `smb_path` | Optional sub-path within the share |
 | `smb_user` / `smb_password` | SMB credentials |
-| `redact_names` | Names to redact from backup files |
+| `redact_entities` | Strings to redact from backup files |
 | `token` | HA long-lived access token (for API calls) |
 
 ## Backup
@@ -46,29 +46,29 @@ for safe version control. An entity map is saved so redaction can be reversed.
 
 ```bash
 # Backup + sanitize (default, with no flags)
-uv run python home_assistant_backup.py
+uv run python scripts/home_assistant_backup.py
 
 # SMB pull only, no redaction pass
 # - backup
-uv run python home_assistant_backup.py -b
+uv run python scripts/home_assistant_backup.py -b
 
 # Redaction pass only, no SMB pull
-# (processes both home_assistant_backup/ and home_assistant_backup_comments/)
+# (processes home_assistant_backup/, home_assistant_backup_comments/, and dashboards/)
 # - sanitize
-uv run python home_assistant_backup.py -s
+uv run python scripts/home_assistant_backup.py -s
 
 # Restore redacted files to original values using entity_map.yaml
 # - restore
-uv run python home_assistant_backup.py -r
+uv run python scripts/home_assistant_backup.py -r
 
 # Debug logging
-uv run python home_assistant_backup.py -d
+uv run python scripts/home_assistant_backup.py -d
 
 # Set a specific log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-uv run python home_assistant_backup.py -l DEBUG
+uv run python scripts/home_assistant_backup.py -l DEBUG
 
 # Help
-uv run python home_assistant_backup.py -h
+uv run python scripts/home_assistant_backup.py -h
 ```
 
 | Flag | Long form | Purpose |
@@ -102,18 +102,18 @@ here for reference as it's a good dashboard, maybe in the future.
 
 ### Uploading to Home Assistant
 
-`dashboard_upload.py` pushes `dashboard.yaml` to the HA config share over SMB
+`scripts/dashboard_upload.py` pushes `dashboard.yaml` to the HA config share over SMB
 using the same credentials as the backup script.
 
 ```bash
 # Upload and trigger lovelace reload
-uv run python dashboard_upload.py
+uv run python scripts/dashboard_upload.py
 
 # Upload without reload
-uv run python dashboard_upload.py -n
+uv run python scripts/dashboard_upload.py -n
 
 # Debug mode
-uv run python dashboard_upload.py -d
+uv run python scripts/dashboard_upload.py -d
 ```
 
 After uploading, HA detects the file change and shows a "Refresh" prompt in the
@@ -136,15 +136,15 @@ WebRTC Camera, Lunar Phase Card, Weather Forecast Extended.
 
 ## Entity Discovery
 
-`ha_entity_discovery.py` queries the HA REST API to pull all entities and areas,
+`scripts/ha_entity_discovery.py` queries the HA REST API to pull all entities and areas,
 then writes the results to `ha_entities.json` (gitignored) and prints a
 summary grouped by area and domain.
 
 ```bash
-uv run python ha_entity_discovery.py
+uv run python scripts/ha_entity_discovery.py
 
 # Debug mode
-uv run python ha_entity_discovery.py -d
+uv run python scripts/ha_entity_discovery.py -d
 ```
 
 This avoids repeated large API calls filling up context when working on dashboard
@@ -169,14 +169,19 @@ uv run pytest tests/ -v
 .
 ├── config.example.yaml              # Template for config.yaml (gitignored)
 ├── pyproject.toml                   # Python project config (uv/pip)
-├── utils.py                         # Shared logging (JSON + colored TTY output)
+├── conftest.py                      # Adds scripts/ to Python path for tests
 │
-├── home_assistant_backup.py         # Pull HA config over SMB, redact, shorten IDs
-├── ha_entity_discovery.py           # Query HA API for entities/areas -> JSON
-├── dashboard_customize.py           # Bulk entity/room substitution for dashboard
-├── dashboard_upload.py              # Push dashboard.yaml to HA over SMB
+├── scripts/                         # All Python scripts
+│   ├── utils.py                     # Shared logging (JSON + colored TTY output)
+│   ├── home_assistant_backup.py     # Pull HA config over SMB, redact, shorten IDs
+│   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
+│   ├── dashboard_upload.py          # Push dashboard.yaml to HA over SMB
+│   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
+│   └── general_home_sync.py         # Sync General Home Mobile dashboard to HA
 │
 ├── dashboards/                      # Dashboards live here
+│   ├── cyberdeck/                   # 3D printer farm dashboard
+│   └── general_home_mobile/         # Mobile-first general home dashboard
 │
 ├── home_assistant_backup/           # Backup of HA config (redacted)
 │   ├── configuration.yaml

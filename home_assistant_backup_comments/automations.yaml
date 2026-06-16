@@ -493,3 +493,49 @@ actions:
             - 921...86f
             - 83e...943
             - d9e...17d
+
+# =============================================================================
+# HA configuration.yaml additions for the General Home Mobile dashboard
+# =============================================================================
+# --- 5. Automations to toggle conditional card helpers ---
+# Create in Settings > Automations, or add to automations.yaml:
+#
+- id: 'cond_bedtime_doors_on'
+  alias: "Cond: Bedtime Doors ON"
+  trigger:
+    - platform: time
+      at: "19:30:00"
+  action:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.cond_bedtime_doors
+
+- id: 'cond_bedtime_doors_off'
+  alias: "Cond: Bedtime Doors OFF"
+  trigger:
+    - platform: time
+      at: "07:00:00"
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.cond_bedtime_doors
+
+- id: 'cond_uv_index_on'
+  alias: "Cond: UV Index ON"
+  trigger:
+    - platform: time
+      at: "07:00:00"
+  action:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.cond_uv_index
+
+- id: 'cond_uv_index_off'
+  alias: "Cond: UV Index OFF"
+  trigger:
+    - platform: time
+      at: "15:00:00"
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.cond_uv_index
