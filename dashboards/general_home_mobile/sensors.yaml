@@ -81,3 +81,79 @@
         active_count: >
           {{ expand('input_boolean.cond_bedtime_doors', 'input_boolean.cond_uv_index')
              | selectattr('state', 'eq', 'on') | list | length }}
+
+# Room light toggles (Rooms pop-up)
+# ---------------------------------
+# Uses HA area assignments. Pop-up room → area ID (from entity discovery):
+#   Living Room  → living_room   (no lights in area)
+#   Basement     → basement      (printer chamber lights only)
+#   Main Suite   → main_suite    (ceiling + lamps; excludes *_led presence LEDs)
+#   <entity_3>'s Room → <entity_3>_s_room (no lights in area)
+#   <entity_4>'s Room → <entity_4>_s_room (light.<entity_4>s_room)
+#   Kitchen      → kitchen       (light.kitchen_table_light)
+# <entity_11> ceiling light is in <entity_11> area (not basement pop-up).
+
+- switch:
+    - name: "Basement Lights"
+      unique_id: room_lights_basement
+      icon: mdi:lightbulb
+      availability: >
+        {{ area_entities('basement') | select('match', '^light\\.') | list | length > 0 }}
+      state: >
+        {{ area_entities('basement') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+      turn_on:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ area_entities('basement') | select('match', '^light\\.') | list }}"
+      turn_off:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ area_entities('basement') | select('match', '^light\\.') | list }}"
+
+    - name: "Main Suite Lights"
+      unique_id: room_lights_main_suite
+      icon: mdi:lightbulb
+      availability: >
+        {{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list | length > 0 }}
+      state: >
+        {{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | select('is_state', 'on') | list | length > 0 }}
+      turn_on:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list }}"
+      turn_off:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list }}"
+
+    - name: "Kitchen Lights"
+      unique_id: room_lights_kitchen
+      icon: mdi:lightbulb
+      availability: >
+        {{ area_entities('kitchen') | select('match', '^light\\.') | list | length > 0 }}
+      state: >
+        {{ area_entities('kitchen') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+      turn_on:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ area_entities('kitchen') | select('match', '^light\\.') | list }}"
+      turn_off:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ area_entities('kitchen') | select('match', '^light\\.') | list }}"
+
+    - name: "<entity_4>s Room Lights"
+      unique_id: room_lights_<entity_4>_s_room
+      icon: mdi:lightbulb
+      availability: >
+        {{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list | length > 0 }}
+      state: >
+        {{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+      turn_on:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list }}"
+      turn_off:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list }}"

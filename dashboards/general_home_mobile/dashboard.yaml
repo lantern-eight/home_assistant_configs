@@ -575,20 +575,189 @@ views:
                     tap_action:
                       action: navigate
                       navigation_path: /general-home/home
-                  - type: custom:mushroom-template-card
-                    primary: "Basement"
-                    icon: mdi:stairs-down
-                    icon_color: indigo
-                    tap_action:
-                      action: navigate
-                      navigation_path: /general-home/home
-                  - type: custom:mushroom-template-card
-                    primary: "Main Suite"
-                    icon: mdi:bed-king
-                    icon_color: deep-purple
-                    tap_action:
-                      action: navigate
-                      navigation_path: /general-home/home
+                  - type: custom:stack-in-card
+                    mode: horizontal
+                    keep:
+                      border_radius: true
+                      background: true
+                      box_shadow: true
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            width: 100%;
+                          }
+                        hui-horizontal-stack$: |
+                          #root {
+                            display: flex !important;
+                            width: 100% !important;
+                            align-items: center !important;
+                          }
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: "Kitchen"
+                        icon: mdi:stove
+                        icon_color: orange
+                        layout: horizontal
+                        tap_action:
+                          action: navigate
+                          navigation_path: /general-home/home
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 1 1 auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              width: 100%;
+                            }
+                      - type: custom:mushroom-entity-card
+                        entity: switch.kitchen_lights
+                        primary_info: none
+                        secondary_info: none
+                        icon: mdi:lightbulb
+                        layout: horizontal
+                        tap_action:
+                          action: toggle
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 0 0 auto !important;
+                              margin-left: auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              padding: 0 16px 0 8px;
+                              width: auto;
+                              min-width: 44px;
+                              --icon-size: 22px;
+                            }
+                  - type: custom:stack-in-card
+                    mode: horizontal
+                    keep:
+                      border_radius: true
+                      background: true
+                      box_shadow: true
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            width: 100%;
+                          }
+                        hui-horizontal-stack$: |
+                          #root {
+                            display: flex !important;
+                            width: 100% !important;
+                            align-items: center !important;
+                          }
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: "Basement"
+                        icon: mdi:stairs-down
+                        icon_color: indigo
+                        layout: horizontal
+                        tap_action:
+                          action: navigate
+                          navigation_path: /general-home/home
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 1 1 auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              width: 100%;
+                            }
+                      - type: custom:mushroom-entity-card
+                        entity: switch.basement_lights
+                        primary_info: none
+                        secondary_info: none
+                        icon: mdi:lightbulb
+                        layout: horizontal
+                        tap_action:
+                          action: toggle
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 0 0 auto !important;
+                              margin-left: auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              padding: 0 16px 0 8px;
+                              width: auto;
+                              min-width: 44px;
+                              --icon-size: 22px;
+                            }
+                  - type: custom:stack-in-card
+                    mode: horizontal
+                    keep:
+                      border_radius: true
+                      background: true
+                      box_shadow: true
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            width: 100%;
+                          }
+                        hui-horizontal-stack$: |
+                          #root {
+                            display: flex !important;
+                            width: 100% !important;
+                            align-items: center !important;
+                          }
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: "Main Suite"
+                        icon: mdi:bed-king
+                        icon_color: deep-purple
+                        layout: horizontal
+                        tap_action:
+                          action: navigate
+                          navigation_path: /general-home/home
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 1 1 auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              width: 100%;
+                            }
+                      - type: custom:mushroom-entity-card
+                        entity: switch.main_suite_lights
+                        primary_info: none
+                        secondary_info: none
+                        icon: mdi:lightbulb
+                        layout: horizontal
+                        tap_action:
+                          action: toggle
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 0 0 auto !important;
+                              margin-left: auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              padding: 0 16px 0 8px;
+                              width: auto;
+                              min-width: 44px;
+                              --icon-size: 22px;
+                            }
                   - type: custom:mushroom-template-card
                     primary: "<entity_3>'s Room"
                     icon: mdi:bed
@@ -596,13 +765,67 @@ views:
                     tap_action:
                       action: navigate
                       navigation_path: /general-home/home
-                  - type: custom:mushroom-template-card
-                    primary: "<entity_4>'s Room"
-                    icon: mdi:bed
-                    icon_color: purple
-                    tap_action:
-                      action: navigate
-                      navigation_path: /general-home/home
+                  - type: custom:stack-in-card
+                    mode: horizontal
+                    keep:
+                      border_radius: true
+                      background: true
+                      box_shadow: true
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            width: 100%;
+                          }
+                        hui-horizontal-stack$: |
+                          #root {
+                            display: flex !important;
+                            width: 100% !important;
+                            align-items: center !important;
+                          }
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: "<entity_4>'s Room"
+                        icon: mdi:bed
+                        icon_color: purple
+                        layout: horizontal
+                        tap_action:
+                          action: navigate
+                          navigation_path: /general-home/home
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 1 1 auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              width: 100%;
+                            }
+                      - type: custom:mushroom-entity-card
+                        entity: switch.<entity_4>s_room_lights
+                        primary_info: none
+                        secondary_info: none
+                        icon: mdi:lightbulb
+                        layout: horizontal
+                        tap_action:
+                          action: toggle
+                        card_mod:
+                          style: |
+                            :host {
+                              flex: 0 0 auto !important;
+                              margin-left: auto !important;
+                            }
+                            ha-card {
+                              border: none !important;
+                              box-shadow: none !important;
+                              margin: 0;
+                              padding: 0 16px 0 8px;
+                              width: auto;
+                              min-width: 44px;
+                              --icon-size: 22px;
+                            }
 
           # --- More pop-up ---
           - type: custom:bubble-card
