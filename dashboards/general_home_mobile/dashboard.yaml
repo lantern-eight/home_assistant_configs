@@ -505,16 +505,46 @@ views:
           - type: custom:calendar-card-pro
             entities:
               - entity: calendar.<entity_15>_calendar
-              - entity: calendar.birthdays
-              - entity: calendar.conventions
-              - entity: calendar.<entity_14>_game_nights
-              - entity: calendar.piano
+                accent_color: '#03a9f4'
               - entity: calendar.unknown
+                label: '🔹'
+                accent_color: '#2196f3'
+              - entity: calendar.birthdays
+                label: '🎂'
+                accent_color: '#e91e63'
+              - entity: calendar.conventions
+                label: '🎟️'
+                accent_color: '#9c27b0'
+              - entity: calendar.<entity_14>_game_nights
+                label: '🎲'
+                accent_color: '#4caf50'
+              - entity: calendar.piano
+                label: '🎹'
+                accent_color: '#009688'
               - entity: calendar.unknown_2
+                accent_color: '#ff5722'
             days_to_show: 7
+            compact_days_to_show: 3
+            show_empty_days: false
+            split_multiday_events: true
             show_past_events: false
-            hide_empty_days: true
-            show_multi_day_events_on_each_day: true
+            show_time: true
+            show_location: true
+            show_countdown: true
+            show_progress_bar: true
+            event_background_opacity: 15
+            vertical_line_width: 3px
+            today_indicator: true
+            weekend_weekday_color: var(--secondary-text-color)
+            weekend_day_color: var(--secondary-text-color)
+            day_separator_width: 1px
+            day_separator_color: var(--divider-color)
+            week_separator_width: 2px
+            week_separator_color: '#03a9f450'
+            month_separator_width: 3px
+            month_separator_color: var(--primary-text-color)
+            tap_action:
+              action: expand
             card_mod:
               style: |
                 ha-card {
