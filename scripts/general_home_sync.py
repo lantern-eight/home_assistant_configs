@@ -1,4 +1,4 @@
-"""Sync Cyberdeck dashboard, theme, and sensors to Home Assistant via SMB."""
+"""Sync General Home Mobile dashboard and sensors to Home Assistant via SMB."""
 
 import logging
 import sys
@@ -12,21 +12,21 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-  'Usage: uv run python cyberdeck_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
+  'Usage: uv run python scripts/general_home_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-  '  -r, --restart    Restart HA after sync (required on first deploy)\n'
+  '  -r, --restart    Restart HA after sync (required on first deploy or sensor changes)\n'
   '  -h, --help       Show this help'
 )
 
-CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
-CYBERDECK_DIR = Path(__file__).resolve().parent / 'dashboards' / 'cyberdeck'
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = REPO_ROOT / 'config.yaml'
+DASHBOARD_DIR = REPO_ROOT / 'dashboards' / 'general_home_mobile'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
 FILE_MAP = {
-  'dashboard.yaml': 'dashboards/cyberdeck/dashboard.yaml',
-  'theme.yaml':     'themes/cyberdeck/cyberdeck.yaml',
-  'sensors.yaml':   'template_sensors/printer_farm_sensors.yaml',
+  'dashboard.yaml': 'dashboards/general_home_mobile/dashboard.yaml',
+  'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
 }
 
 
@@ -84,7 +84,7 @@ def _sync_files(cfg: dict) -> int:
 
   uploaded = 0
   for local_name, remote_rel in FILE_MAP.items():
-    local_path = CYBERDECK_DIR / local_name
+    local_path = DASHBOARD_DIR / local_name
     if not local_path.exists():
       LOGGER.warning('Local file missing, skipping', extra={'file': str(local_path)})
       continue
@@ -104,23 +104,6 @@ def _sync_files(cfg: dict) -> int:
 
   smbclient.reset_connection_cache()
   return uploaded
-
-
-def _reload_themes(token: str) -> bool:
-  if not token or token == 'your_token_here':
-    LOGGER.warning('No valid HA token; skipping theme reload')
-    return False
-  headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-  try:
-    resp = requests.post(f'{HA_BASE_URL}/api/services/frontend/reload_themes', headers=headers, timeout=15)
-    if resp.status_code == 200:
-      LOGGER.info('Themes reloaded')
-      return True
-    LOGGER.warning('Theme reload failed', extra={'status': resp.status_code})
-    return False
-  except requests.RequestException as e:
-    LOGGER.warning('Theme reload error', extra={'error': str(e)})
-    return False
 
 
 def _restart_ha(token: str) -> bool:
@@ -143,16 +126,15 @@ def _restart_ha(token: str) -> bool:
 
 def main(argv: list[str] | None = None) -> None:
   """
-  Sync Cyberdeck printer farm dashboard to Home Assistant.
+  Sync General Home Mobile dashboard to Home Assistant.
 
-  Uploads dashboard.yaml, theme, and template sensors via SMB,
-  then reloads themes. Use --restart on first deploy or after
-  editing configuration.yaml / template sensors.
+  Uploads dashboard.yaml and template sensors via SMB.
+  Use --restart on first deploy or after editing sensors/configuration.
 
   Example:
-    > uv run python cyberdeck_sync.py           # sync files + reload themes
-    > uv run python cyberdeck_sync.py -r         # sync + restart HA
-    > uv run python cyberdeck_sync.py -d         # sync with debug logging
+    > uv run python general_home_sync.py           # sync dashboard only
+    > uv run python general_home_sync.py -r         # sync + restart HA
+    > uv run python general_home_sync.py -d         # sync with debug logging
   """
   argv = argv if argv is not None else sys.argv[1:]
 
@@ -178,20 +160,19 @@ def main(argv: list[str] | None = None) -> None:
     if opt in ('-r', '--restart'):
       do_restart = True
 
-  if not CYBERDECK_DIR.exists():
-    LOGGER.error('Cyberdeck directory not found at %s', CYBERDECK_DIR)
+  if not DASHBOARD_DIR.exists():
+    LOGGER.error('Dashboard directory not found at %s', DASHBOARD_DIR)
     sys.exit(1)
 
   cfg = _load_config()
 
-  LOGGER.info('Syncing Cyberdeck dashboard to HA')
+  LOGGER.info('Syncing General Home Mobile dashboard to HA')
   count = _sync_files(cfg)
   LOGGER.info('Sync complete', extra={'files_synced': count})
 
   if do_restart:
     _restart_ha(cfg['token'])
   else:
-    _reload_themes(cfg['token'])
     LOGGER.info('Dashboard YAML reloads automatically on next page visit')
 
 

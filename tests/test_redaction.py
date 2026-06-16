@@ -1,8 +1,8 @@
-"""Tests for the pure text-transformation functions: shorten_ids, redact_names_in_text, neutralize_pronouns, normalize_yaml_escapes."""
+"""Tests for the pure text-transformation functions: shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes."""
 
 import pytest
 
-from home_assistant_backup import shorten_ids, redact_names_in_text, neutralize_pronouns, normalize_yaml_escapes
+from home_assistant_backup import shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes
 
 
 # ---------------------------------------------------------------------------
@@ -58,6 +58,19 @@ class TestShortenIds:
     result = shorten_ids(yaml_content)
     assert result == "  unique_id: abc...678\n  name: Light"
 
+  def test_hyphenated_uuid_is_shortened(self):
+    uuid = "00000000-0000-4000-8000-000000000001"
+    result = shorten_ids(f"unique_id: {uuid}\n")
+    assert result == "unique_id: 000...001\n"
+    assert uuid not in result
+
+  def test_multiple_uuids_in_yaml(self):
+    uuid1 = "00000000-0000-4000-8000-000000000001"
+    uuid2 = "00000000-0000-4000-8000-000000000002"
+    text = f"unique_id: {uuid1}\nother_id: {uuid2}\n"
+    result = shorten_ids(text)
+    assert result == "unique_id: 000...001\nother_id: 000...002\n"
+
   def test_empty_string(self):
     assert shorten_ids("") == ""
 
@@ -81,57 +94,57 @@ class TestShortenIds:
 
 
 # ---------------------------------------------------------------------------
-# redact_names_in_text
+# redact_entities_in_text
 # ---------------------------------------------------------------------------
 
 class TestRedactNamesInText:
 
   def test_simple_name_redaction(self):
-    result = redact_names_in_text("Hello Alice", ["Alice"])
+    result = redact_entities_in_text("Hello Alice", ["Alice"])
     assert result == "Hello <entity_1>"
 
   def test_case_insensitive(self):
-    result = redact_names_in_text("hello alice and ALICE", ["Alice"])
+    result = redact_entities_in_text("hello alice and ALICE", ["Alice"])
     assert result == "hello <entity_1> and <entity_1>"
 
   def test_multiple_names(self):
-    result = redact_names_in_text("Alice and Bob went home", ["Alice", "Bob"])
+    result = redact_entities_in_text("Alice and Bob went home", ["Alice", "Bob"])
     assert result == "<entity_1> and <entity_2> went home"
 
   def test_name_in_entity_id(self):
-    result = redact_names_in_text("person.alice_phone", ["alice"])
+    result = redact_entities_in_text("person.alice_phone", ["alice"])
     assert result == "person.<entity_1>_phone"
 
   def test_empty_names_list(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, []) == text
+    assert redact_entities_in_text(text, []) == text
 
   def test_none_in_names_list(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, [None, "Alice"]) == "Hello <entity_2>"
+    assert redact_entities_in_text(text, [None, "Alice"]) == "Hello <entity_2>"
 
   def test_whitespace_only_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["  ", "Alice"]) == "Hello <entity_2>"
+    assert redact_entities_in_text(text, ["  ", "Alice"]) == "Hello <entity_2>"
 
   def test_empty_string_name_skipped(self):
     text = "Hello Alice"
-    assert redact_names_in_text(text, ["", "Alice"]) == "Hello <entity_2>"
+    assert redact_entities_in_text(text, ["", "Alice"]) == "Hello <entity_2>"
 
   def test_name_with_special_regex_chars(self):
-    result = redact_names_in_text("User: alice.b", ["alice.b"])
+    result = redact_entities_in_text("User: alice.b", ["alice.b"])
     assert result == "User: <entity_1>"
 
   def test_preserves_surrounding_text(self):
-    result = redact_names_in_text("sensor.alice_room_temp: 22.5", ["Alice"])
+    result = redact_entities_in_text("sensor.alice_room_temp: 22.5", ["Alice"])
     assert result == "sensor.<entity_1>_room_temp: 22.5"
 
   def test_empty_content(self):
-    assert redact_names_in_text("", ["Alice"]) == ""
+    assert redact_entities_in_text("", ["Alice"]) == ""
 
   def test_no_match_returns_unchanged(self):
     text = "Hello World"
-    assert redact_names_in_text(text, ["Alice"]) == text
+    assert redact_entities_in_text(text, ["Alice"]) == text
 
 
 # ---------------------------------------------------------------------------

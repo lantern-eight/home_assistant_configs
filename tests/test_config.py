@@ -26,7 +26,7 @@ class TestLoadConfigFromYaml:
         "smb_path": "config/path",
         "smb_user": "admin",
         "smb_password": "secret",
-        "redact_names": ["Alice", "Bob"],
+        "redact_entities": ["Alice", "Bob"],
       }
       cfg_path = _make_config_yaml(tmp, cfg_data)
       with patch.object(hab, "CONFIG_PATH", hab.Path(cfg_path)):
@@ -37,7 +37,7 @@ class TestLoadConfigFromYaml:
       assert result["smb_path"] == "config/path"
       assert result["smb_user"] == "admin"
       assert result["smb_password"] == "secret"
-      assert result["redact_names"] == ["Alice", "Bob"]
+      assert result["redact_entities"] == ["Alice", "Bob"]
 
   def test_missing_optional_fields_default_to_empty(self):
     with tempfile.TemporaryDirectory() as tmp:
@@ -50,7 +50,7 @@ class TestLoadConfigFromYaml:
       assert result["smb_path"] == ""
       assert result["smb_user"] == ""
       assert result["smb_password"] == ""
-      assert result["redact_names"] == []
+      assert result["redact_entities"] == []
 
   def test_empty_yaml_file(self):
     with tempfile.TemporaryDirectory() as tmp:
@@ -59,7 +59,7 @@ class TestLoadConfigFromYaml:
         result = hab._load_config()
 
       assert result["smb_server"] == ""
-      assert result["redact_names"] == []
+      assert result["redact_entities"] == []
 
 
 class TestLoadConfigFromEnv:
@@ -82,7 +82,7 @@ class TestLoadConfigFromEnv:
     assert result["smb_path"] == "/data"
     assert result["smb_user"] == "user1"
     assert result["smb_password"] == "pass1"
-    assert result["redact_names"] == []
+    assert result["redact_entities"] == []
 
   def test_env_defaults_to_empty_strings(self):
     fake_path = hab.Path("/nonexistent/config.yaml")
@@ -95,17 +95,17 @@ class TestLoadConfigFromEnv:
     assert result["smb_path"] == ""
     assert result["smb_user"] == ""
     assert result["smb_password"] == ""
-    assert result["redact_names"] == []
+    assert result["redact_entities"] == []
 
 
-class TestRedactNamesNormalization:
-  """The module-level normalization of REDACT_NAMES handles None, str, and list."""
+class TestRedactEntitiesNormalization:
+  """The module-level normalization of REDACT_ENTITIES handles None, str, and list."""
 
   def test_none_becomes_empty_list(self):
-    assert hab._normalize_redact_names(None) == []
+    assert hab._normalize_redact_entities(None) == []
 
   def test_string_becomes_single_item_list(self):
-    assert hab._normalize_redact_names("Alice") == ["Alice"]
+    assert hab._normalize_redact_entities("Alice") == ["Alice"]
 
   def test_list_stays_as_list(self):
-    assert hab._normalize_redact_names(["Alice", "Bob"]) == ["Alice", "Bob"]
+    assert hab._normalize_redact_entities(["Alice", "Bob"]) == ["Alice", "Bob"]

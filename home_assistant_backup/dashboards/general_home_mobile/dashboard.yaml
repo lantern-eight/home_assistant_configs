@@ -1,0 +1,636 @@
+# =============================================================================
+# General Home Mobile Dashboard
+# =============================================================================
+# Phone-first dashboard for all household members.
+# Uses Material You theme (auto light/dark from system).
+# Kiosk mode: configure via kiosk-mode HACS integration for URL
+#   /general-home/*. Escape via More > Home Assistant.
+#
+# HACS cards: clock-weather-card, calendar-card-pro, bubble-card,
+#   mushroom, apexcharts-card, card-mod, stack-in-card, mini-graph-card,
+#   material-you-utilities, kiosk-mode
+#
+# HA helpers:
+#   - input_boolean.cond_bedtime_doors
+#   - input_boolean.cond_uv_index
+#
+# Template sensors: general_home_mobile/sensors.yaml
+# REST sensor:      general_home_mobile/rest_sensors.yaml
+# HA config:        general_home_mobile/ha_config_additions.yaml
+# Sync:             uv run python scripts/general_home_sync.py [-r]
+# =============================================================================
+
+views:
+  # ===========================================================================
+  # HOME — Main view
+  # ===========================================================================
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 1
+    sections:
+      # -----------------------------------------------------------------------
+      # Header — Clock + Weather
+      # -----------------------------------------------------------------------
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:clock-weather-card
+            entity: weather.house_open_meteo_weather
+            temperature_sensor: sensor.<entity_10>_temperature
+            humidity_sensor: sensor.<entity_10>_humidity
+            weather_icon_type: line
+            animated_icon: true
+            forecast_rows: 5
+            locale: en
+            time_format: 12
+            date_pattern: "EEEE, MMM d"
+            hide_today_section: false
+            hide_forecast_section: false
+            use_browser_time: true
+
+      # -----------------------------------------------------------------------
+      # Conditional Cards — priority-managed, max 5 shown
+      # -----------------------------------------------------------------------
+      # Each card wraps in a conditional that checks the priority template
+      # sensor. Cards appear/disappear based on time and context.
+      - type: grid
+        column_span: 1
+        cards:
+          # --- Bedtime Door Monitor (7:30 PM – 7:00 AM) ---
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.dashboard_conditional_visible
+                state_not: "0"
+              - condition: state
+                entity: input_boolean.cond_bedtime_doors
+                state: "on"
+            card:
+              type: custom:stack-in-card
+              mode: vertical
+              cards:
+                - type: custom:mushroom-title-card
+                  title: "Bedtime Doors"
+                  subtitle: "Monitoring active"
+                  icon: mdi:door-open
+                  card_mod:
+                    style: |
+                      ha-card {
+                        --card-primary-font-size: 16px;
+                        --card-secondary-font-size: 12px;
+                        padding-bottom: 0 !important;
+                      }
+                - type: entities
+                  entities:
+                    - entity: binary_sensor.<entity_3>s_door_door
+                      name: "<entity_3>'s Door"
+                      icon: mdi:door
+                      secondary_info: last-changed
+                    - entity: binary_sensor.<entity_4>s_door_door
+                      name: "<entity_4>'s Door"
+                      icon: mdi:door
+                      secondary_info: last-changed
+                  card_mod:
+                    style: |
+                      ha-card {
+                        border-top: none !important;
+                        box-shadow: none !important;
+                        padding-top: 0;
+                      }
+
+          # --- UV Index Chart (7:00 AM – 3:00 PM) ---
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.cond_uv_index
+                state: "on"
+            card:
+              type: custom:apexcharts-card
+              header:
+                title: "UV Index Today"
+                show: true
+                show_states: true
+                colorize_states: true
+              graph_span: 12h
+              span:
+                start: day
+                offset: "+7h"
+              now:
+                show: true
+                label: "Now"
+              yaxis:
+                - min: 0
+                  max: ~12
+                  apex_config:
+                    tickAmount: 4
+              apex_config:
+                chart:
+                  height: 180
+                fill:
+                  type: gradient
+                  gradient:
+                    type: vertical
+                    shadeIntensity: 0.5
+                    opacityFrom: 0.7
+                    opacityTo: 0.2
+                annotations:
+                  yaxis:
+                    - y: 0
+                      y2: 3
+                      fillColor: "#4CAF50"
+                      opacity: 0.1
+                      label:
+                        text: "Low"
+                        style:
+                          fontSize: "10px"
+                    - y: 3
+                      y2: 6
+                      fillColor: "#FFC107"
+                      opacity: 0.1
+                      label:
+                        text: "Moderate"
+                        style:
+                          fontSize: "10px"
+                    - y: 6
+                      y2: 8
+                      fillColor: "#FF9800"
+                      opacity: 0.1
+                      label:
+                        text: "High"
+                        style:
+                          fontSize: "10px"
+                    - y: 8
+                      y2: 15
+                      fillColor: "#F44336"
+                      opacity: 0.1
+                      label:
+                        text: "Very High"
+                        style:
+                          fontSize: "10px"
+              series:
+                - entity: sensor.<entity_10>_uv_index
+                  name: "Measured"
+                  type: area
+                  color: "#FF9800"
+                  stroke_width: 2
+                  extend_to: now
+                  group_by:
+                    func: avg
+                    duration: 30min
+                - entity: sensor.openmeteo_hourly_uv_forecast
+                  name: "Forecast"
+                  type: line
+                  color: "#FF9800"
+                  opacity: 0.5
+                  stroke_width: 2
+                  stroke_dash: 4
+                  data_generator: |
+                    const attrs = entity.attributes;
+                    if (!attrs.time || !attrs.uv_index) return [];
+                    return attrs.time.map((t, i) => [new Date(t).getTime(), attrs.uv_index[i]]);
+
+      # -----------------------------------------------------------------------
+      # Indoor Climate — <entity_17> + Airthings
+      # -----------------------------------------------------------------------
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+              # Thermostat headline
+              - type: custom:mushroom-climate-card
+                entity: climate.living_room_thermostat
+                name: "Indoor Climate"
+                show_temperature_control: false
+                hvac_modes:
+                  - heat
+                  - cool
+                  - heat_cool
+                  - "off"
+                collapsible_controls: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /general-home/climate
+                card_mod:
+                  style: |
+                    ha-card {
+                      padding-bottom: 4px !important;
+                    }
+
+              # 24h temperature graph
+              - type: custom:mini-graph-card
+                entities:
+                  - entity: sensor.living_room_thermostat_current_temperature
+                    name: "Indoor"
+                    color: var(--primary-color)
+                  - entity: sensor.<entity_10>_temperature
+                    name: "Outdoor"
+                    color: var(--secondary-text-color)
+                    show_state: true
+                hours_to_show: 24
+                points_per_hour: 2
+                line_width: 2
+                animate: true
+                show:
+                  name: false
+                  icon: false
+                  labels: false
+                  fill: fade
+                  legend: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      box-shadow: none !important;
+                      border: none !important;
+                      margin-top: -8px;
+                    }
+
+              # Air quality metrics row
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.basement_humidity
+                    name: "Humidity"
+                    icon: mdi:water-percent
+                    icon_color: blue
+                    layout: vertical
+                    tap_action:
+                      action: more-info
+                    card_mod:
+                      style: |
+                        ha-card { box-shadow: none !important; }
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.basement_carbon_dioxide
+                    name: "CO₂"
+                    icon: mdi:molecule-co2
+                    icon_color: green
+                    layout: vertical
+                    tap_action:
+                      action: more-info
+                    card_mod:
+                      style: |
+                        ha-card { box-shadow: none !important; }
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.basement_volatile_organic_compounds_parts
+                    name: "VOC"
+                    icon: mdi:chemical-weapon
+                    icon_color: amber
+                    layout: vertical
+                    tap_action:
+                      action: more-info
+                    card_mod:
+                      style: |
+                        ha-card { box-shadow: none !important; }
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.basement_pm2_5
+                    name: "PM2.5"
+                    icon: mdi:blur
+                    icon_color: orange
+                    layout: vertical
+                    tap_action:
+                      action: more-info
+                    card_mod:
+                      style: |
+                        ha-card { box-shadow: none !important; }
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.basement_radon
+                    name: "Radon"
+                    icon: mdi:radioactive
+                    icon_color: deep-purple
+                    layout: vertical
+                    tap_action:
+                      action: more-info
+                    card_mod:
+                      style: |
+                        ha-card { box-shadow: none !important; }
+
+      # -----------------------------------------------------------------------
+      # Calendar
+      # -----------------------------------------------------------------------
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:calendar-card-pro
+            entities:
+              - entity: calendar.<entity_15>_calendar
+              - entity: calendar.birthdays
+              - entity: calendar.conventions
+              - entity: calendar.<entity_14>_game_nights
+              - entity: calendar.piano
+              - entity: calendar.unknown
+              - entity: calendar.unknown_2
+            days_to_show: 7
+            show_past_events: false
+            hide_empty_days: true
+            show_multi_day_events_on_each_day: true
+            card_mod:
+              style: |
+                ha-card {
+                  overflow: hidden;
+                }
+
+      # -----------------------------------------------------------------------
+      # Bubble Card Pop-ups (hidden, triggered by bottom nav hash links)
+      # -----------------------------------------------------------------------
+      - type: grid
+        column_span: 1
+        cards:
+          # --- Rooms pop-up ---
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#rooms"
+            name: "Rooms"
+            icon: mdi:floor-plan
+            auto_close: ""
+            back_open: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: "Living Room"
+                    icon: mdi:sofa
+                    icon_color: cyan
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/home
+                  - type: custom:mushroom-template-card
+                    primary: "Basement"
+                    icon: mdi:stairs-down
+                    icon_color: indigo
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/home
+                  - type: custom:mushroom-template-card
+                    primary: "Main Suite"
+                    icon: mdi:bed-king
+                    icon_color: deep-purple
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/home
+                  - type: custom:mushroom-template-card
+                    primary: "<entity_3>'s Room"
+                    icon: mdi:bed
+                    icon_color: red
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/home
+                  - type: custom:mushroom-template-card
+                    primary: "<entity_4>'s Room"
+                    icon: mdi:bed
+                    icon_color: purple
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/home
+
+          # --- More pop-up ---
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#more"
+            name: "More"
+            icon: mdi:dots-horizontal
+            auto_close: ""
+            back_open: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: "All Alerts"
+                    secondary: "View all conditional cards"
+                    icon: mdi:bell-ring
+                    icon_color: amber
+                    tap_action:
+                      action: navigate
+                      navigation_path: /general-home/all-alerts
+                  - type: custom:mushroom-template-card
+                    primary: "3D Printer Farm"
+                    secondary: "Cyberdeck dashboard"
+                    icon: mdi:printer-3d
+                    icon_color: cyan
+                    tap_action:
+                      action: navigate
+                      navigation_path: /cyber-deck/farm-ctl
+                  - type: custom:mushroom-template-card
+                    primary: "Home Assistant"
+                    secondary: "Default dashboard (exit kiosk)"
+                    icon: mdi:home-assistant
+                    icon_color: blue
+                    tap_action:
+                      action: navigate
+                      navigation_path: /lovelace/0
+
+      # -----------------------------------------------------------------------
+      # Bottom Nav Bar (Bubble Card)
+      # -----------------------------------------------------------------------
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:bubble-card
+            card_type: bottom-bar
+            styles: |
+              .bubble-bottom-bar {
+                --bubble-bottom-bar-background: var(--card-background-color, var(--ha-card-background));
+                backdrop-filter: blur(10px);
+              }
+            buttons:
+              - name: Home
+                icon: mdi:home
+                tap_action:
+                  action: navigate
+                  navigation_path: /general-home/home
+              - name: Rooms
+                icon: mdi:floor-plan
+                tap_action:
+                  action: navigate
+                  navigation_path: "#rooms"
+              - name: Climate
+                icon: mdi:thermometer
+                tap_action:
+                  action: navigate
+                  navigation_path: /general-home/climate
+              - name: Security
+                icon: mdi:shield-home
+                tap_action:
+                  action: navigate
+                  navigation_path: /general-home/security
+              - name: More
+                icon: mdi:dots-horizontal
+                tap_action:
+                  action: navigate
+                  navigation_path: "#more"
+
+  # ===========================================================================
+  # CLIMATE — Sub-view for thermostat controls
+  # ===========================================================================
+  - title: Climate
+    path: climate
+    icon: mdi:thermometer
+    subview: true
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        column_span: 1
+        cards:
+          - type: thermostat
+            entity: climate.living_room_thermostat
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - heat
+                  - cool
+                  - heat_cool
+                  - "off"
+              - type: target-temperature
+
+          - type: custom:mini-graph-card
+            entities:
+              - entity: sensor.living_room_thermostat_current_temperature
+                name: "Indoor"
+                color: var(--primary-color)
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 2
+            show:
+              fill: fade
+              labels: true
+              name: false
+              icon: false
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.living_room_thermostat_current_humidity
+            name: "Indoor Humidity"
+            icon: mdi:water-percent
+
+          - type: custom:mushroom-entity-card
+            entity: select.living_room_thermostat_current_mode
+            name: "<entity_17> Mode"
+            icon: mdi:thermostat
+
+  # ===========================================================================
+  # SECURITY — Stub view
+  # ===========================================================================
+  - title: Security
+    path: security
+    icon: mdi:shield-home
+    subview: true
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:mushroom-title-card
+            title: "Security"
+            subtitle: "Door and entry monitoring"
+          - type: entities
+            entities:
+              - entity: binary_sensor.<entity_3>s_door_door
+                name: "<entity_3>'s Door"
+                icon: mdi:door
+                secondary_info: last-changed
+              - entity: binary_sensor.<entity_4>s_door_door
+                name: "<entity_4>'s Door"
+                icon: mdi:door
+                secondary_info: last-changed
+
+  # ===========================================================================
+  # ALL ALERTS — Sub-view for all conditional cards
+  # ===========================================================================
+  - title: All Alerts
+    path: all-alerts
+    icon: mdi:bell-ring
+    subview: true
+    type: sections
+    max_columns: 1
+    sections:
+      # Active alerts (sorted by priority via template sensor)
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:mushroom-title-card
+            title: "Active"
+            subtitle: "Currently triggered conditional cards"
+            icon: mdi:alert-circle
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.cond_bedtime_doors
+                state: "on"
+            card:
+              type: entities
+              title: "Bedtime Doors"
+              entities:
+                - entity: binary_sensor.<entity_3>s_door_door
+                  name: "<entity_3>'s Door"
+                  icon: mdi:door
+                  secondary_info: last-changed
+                - entity: binary_sensor.<entity_4>s_door_door
+                  name: "<entity_4>'s Door"
+                  icon: mdi:door
+                  secondary_info: last-changed
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.cond_uv_index
+                state: "on"
+            card:
+              type: custom:apexcharts-card
+              header:
+                title: "UV Index Today"
+                show: true
+              graph_span: 12h
+              span:
+                start: day
+                offset: "+7h"
+              yaxis:
+                - min: 0
+                  max: ~12
+              series:
+                - entity: sensor.<entity_10>_uv_index
+                  name: "Measured"
+                  type: area
+                  color: "#FF9800"
+                  extend_to: now
+                  group_by:
+                    func: avg
+                    duration: 30min
+
+      # Hidden / inactive alerts
+      - type: grid
+        column_span: 1
+        cards:
+          - type: custom:mushroom-title-card
+            title: "Inactive"
+            subtitle: "Currently hidden conditional cards"
+            icon: mdi:eye-off
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.cond_bedtime_doors
+                state: "off"
+            card:
+              type: custom:mushroom-entity-card
+              entity: input_boolean.cond_bedtime_doors
+              name: "Bedtime Doors"
+              icon: mdi:door-closed-lock
+              secondary_info: "Active 7:30 PM – 7:00 AM"
+              layout: horizontal
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.cond_uv_index
+                state: "off"
+            card:
+              type: custom:mushroom-entity-card
+              entity: input_boolean.cond_uv_index
+              name: "UV Index Chart"
+              icon: mdi:weather-sunny-alert
+              secondary_info: "Active 7:00 AM – 3:00 PM"
+              layout: horizontal

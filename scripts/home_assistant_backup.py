@@ -25,11 +25,11 @@ def _status(msg: str) -> None:
 
 
 USAGE = (
-  'Usage: uv run python home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
+  'Usage: uv run python scripts/home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
   '  -b, --backup     Run the SMB pull only (no sanitize)\n'
   '  -s, --sanitize   Run the redaction pass only (no SMB pull); processes\n'
-  '                   both home_assistant_backup/ and\n'
-  '                   home_assistant_backup_comments/\n'
+  '                   home_assistant_backup/, home_assistant_backup_comments/,\n'
+  '                   and dashboards/\n'
   '  -r, --restore    Restore redacted files using entity_map.yaml\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
@@ -38,8 +38,9 @@ USAGE = (
   'With no -b/-s/-r flag, runs backup followed by sanitize (the default).'
 )
 
-CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
-ENTITY_MAP_PATH = Path(__file__).resolve().parent / 'entity_map.yaml'
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = REPO_ROOT / 'config.yaml'
+ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
 
 
 def _load_config() -> dict:
@@ -53,7 +54,7 @@ def _load_config() -> dict:
       'smb_path': str(raw.get('smb_path', '')),
       'smb_user': str(raw.get('smb_user', '')),
       'smb_password': str(raw.get('smb_password', '')),
-      'redact_names': raw.get('redact_names', []),
+      'redact_entities': raw.get('redact_entities', []),
     }
   return {
     'smb_server': os.environ.get('SMB_SERVER', ''),
@@ -61,17 +62,17 @@ def _load_config() -> dict:
     'smb_path': os.environ.get('SMB_PATH', ''),
     'smb_user': os.environ.get('SMB_USER', ''),
     'smb_password': os.environ.get('SMB_PASSWORD', ''),
-    'redact_names': [],
+    'redact_entities': [],
   }
 
 
-def _normalize_redact_names(names):
-  '''Normalize redact_names from config: None -> [], str -> [str], list unchanged.'''
-  if names is None:
+def _normalize_redact_entities(entities):
+  '''Normalize redact_entities from config: None -> [], str -> [str], list unchanged.'''
+  if entities is None:
     return []
-  if isinstance(names, str):
-    return [names]
-  return names
+  if isinstance(entities, str):
+    return [entities]
+  return entities
 
 
 _cfg = _load_config()
@@ -80,10 +81,18 @@ SMB_SHARE = _cfg['smb_share']
 SMB_PATH = _cfg['smb_path']
 SMB_USER = _cfg['smb_user']
 SMB_PASSWORD = _cfg['smb_password']
-REDACT_NAMES = _normalize_redact_names(_cfg.get('redact_names', []))
+REDACT_ENTITIES = _normalize_redact_entities(_cfg.get('redact_entities', []))
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
 COMMENTS_DIR = os.path.join(os.getcwd(), 'home_assistant_backup_comments')
+DASHBOARDS_DIR = os.path.join(os.getcwd(), 'dashboards')
+
+
+def _iter_sanitize_dirs():
+  '''Yield local directories that participate in sanitize/restore passes.'''
+  for path in (DEST, COMMENTS_DIR, DASHBOARDS_DIR):
+    if os.path.isdir(path):
+      yield path
 
 IGNORE_PATTERNS = [
   '*.db',
@@ -111,7 +120,12 @@ def should_ignore(name: str) -> bool:
 
 PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
 
-_ID_PATTERN = re.compile(r'\b([0-9a-fA-F]{32})\b')
+_ID_PATTERN = re.compile(
+  r'\b('
+  r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+  r'|[0-9a-fA-F]{32}'
+  r')\b'
+)
 
 PRONOUN_MAP = [
   (r'\bhe\b',    'they'),
@@ -124,7 +138,7 @@ PRONOUN_MAP = [
 
 
 def shorten_ids(content: str, id_map: dict | None = None) -> str:
-  '''Replace 32-char hex IDs with a shortened form (first3...last3).'''
+  '''Replace 32-char hex IDs and hyphenated UUIDs with first3...last3.'''
   def _shorten(match):
     s = match.group(1)
     short = f'{s[:3]}...{s[-3:]}'
@@ -134,20 +148,20 @@ def shorten_ids(content: str, id_map: dict | None = None) -> str:
   return _ID_PATTERN.sub(_shorten, content)
 
 
-def redact_names_in_text(content: str, names: list[str], name_map: dict | None = None) -> str:
-  '''Replace each name in *names* with a stable '<entity_N>' placeholder.
+def redact_entities_in_text(content: str, entities: list[str], entities_map: dict | None = None) -> str:
+  '''Replace each string in *entities* with a stable '<entity_N>' placeholder.
 
-  If *name_map* already contains a mapping for a given name (e.g. from a
+  If *entities_map* already contains a mapping for a given value (e.g. from a
   previous run loaded off disk), that placeholder is reused so repeated /
-  partial sanitize runs and reordering of *names* stay stable. New names
-  pick up the next unused index instead of just enumerating *names*.
+  partial sanitize runs and reordering of *entities* stay stable. New values
+  pick up the next unused index instead of just enumerating *entities*.
   '''
-  # Reverse-lookup of real_name (lowercased) -> placeholder, plus the set of
+  # Reverse-lookup of real value (lowercased) -> placeholder, plus the set of
   # already-used <entity_N> indices so we can pick the next free one.
   existing: dict[str, str] = {}
   used_indices: set[int] = set()
-  if name_map is not None:
-    for placeholder, real in name_map.items():
+  if entities_map is not None:
+    for placeholder, real in entities_map.items():
       existing[real.lower()] = placeholder
       m = re.match(r'<entity_(\d+)>$', placeholder)
       if m:
@@ -155,21 +169,25 @@ def redact_names_in_text(content: str, names: list[str], name_map: dict | None =
 
   next_index = 1
 
-  for name in names:
-    if not name or not name.strip():
+  for entity in entities:
+    if not entity or not entity.strip():
+      while next_index in used_indices:
+        next_index += 1
+      used_indices.add(next_index)
+      next_index += 1
       continue
 
-    placeholder = existing.get(name.lower())
+    placeholder = existing.get(entity.lower())
     if placeholder is None:
       while next_index in used_indices:
         next_index += 1
       placeholder = f'<entity_{next_index}>'
       used_indices.add(next_index)
-      existing[name.lower()] = placeholder
-      if name_map is not None:
-        name_map[placeholder] = name
+      existing[entity.lower()] = placeholder
+      if entities_map is not None:
+        entities_map[placeholder] = entity
 
-    content = re.sub(re.escape(name), placeholder, content, flags=re.IGNORECASE)
+    content = re.sub(re.escape(entity), placeholder, content, flags=re.IGNORECASE)
 
   return content
 
@@ -221,19 +239,19 @@ def load_entity_map(path: Path | str = ENTITY_MAP_PATH) -> dict:
   '''Read the entity map from a YAML file.'''
   with open(path, 'r', encoding='utf-8') as f:
     data = yaml.safe_load(f) or {}
-  return {'ids': data.get('ids', {}), 'names': data.get('names', {})}
+  return {'ids': data.get('ids', {}), 'entities': data.get('entities', {})}
 
 
 def _process_backup_files(
   dest_dir: str,
-  redact_names: list[str],
+  redact_entities: list[str],
   entity_map: dict | None = None,
 ) -> None:
   '''Post-process backup files to redact sensitive info and shorten IDs.'''
-  LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_names)})
+  LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_entities)})
 
   id_map = entity_map['ids'] if entity_map is not None else None
-  name_map = entity_map['names'] if entity_map is not None else None
+  entities_map = entity_map['entities'] if entity_map is not None else None
 
   for root, _, files in os.walk(dest_dir):
     for file in files:
@@ -247,7 +265,7 @@ def _process_backup_files(
 
         original = content
         content = shorten_ids(content, id_map)
-        content = redact_names_in_text(content, redact_names, name_map)
+        content = redact_entities_in_text(content, redact_entities, entities_map)
         content = neutralize_pronouns(content)
         if file.endswith('.yaml'):
           content = normalize_yaml_escapes(content)
@@ -265,11 +283,11 @@ def _process_backup_files(
 
 def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
   '''Reverse redaction in backup files using a previously saved entity map.'''
-  names = entity_map.get('names', {})
+  entities = entity_map.get('entities', {})
   ids = entity_map.get('ids', {})
   LOGGER.info(
     'Starting restore of backup files',
-    extra={'name_count': len(names), 'id_count': len(ids)},
+    extra={'entity_count': len(entities), 'id_count': len(ids)},
   )
 
   for root, _, files in os.walk(dest_dir):
@@ -283,8 +301,8 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
           content = f.read()
 
         original = content
-        for placeholder, real_name in names.items():
-          content = content.replace(placeholder, real_name)
+        for placeholder, real_value in entities.items():
+          content = content.replace(placeholder, real_value)
         for short_id, full_id in ids.items():
           content = content.replace(short_id, full_id)
 
@@ -379,34 +397,32 @@ def _run_backup() -> None:
 
 
 def _run_sanitize() -> None:
-  '''Run the redaction pass over DEST and COMMENTS_DIR.
+  '''Run the redaction pass over DEST, COMMENTS_DIR, and DASHBOARDS_DIR.
 
   Loads the existing entity_map.yaml first if it exists so that placeholder
-  numbering for already-known names stays stable. This makes partial /
-  repeated sanitize runs safe: real names already replaced with
+  numbering for already-known strings stays stable. This makes partial /
+  repeated sanitize runs safe: real strings already replaced with
   <entity_N> in a file are left alone, and any unredacted occurrences pick
   up the SAME placeholder as before instead of drifting.
   '''
   _status('Starting sanitize / redaction pass')
-  entity_map: dict = {'ids': {}, 'names': {}}
+  entity_map: dict = {'ids': {}, 'entities': {}}
   if ENTITY_MAP_PATH.exists():
     entity_map = load_entity_map(ENTITY_MAP_PATH)
     LOGGER.info(
       'Loaded existing entity_map for stable placeholder reuse',
       extra={
-        'name_count': len(entity_map['names']),
+        'entity_count': len(entity_map['entities']),
         'id_count': len(entity_map['ids']),
         'path': str(ENTITY_MAP_PATH),
       },
     )
 
-  _status(f'Redacting backup files in {DEST}')
-  _process_backup_files(DEST, REDACT_NAMES, entity_map)
-  if os.path.isdir(COMMENTS_DIR):
-    _status(f'Redacting comments files in {COMMENTS_DIR}')
-    _process_backup_files(COMMENTS_DIR, REDACT_NAMES, entity_map)
+  for dir_path in _iter_sanitize_dirs():
+    _status(f'Redacting files in {dir_path}')
+    _process_backup_files(dir_path, REDACT_ENTITIES, entity_map)
 
-  if entity_map['ids'] or entity_map['names']:
+  if entity_map['ids'] or entity_map['entities']:
     _status(f'Saving entity map to {ENTITY_MAP_PATH}')
     save_entity_map(entity_map, ENTITY_MAP_PATH)
   _status('Sanitize complete')
@@ -419,7 +435,7 @@ def main(argv: list[str] | None = None) -> None:
   Modes (mutually exclusive):
     (default) backup + sanitize
     -b/--backup    backup only
-    -s/--sanitize  sanitize only (processes DEST and COMMENTS_DIR)
+    -s/--sanitize  sanitize only (processes DEST, COMMENTS_DIR, dashboards/)
     -r/--restore   restore redactions using entity_map.yaml
 
   Example usage:
@@ -492,11 +508,9 @@ def main(argv: list[str] | None = None) -> None:
       LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
       sys.exit(1)
     entity_map = load_entity_map(ENTITY_MAP_PATH)
-    _status(f'Restoring backup files in {DEST}')
-    _restore_backup_files(DEST, entity_map)
-    if os.path.isdir(COMMENTS_DIR):
-      _status(f'Restoring comments files in {COMMENTS_DIR}')
-      _restore_backup_files(COMMENTS_DIR, entity_map)
+    for dir_path in _iter_sanitize_dirs():
+      _status(f'Restoring files in {dir_path}')
+      _restore_backup_files(dir_path, entity_map)
     _status('Restore complete')
     LOGGER.info('Restore complete')
     return

@@ -1,0 +1,83 @@
+# =============================================================================
+# General Home Mobile — Template Sensors
+# =============================================================================
+# Synced to HA as: template_sensors/general_home_sensors.yaml
+# Requires HA restart after changes.
+#
+# Conditional Card Priority System
+# ---------------------------------
+# Each conditional card has:
+#   - An input_boolean (is the card's trigger condition active?)
+#   - A priority (1 = highest, 100 = lowest) — evaluated dynamically
+#
+# The template sensor below reads all card booleans, calculates dynamic
+# priorities, sorts, and outputs the top 5 as the "visible" set.
+# Dashboard conditional cards check this sensor to show/hide.
+#
+# To add a new conditional card:
+#   1. Create input_boolean.cond_<card_id> in HA helpers
+#   2. Add an automation to toggle it based on conditions
+#   3. Add the card entry to the `cards` list below with id, boolean, and
+#      priority template
+#   4. Add the conditional card in dashboard.yaml
+# =============================================================================
+
+- sensor:
+    # -------------------------------------------------------------------------
+    # Conditional card visibility manager
+    # -------------------------------------------------------------------------
+    - name: "Dashboard Conditional Visible"
+      unique_id: dashboard_conditional_visible
+      icon: mdi:cards
+      state: >
+        {% set max_visible = 5 %}
+        {% set cards = [
+          {
+            'id': 'bedtime_doors',
+            'active': is_state('input_boolean.cond_bedtime_doors', 'on'),
+            'priority': 10 if (now().hour >= 22 or now().hour < 5) else 30
+          },
+          {
+            'id': 'uv_index',
+            'active': is_state('input_boolean.cond_uv_index', 'on'),
+            'priority': 15 if state_attr('sensor.<entity_10>_uv_index', 'state') | float(0) >= 6 else 40
+          }
+        ] %}
+        {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
+        {{ active[:max_visible] | length }}
+      attributes:
+        visible_ids: >
+          {% set max_visible = 5 %}
+          {% set cards = [
+            {
+              'id': 'bedtime_doors',
+              'active': is_state('input_boolean.cond_bedtime_doors', 'on'),
+              'priority': 10 if (now().hour >= 22 or now().hour < 5) else 30
+            },
+            {
+              'id': 'uv_index',
+              'active': is_state('input_boolean.cond_uv_index', 'on'),
+              'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
+            }
+          ] %}
+          {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
+          {{ active[:max_visible] | map(attribute='id') | list }}
+        all_cards: >
+          {% set cards = [
+            {
+              'id': 'bedtime_doors',
+              'name': 'Bedtime Doors',
+              'active': is_state('input_boolean.cond_bedtime_doors', 'on'),
+              'priority': 10 if (now().hour >= 22 or now().hour < 5) else 30
+            },
+            {
+              'id': 'uv_index',
+              'name': 'UV Index',
+              'active': is_state('input_boolean.cond_uv_index', 'on'),
+              'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
+            }
+          ] %}
+          {{ cards | sort(attribute='priority') }}
+        active_count: >
+          {{ expand('input_boolean.cond_bedtime_doors', 'input_boolean.cond_uv_index')
+             | selectattr('state', 'eq', 'on') | list | length }}

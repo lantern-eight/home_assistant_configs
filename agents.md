@@ -2,7 +2,7 @@
 
 ## Home Assistant config backup and automations
 
-Relevant when working under `home_assistant_backup/**` or `home_assistant_backup_comments/**`.
+Relevant when working under `home_assistant_backup/**`, `home_assistant_backup_comments/**`, or `dashboards/**`.
 
 ### Where to edit
 
@@ -12,16 +12,16 @@ Relevant when working under `home_assistant_backup/**` or `home_assistant_backup
 
 ```bash
 # Pull from HA + redact (default)
-uv run python home_assistant_backup.py
+uv run python scripts/home_assistant_backup.py
 
 # Pull only, no redaction
-uv run python home_assistant_backup.py -b
+uv run python scripts/home_assistant_backup.py -b
 
 # Redact only, no pull
-uv run python home_assistant_backup.py -s
+uv run python scripts/home_assistant_backup.py -s
 
 # Reverse redaction before pushing to HA
-uv run python home_assistant_backup.py -r
+uv run python scripts/home_assistant_backup.py -r
 ```
 
 Do not push to HA unless the user explicitly asks.
@@ -30,13 +30,13 @@ Do not push to HA unless the user explicitly asks.
 
 `config.yaml` and `entity_map.yaml` are gitignored. They drive the sanitize pass differently:
 
-| | **Custom names** (`entity_map.names`) | **Device/entity IDs** (`entity_map.ids`) |
+| | **Custom strings** (`entity_map.entities`) | **Device/entity IDs** (`entity_map.ids`) |
 |---|---|---|
-| **What triggers redaction** | Names listed in `config.yaml` → `redact_names` | Any 32-char hex string found in a file |
+| **What triggers redaction** | Strings listed in `config.yaml` → `redact_entities` | Any 32-char hex string or hyphenated UUID in a file |
 | **Role of `entity_map.yaml`** | Reuse `<entity_N>` placeholders across runs; restore with `-r` | Record `abc...def` ↔ full ID mapping; restore with `-r` |
-| **Configured in `config.yaml`?** | Yes — add each name to `redact_names` | No — IDs are auto-discovered |
+| **Configured in `config.yaml`?** | Yes — add each string to `redact_entities` | No — IDs are auto-discovered |
 
-**Adding an ID**: no config step. If a full 32-char hex ID appears in a comments file, sanitize shortens it to `first3...last3` and saves the mapping in `entity_map.ids`. Pre-populating `entity_map.ids` does not shorten anything — the full ID must be present in the file when sanitize runs.
+**Adding an ID**: no config step. If a full 32-char hex ID or hyphenated UUID appears in a file, sanitize shortens it to `first3...last3` and saves the mapping in `entity_map.ids`. Pre-populating `entity_map.ids` does not shorten anything — the full ID must be present in the file when sanitize runs.
 
 ## Cyberdeck printer farm dashboard
 
@@ -55,7 +55,7 @@ The Cyberdeck dashboard lives in `dashboards/cyberdeck/` with three files:
 After editing any Cyberdeck file, run:
 
 ```bash
-uv run python cyberdeck_sync.py
+uv run python scripts/cyberdeck_sync.py
 ```
 
 This uploads all three files to HA via SMB and reloads themes. The dashboard YAML is re-read by HA on the next page visit — no restart needed for dashboard-only changes.
@@ -63,7 +63,7 @@ This uploads all three files to HA via SMB and reloads themes. The dashboard YAM
 If you changed `sensors.yaml` (template sensors) or `configuration.yaml`, a restart is required:
 
 ```bash
-uv run python cyberdeck_sync.py -r
+uv run python scripts/cyberdeck_sync.py -r
 ```
 
 ### Key constraints

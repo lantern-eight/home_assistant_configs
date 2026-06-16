@@ -10,14 +10,15 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-  'Usage: uv run python ha_entity_discovery.py [-d] [-l LEVEL] [-h]\n'
+  'Usage: uv run python scripts/ha_entity_discovery.py [-d] [-l LEVEL] [-h]\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
   '  -h, --help       Show this help'
 )
 
-CONFIG_PATH = Path(__file__).resolve().parent / 'config.yaml'
-OUTPUT_PATH = Path(__file__).resolve().parent / 'ha_entities.json'
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = REPO_ROOT / 'config.yaml'
+OUTPUT_PATH = REPO_ROOT / 'ha_entities.json'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
 
