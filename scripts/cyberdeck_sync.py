@@ -21,6 +21,7 @@ USAGE = (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / 'config.yaml'
+ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
 CYBERDECK_DIR = REPO_ROOT / 'dashboards' / 'cyberdeck'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
@@ -62,6 +63,19 @@ def _smb_makedirs(smb_path: str) -> None:
     pass
 
 
+def _restore_content(content: str) -> str:
+  '''Replace redacted placeholders with real values before pushing to HA.'''
+  if not ENTITY_MAP_PATH.exists():
+    return content
+  with open(ENTITY_MAP_PATH) as f:
+    entity_map = yaml.safe_load(f) or {}
+  for placeholder, real_value in entity_map.get('entities', {}).items():
+    content = content.replace(placeholder, real_value)
+  for short_id, full_id in entity_map.get('ids', {}).items():
+    content = content.replace(short_id, full_id)
+  return content
+
+
 def _sync_files(cfg: dict) -> int:
   smb_server = cfg['smb_server']
   smb_share = cfg['smb_share']
@@ -95,9 +109,10 @@ def _sync_files(cfg: dict) -> int:
     _smb_makedirs(remote_dir)
 
     try:
-      with open(local_path, 'rb') as src:
-        with smbclient.open_file(remote_path, mode='wb') as dst:
-          dst.write(src.read())
+      with open(local_path, 'r', encoding='utf-8') as src:
+        content = _restore_content(src.read())
+      with smbclient.open_file(remote_path, mode='w') as dst:
+        dst.write(content)
       uploaded += 1
       LOGGER.info('Synced', extra={'local': local_name, 'remote': remote_rel})
     except OSError as e:
