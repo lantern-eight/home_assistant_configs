@@ -6,7 +6,7 @@
 # Kiosk mode: configure via kiosk-mode HACS integration for URL
 #   /general-home/*. Escape via More > Home Assistant.
 #
-# HACS cards: clock-weather-card, calendar-card-pro, bubble-card,
+# HACS cards: weather-forecast-card, calendar-card-pro, bubble-card,
 #   mushroom, apexcharts-card, card-mod, stack-in-card, mini-graph-card,
 #   material-you-utilities, kiosk-mode, auto-entities
 #
@@ -35,24 +35,114 @@ views:
     max_columns: 1
     sections:
       # -----------------------------------------------------------------------
-      # Header — Clock + Weather
+      # Header — Weather
       # -----------------------------------------------------------------------
       - type: grid
         column_span: 1
         cards:
-          - type: custom:clock-weather-card
-            entity: weather.house_open_meteo_weather
-            temperature_sensor: sensor.<entity_10>_temperature
-            humidity_sensor: sensor.<entity_10>_humidity
-            weather_icon_type: line
-            animated_icon: true
-            forecast_rows: 5
-            locale: en
-            time_format: 12
-            date_pattern: "EEEE, MMM d"
-            hide_today_section: false
-            hide_forecast_section: false
-            use_browser_time: true
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+              - type: custom:weather-forecast-card
+                entity: weather.forecast_home
+                name: Home
+                default_forecast: hourly
+                current:
+                  temperature_entity: sensor.<entity_10>_temperature
+                  temperature_precision: 0
+                  show_attributes:
+                    - name: apparent_temperature
+                      entity: sensor.<entity_10>_feels_like
+                forecast:
+                  mode: chart
+                  extra_attribute: wind_bearing
+                  hourly_group_size: 2
+                card_mod:
+                  style: |
+                    .wfc-current-secondary-info {
+                      display: none !important;
+                    }
+                    .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name {
+                      font-size: 0;
+                    }
+                    .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name::after {
+                      content: "Feels Like";
+                      font-size: var(--ha-font-size-m, 14px);
+                    }
+                    ha-card {
+                      border-bottom: none !important;
+                      box-shadow: none !important;
+                      padding-bottom: 0 !important;
+                    }
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Absolute humidity
+                  show_states: true
+                graph_span: 24h
+                span:
+                  end: hour
+                yaxis:
+                  - min: 0
+                    max: 20
+                    decimals: 0
+                    apex_config:
+                      tickAmount: 4
+                apex_config:
+                  chart:
+                    height: 130
+                  stroke:
+                    curve: smooth
+                    width: 2
+                  fill:
+                    type: gradient
+                    gradient:
+                      opacityFrom: 0.45
+                      opacityTo: 0.05
+                  grid:
+                    show: true
+                    borderColor: rgba(128, 128, 128, 0.2)
+                  legend:
+                    show: false
+                  xaxis:
+                    type: datetime
+                    tickAmount: 5
+                    labels:
+                      showDuplicates: false
+                      formatter: |
+                        EVAL:function(val, timestamp, opts) {
+                          const i = opts.i;
+                          const n = opts.w.globals.labels.length;
+                          const step = Math.max(1, Math.round((n - 1) / 5));
+                          if (i % step !== 0 && i !== n - 1) return '';
+                          return new Date(val).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            hour12: true,
+                          });
+                        }
+                  yaxis:
+                    labels:
+                      show: true
+                series:
+                  - entity: sensor.backyard_absolute_humidity
+                    name: Absolute humidity
+                    type: area
+                    show:
+                      name_in_header: false
+                    group_by:
+                      func: avg
+                      duration: 1h
+                card_mod:
+                  style: |
+                    ha-card {
+                      box-shadow: none !important;
+                      border: none !important;
+                      margin-top: -8px;
+                      padding-top: 0 !important;
+                    }
+                    .apexcharts-xaxis text {
+                      font-size: 10px !important;
+                    }
 
       # -----------------------------------------------------------------------
       # Conditional Cards — priority-managed, max 5 shown
@@ -104,7 +194,7 @@ views:
                         padding-top: 0;
                       }
 
-          # --- UV Index Chart (7:00 AM – 3:00 PM) ---
+          # --- UV Index Chart (7:00 AM – 5:00 PM) ---
           - type: conditional
             conditions:
               - condition: state
@@ -250,32 +340,41 @@ views:
                       padding-bottom: 4px !important;
                     }
 
-              # 24h temperature graph
-              - type: custom:mini-graph-card
-                entities:
-                  - entity: sensor.living_room_thermostat_current_temperature
-                    name: "Indoor"
-                    color: var(--primary-color)
-                  - entity: sensor.<entity_10>_temperature
-                    name: "Outdoor"
-                    color: var(--secondary-text-color)
-                    show_state: true
-                hours_to_show: 24
-                points_per_hour: 2
-                line_width: 2
-                animate: true
-                show:
-                  name: false
-                  icon: false
-                  labels: false
-                  fill: fade
-                  legend: true
+              # Current indoor temperature (<entity_17> reading used for HVAC)
+              - type: custom:button-card
+                entity: sensor.living_room_thermostat_current_temperature
+                show_icon: false
+                show_name: false
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /general-home/climate
+                custom_fields:
+                  temp: |
+                    [[[
+                      const val = parseFloat(entity.state);
+                      const n = Number.isFinite(val) ? Math.round(val) : '--';
+                      return `<div style="font-size:52px;font-weight:300;line-height:1;letter-spacing:-1px;">${n}<span style="font-size:28px;vertical-align:super;">°</span></div>`;
+                    ]]]
+                styles:
+                  card:
+                    - background: none
+                    - box-shadow: none
+                    - border: none
+                    - padding: 0 16px 8px
+                  grid:
+                    - grid-template-areas: '"temp"'
+                    - grid-template-columns: 1fr
+                    - justify-items: center
+                  custom_fields:
+                    temp:
+                      - text-align: center
                 card_mod:
                   style: |
                     ha-card {
                       box-shadow: none !important;
                       border: none !important;
-                      margin-top: -8px;
+                      margin-top: -4px;
                     }
 
               # Air quality metrics row (5-dot severity indicator)
@@ -505,6 +604,55 @@ views:
                       unit: |
                         [[[
                           return `<span style="font-size:10px;color:var(--secondary-text-color);">Bq/m³</span>`;
+                        ]]]
+                    styles:
+                      card:
+                        - background: none
+                        - box-shadow: none
+                        - border: none
+                        - padding: 8px 2px
+                      name:
+                        - font-size: 11px
+                        - color: var(--secondary-text-color)
+                      grid:
+                        - grid-template-areas: '"dots" "n" "value" "unit"'
+                        - grid-template-rows: min-content min-content min-content min-content
+                      custom_fields:
+                        dots:
+                          - margin-bottom: 6px
+                        value:
+                          - margin-top: 2px
+                        unit:
+                          - margin-top: 0px
+                  - type: custom:button-card
+                    entity: sensor.<entity_13>_air_quality_index
+                    name: Outdoor AQI
+                    show_state: false
+                    show_icon: false
+                    show_name: true
+                    tap_action:
+                      action: more-info
+                    custom_fields:
+                      dots: |
+                        [[[
+                          const val = parseFloat(entity.state);
+                          let level = 0;
+                          if (val > 0) level = 1;
+                          if (val > 50) level = 2;
+                          if (val > 100) level = 3;
+                          if (val > 150) level = 4;
+                          if (val > 200) level = 5;
+                          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+                          const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+                          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+                        ]]]
+                      value: |
+                        [[[
+                          return `<span style="font-size:14px;font-weight:bold;">${parseFloat(entity.state).toFixed(0)}</span>`;
+                        ]]]
+                      unit: |
+                        [[[
+                          return `<span style="font-size:10px;color:var(--secondary-text-color);">AQI</span>`;
                         ]]]
                     styles:
                       card:

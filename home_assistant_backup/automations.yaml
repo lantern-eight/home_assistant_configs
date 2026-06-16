@@ -648,7 +648,7 @@
   alias: 'Cond: UV Index OFF'
   trigger:
   - platform: time
-    at: '15:00:00'
+    at: '17:00:00'
   action:
   - service: input_boolean.turn_off
     target:
