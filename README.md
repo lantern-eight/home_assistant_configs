@@ -177,7 +177,7 @@ uv run pytest tests/ -v
 │   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
 │   ├── dashboard_upload.py          # Push dashboard.yaml to HA over SMB
 │   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
-│   └── general_home_sync.py         # Sync General Home Mobile dashboard to HA
+│   └── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
 │
 ├── dashboards/                      # Dashboards live here
 │   ├── cyberdeck/                   # 3D printer farm dashboard

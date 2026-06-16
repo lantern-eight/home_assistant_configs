@@ -12,7 +12,7 @@ import yaml
 from utils import LOGGER
 
 USAGE = (
-  'Usage: uv run python scripts/general_home_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
+  'Usage: uv run python scripts/general_home_dashboard_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
   '  -r, --restart    Restart HA after sync (required on first deploy or sensor changes)\n'
@@ -132,9 +132,9 @@ def main(argv: list[str] | None = None) -> None:
   Use --restart on first deploy or after editing sensors/configuration.
 
   Example:
-    > uv run python general_home_sync.py           # sync dashboard only
-    > uv run python general_home_sync.py -r         # sync + restart HA
-    > uv run python general_home_sync.py -d         # sync with debug logging
+    > uv run python general_home_dashboard_sync.py           # sync dashboard only
+    > uv run python general_home_dashboard_sync.py -r         # sync + restart HA
+    > uv run python general_home_dashboard_sync.py -d         # sync with debug logging
   """
   argv = argv if argv is not None else sys.argv[1:]
 

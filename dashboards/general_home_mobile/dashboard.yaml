@@ -17,7 +17,7 @@
 # Template sensors: general_home_mobile/sensors.yaml
 # REST sensor:      general_home_mobile/rest_sensors.yaml
 # HA config:        general_home_mobile/ha_config_additions.yaml
-# Sync:             uv run python scripts/general_home_sync.py [-r]
+# Sync:             uv run python scripts/general_home_dashboard_sync.py [-r]
 # =============================================================================
 
 views:
