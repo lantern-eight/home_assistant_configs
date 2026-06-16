@@ -42,7 +42,9 @@
 #           - uv_index
 #
 # And in secrets.yaml:
-#   openmeteo_uv_url: "https://api.open-meteo.com/v1/<entity_13>&forecast_days=1&start_hour=7&end_hour=19"
+#   openmeteo_uv_url: "https://api.open-meteo.com/v1/forecast?latitude=LAT&longitude=LON&hourly=uv_index&timezone=TIMEZONE&forecast_days=1"
+#   - Replace LAT, LON, and TIMEZONE with your actual values in the secrets.yaml file.
+#   - Chart span limits display to 7 AM–7 PM; do not use start_hour/end_hour — OpenMeteo returns HTTP 400.
 #
 
 # --- 4. Input boolean helpers ---

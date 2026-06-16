@@ -132,13 +132,10 @@ views:
               apex_config:
                 chart:
                   height: 180
+                stroke:
+                  opacity: 1
                 fill:
-                  type: gradient
-                  gradient:
-                    type: vertical
-                    shadeIntensity: 0.5
-                    opacityFrom: 0.7
-                    opacityTo: 0.2
+                  opacity: [0, 0.7]
                 annotations:
                   yaxis:
                     - y: 0
@@ -174,6 +171,19 @@ views:
                         style:
                           fontSize: "10px"
               series:
+                - entity: sensor.openmeteo_hourly_uv_forecast
+                  name: "Forecast"
+                  type: area
+                  color: "#03A9F4"
+                  opacity: 0
+                  stroke_width: 2
+                  stroke_dash: 6
+                  show:
+                    in_header: raw
+                  data_generator: |
+                    return entity.attributes.time
+                      .map((t, i) => [new Date(t).getTime(), entity.attributes.uv_index[i]])
+                      .filter((p) => p[0] >= start.getTime() && p[0] <= end.getTime());
                 - entity: sensor.<entity_10>_uv_index
                   name: "Measured"
                   type: area
@@ -183,17 +193,6 @@ views:
                   group_by:
                     func: avg
                     duration: 30min
-                - entity: sensor.openmeteo_hourly_uv_forecast
-                  name: "Forecast"
-                  type: line
-                  color: "#FF9800"
-                  opacity: 0.5
-                  stroke_width: 2
-                  stroke_dash: 4
-                  data_generator: |
-                    const attrs = entity.attributes;
-                    if (!attrs.time || !attrs.uv_index) return [];
-                    return attrs.time.map((t, i) => [new Date(t).getTime(), attrs.uv_index[i]]);
 
       # -----------------------------------------------------------------------
       # Indoor Climate — <entity_17> + Airthings
@@ -1049,13 +1048,10 @@ views:
             apex_config:
               chart:
                 height: 180
+              stroke:
+                opacity: 1
               fill:
-                type: gradient
-                gradient:
-                  type: vertical
-                  shadeIntensity: 0.5
-                  opacityFrom: 0.7
-                  opacityTo: 0.2
+                opacity: [0, 0.7]
               annotations:
                 yaxis:
                   - y: 0
@@ -1091,6 +1087,19 @@ views:
                       style:
                         fontSize: "10px"
             series:
+              - entity: sensor.openmeteo_hourly_uv_forecast
+                name: "Forecast"
+                type: area
+                color: "#03A9F4"
+                opacity: 0
+                stroke_width: 2
+                stroke_dash: 6
+                show:
+                  in_header: raw
+                data_generator: |
+                  return entity.attributes.time
+                    .map((t, i) => [new Date(t).getTime(), entity.attributes.uv_index[i]])
+                    .filter((p) => p[0] >= start.getTime() && p[0] <= end.getTime());
               - entity: sensor.<entity_10>_uv_index
                 name: "Measured"
                 type: area
@@ -1100,17 +1109,6 @@ views:
                 group_by:
                   func: avg
                   duration: 30min
-              - entity: sensor.openmeteo_hourly_uv_forecast
-                name: "Forecast"
-                type: line
-                color: "#FF9800"
-                opacity: 0.5
-                stroke_width: 2
-                stroke_dash: 4
-                data_generator: |
-                  const attrs = entity.attributes;
-                  if (!attrs.time || !attrs.uv_index) return [];
-                  return attrs.time.map((t, i) => [new Date(t).getTime(), attrs.uv_index[i]]);
 
   # ===========================================================================
   # AUTOMATIONS — Sub-view listing all automations with enable/disable toggles
