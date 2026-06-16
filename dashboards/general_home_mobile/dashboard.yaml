@@ -20,6 +20,10 @@
 # Sync:             uv run python scripts/general_home_dashboard_sync.py [-r]
 # =============================================================================
 
+kiosk_mode:
+  hide_header: true
+  hide_sidebar: true
+
 views:
   # ===========================================================================
   # HOME — Main view
