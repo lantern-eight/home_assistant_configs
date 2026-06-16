@@ -123,7 +123,6 @@ views:
                 offset: "+7h"
               now:
                 show: true
-                label: "Now"
               yaxis:
                 - min: 0
                   max: ~12
@@ -144,32 +143,64 @@ views:
                       opacity: 0.1
                       label:
                         text: "Low"
+                        borderWidth: 0
                         style:
                           fontSize: "10px"
+                          background: transparent
+                          color: "#9E9E9E"
+                          padding:
+                            left: 0
+                            right: 0
+                            top: 0
+                            bottom: 0
                     - y: 3
                       y2: 6
                       fillColor: "#FFC107"
                       opacity: 0.1
                       label:
                         text: "Moderate"
+                        borderWidth: 0
                         style:
                           fontSize: "10px"
+                          background: transparent
+                          color: "#9E9E9E"
+                          padding:
+                            left: 0
+                            right: 0
+                            top: 0
+                            bottom: 0
                     - y: 6
                       y2: 8
                       fillColor: "#FF9800"
                       opacity: 0.1
                       label:
                         text: "High"
+                        borderWidth: 0
                         style:
                           fontSize: "10px"
+                          background: transparent
+                          color: "#9E9E9E"
+                          padding:
+                            left: 0
+                            right: 0
+                            top: 0
+                            bottom: 0
                     - y: 8
                       y2: 15
                       fillColor: "#F44336"
                       opacity: 0.1
                       label:
                         text: "Very High"
+                        borderWidth: 0
                         style:
                           fontSize: "10px"
+                          background: transparent
+                          color: "#9E9E9E"
+                          padding:
+                            left: 0
+                            right: 0
+                            top: 0
+                            bottom: 0
               series:
                 - entity: sensor.openmeteo_hourly_uv_forecast
                   name: "Forecast"
@@ -1039,7 +1070,6 @@ views:
               offset: "+7h"
             now:
               show: true
-              label: "Now"
             yaxis:
               - min: 0
                 max: ~12
@@ -1060,32 +1090,64 @@ views:
                     opacity: 0.1
                     label:
                       text: "Low"
+                      borderWidth: 0
                       style:
                         fontSize: "10px"
+                        background: transparent
+                        color: "#9E9E9E"
+                        padding:
+                          left: 0
+                          right: 0
+                          top: 0
+                          bottom: 0
                   - y: 3
                     y2: 6
                     fillColor: "#FFC107"
                     opacity: 0.1
                     label:
                       text: "Moderate"
+                      borderWidth: 0
                       style:
                         fontSize: "10px"
+                        background: transparent
+                        color: "#9E9E9E"
+                        padding:
+                          left: 0
+                          right: 0
+                          top: 0
+                          bottom: 0
                   - y: 6
                     y2: 8
                     fillColor: "#FF9800"
                     opacity: 0.1
                     label:
                       text: "High"
+                      borderWidth: 0
                       style:
                         fontSize: "10px"
+                        background: transparent
+                        color: "#9E9E9E"
+                        padding:
+                          left: 0
+                          right: 0
+                          top: 0
+                          bottom: 0
                   - y: 8
                     y2: 15
                     fillColor: "#F44336"
                     opacity: 0.1
                     label:
                       text: "Very High"
+                      borderWidth: 0
                       style:
                         fontSize: "10px"
+                        background: transparent
+                        color: "#9E9E9E"
+                        padding:
+                          left: 0
+                          right: 0
+                          top: 0
+                          bottom: 0
             series:
               - entity: sensor.openmeteo_hourly_uv_forecast
                 name: "Forecast"
