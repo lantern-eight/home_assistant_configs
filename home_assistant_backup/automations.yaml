@@ -69,7 +69,7 @@
   description: Wake up <entity_4>
   triggers:
   - trigger: time
-    at: 07:15:00
+    at: 07:00:00
     weekday:
     - sun
     - mon
@@ -653,3 +653,10 @@
   - service: input_boolean.turn_off
     target:
       entity_id: input_boolean.cond_uv_index
+- id: theme_generate_background_thumbnails
+  alias: 'Theme: Generate background thumbnails'
+  trigger:
+  - platform: state
+    entity_id: sensor.theme_backgrounds
+  action:
+  - service: shell_command.generate_theme_thumbnails
