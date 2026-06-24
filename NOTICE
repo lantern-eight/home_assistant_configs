@@ -1,0 +1,16 @@
+This project is dedicated to the public domain under CC0 1.0 Universal.
+See LICENSE for details.
+
+Portions of this project use the following third-party services and works:
+
+Open-Meteo API
+  https://open-meteo.com/
+  Weather and UV forecast data used by the dashboard REST sensor.
+  Open-Meteo data is licensed under CC BY 4.0:
+  https://creativecommons.org/licenses/by/4.0/
+
+Share Tech Mono (Google Fonts)
+  https://fonts.google.com/specimen/Share+Tech+Mono
+  Used by the Neon dashboard style. Loaded via Google Fonts CDN.
+  Licensed under the SIL Open Font License 1.1:
+  https://scripts.sil.org/OFL

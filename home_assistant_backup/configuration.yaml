@@ -5,6 +5,13 @@ default_config:
 # Load frontend themes from the themes folder
 frontend:
   themes: !include_dir_merge_named themes
+  # Load card-mod as a frontend module BEFORE lovelace renders any cards, so it
+  # patches all card classes up front. Without this, card-mod loads as a late
+  # lovelace resource and intermittently misses cards (markdown/navbar/calendar
+  # cards were not getting themed). The whole theme system relies on card-level
+  # card_mod applying to every card, so this must be reliable.
+  extra_module_url:
+    - /hacsfiles/lovelace-card-mod/card-mod.js
 
 automation: !include automations.yaml
 script: !include scripts.yaml
@@ -104,3 +111,124 @@ input_boolean:
   cond_uv_index:
     name: "Conditional: UV Index"
     icon: mdi:weather-sunny-alert
+
+
+# --- Theme system (General Home Mobile) ---
+input_select:
+  theme_appearance_user:
+    name: "Theme Appearance User"
+    options:
+      - "<entity_1>"
+      - "<entity_2>"
+    initial: "<entity_1>"
+    icon: mdi:account-switch
+  theme_style_<entity_1>:
+    name: "Theme Style (<entity_1>)"
+    options:
+      - Clean
+      - Glass
+      - Dark
+      - Glow
+      - Neon
+    initial: Clean
+    icon: mdi:palette-swatch-variant
+  theme_style_<entity_2>:
+    name: "Theme Style (<entity_2>)"
+    options:
+      - Clean
+      - Glass
+      - Dark
+      - Glow
+      - Neon
+    initial: Clean
+    icon: mdi:palette-swatch-variant
+  theme_palette_<entity_1>:
+    name: "Theme Palette (<entity_1>)"
+    options:
+      - Indigo
+      - Ocean
+      - Sunset
+      - Forest
+      - Rose
+      - Mono
+      - Cyberdeck
+      - Mint
+    initial: Indigo
+    icon: mdi:palette
+  theme_palette_<entity_2>:
+    name: "Theme Palette (<entity_2>)"
+    options:
+      - Indigo
+      - Ocean
+      - Sunset
+      - Forest
+      - Rose
+      - Mono
+      - Cyberdeck
+      - Mint
+    initial: Indigo
+    icon: mdi:palette
+
+input_text:
+  theme_background_<entity_1>:
+    name: "Theme Background (<entity_1>)"
+    initial: "none"
+    max: 255
+    icon: mdi:image
+  theme_background_<entity_2>:
+    name: "Theme Background (<entity_2>)"
+    initial: "none"
+    max: 255
+    icon: mdi:image
+
+input_number:
+  theme_card_opacity_<entity_1>:
+    name: "theme_card_opacity_<entity_1>"
+    min: -1
+    max: 100
+    step: 5
+    initial: -1
+    icon: mdi:opacity
+    unit_of_measurement: "%"
+    mode: slider
+  theme_card_opacity_<entity_2>:
+    name: "theme_card_opacity_<entity_2>"
+    min: -1
+    max: 100
+    step: 5
+    initial: -1
+    icon: mdi:opacity
+    unit_of_measurement: "%"
+    mode: slider
+  theme_card_blur_<entity_1>:
+    name: "theme_card_blur_<entity_1>"
+    min: -1
+    max: 30
+    step: 1
+    initial: -1
+    icon: mdi:blur
+    unit_of_measurement: "px"
+    mode: slider
+  theme_card_blur_<entity_2>:
+    name: "theme_card_blur_<entity_2>"
+    min: -1
+    max: 30
+    step: 1
+    initial: -1
+    icon: mdi:blur
+    unit_of_measurement: "px"
+    mode: slider
+
+command_line:
+  - sensor:
+      name: theme backgrounds
+      command: >
+        python3 /config/scripts/list_theme_backgrounds.py
+      scan_interval: 30
+      value_template: "{{ value_json.count | int(0) }}"
+      json_attributes:
+        - count
+        - file_list
+
+shell_command:
+  generate_theme_thumbnails: "python3 /config/scripts/generate_theme_thumbnails.py"

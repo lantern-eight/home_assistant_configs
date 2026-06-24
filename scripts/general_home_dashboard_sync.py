@@ -23,11 +23,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / 'config.yaml'
 ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
 DASHBOARD_DIR = REPO_ROOT / 'dashboards' / 'general_home_mobile'
+SCRIPTS_DIR = REPO_ROOT / 'scripts'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
 FILE_MAP = {
   'dashboard.yaml': 'dashboards/general_home_mobile/dashboard.yaml',
   'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
+  'theme_sensors.yaml': 'template_sensors/theme_sensors.yaml',
+}
+
+SCRIPT_MAP = {
+  'generate_theme_thumbnails.py': 'scripts/generate_theme_thumbnails.py',
+  'list_theme_backgrounds.py': 'scripts/list_theme_backgrounds.py',
 }
 
 
@@ -117,8 +124,49 @@ def _sync_files(cfg: dict) -> int:
     except OSError as e:
       LOGGER.error('Failed to sync', extra={'file': local_name, 'error': str(e)})
 
+  for local_name, remote_rel in SCRIPT_MAP.items():
+    local_path = SCRIPTS_DIR / local_name
+    if not local_path.exists():
+      LOGGER.warning('Local script missing, skipping', extra={'file': str(local_path)})
+      continue
+
+    remote_path = rf'{smb_root}\{remote_rel.replace("/", chr(92))}'
+    remote_dir = remote_path.rsplit('\\', 1)[0]
+    _smb_makedirs(remote_dir)
+
+    try:
+      with open(local_path, 'r', encoding='utf-8') as src:
+        content = src.read()
+      with smbclient.open_file(remote_path, mode='w') as dst:
+        dst.write(content)
+      uploaded += 1
+      LOGGER.info('Synced script', extra={'local': local_name, 'remote': remote_rel})
+    except OSError as e:
+      LOGGER.error('Failed to sync script', extra={'file': local_name, 'error': str(e)})
+
   smbclient.reset_connection_cache()
   return uploaded
+
+
+def _reload_services(token: str) -> None:
+  if not token or token == 'your_token_here':
+    LOGGER.warning('No valid HA token; skipping service reloads')
+    return
+  headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+  for service in ('template/reload', 'command_line/reload'):
+    domain, svc = service.split('/', 1)
+    try:
+      resp = requests.post(
+        f'{HA_BASE_URL}/api/services/{domain}/{svc}',
+        headers=headers,
+        timeout=30,
+      )
+      if resp.status_code == 200:
+        LOGGER.info('Reloaded', extra={'service': service})
+      else:
+        LOGGER.warning('Reload failed', extra={'service': service, 'status': resp.status_code})
+    except requests.RequestException as e:
+      LOGGER.warning('Reload error', extra={'service': service, 'error': str(e)})
 
 
 def _restart_ha(token: str) -> bool:
@@ -188,6 +236,7 @@ def main(argv: list[str] | None = None) -> None:
   if do_restart:
     _restart_ha(cfg['token'])
   else:
+    _reload_services(cfg['token'])
     LOGGER.info('Dashboard YAML reloads automatically on next page visit')
 
 
