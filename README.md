@@ -8,7 +8,8 @@ Home Assistant configuration backup, dashboard management, and tooling. Runs on 
 - [Setup](#setup)
 - [Backup](#backup)
 - [Dashboards](#dashboards)
-  - [MD3 Mobile Dashboard](#md3-mobile-dashboard)
+  - [General Home Mobile](#general-home-mobile)
+  - [Cyberdeck (3D Printer Farm)](#cyberdeck-3d-printer-farm)
   - [Uploading to Home Assistant](#uploading-to-home-assistant)
 - [Entity Discovery](#entity-discovery)
 - [Tests](#tests)
@@ -89,50 +90,34 @@ of automations (HA strips comments on save).
 
 ## Dashboards
 
-### MD3 Mobile Dashboard
+### General Home Mobile
 
-A [Material Design 3 dashboard](https://github.com/ElementZoom/Material-Design-3-Dynamic-Mobile-Dashboard)
-by ElementZoom, brought in as a **git subtree** so upstream updates can be
-pulled without losing local customizations.
+Phone-first dashboard for everyday household use. Uses `type: sections` views
+in kiosk mode with a per-user theme system (5 styles, 8 palettes, custom
+backgrounds). See the full
+[README](dashboards/general_home_mobile/README.md) for setup, architecture,
+and screenshots.
 
-The dashboard is served by HA in YAML mode. The relevant entry in `configuration.yaml`:
+```bash
+# Deploy to HA
+uv run python scripts/general_home_dashboard_sync.py
+```
 
-This was going to be implemented, but decided against it for now. Leaving this section
-here for reference as it's a good dashboard, maybe in the future.
+### Cyberdeck (3D Printer Farm)
+
+Dashboard for monitoring and controlling 3D printers. Synced to HA via its
+own sync script.
+
+```bash
+# Deploy to HA
+uv run python scripts/cyberdeck_sync.py
+```
 
 ### Uploading to Home Assistant
 
-`scripts/dashboard_upload.py` pushes `dashboard.yaml` to the HA config share over SMB
-using the same credentials as the backup script.
-
-```bash
-# Upload and trigger lovelace reload
-uv run python scripts/dashboard_upload.py
-
-# Upload without reload
-uv run python scripts/dashboard_upload.py -n
-
-# Debug mode
-uv run python scripts/dashboard_upload.py -d
-```
-
-After uploading, HA detects the file change and shows a "Refresh" prompt in the
-dashboard UI. On a phone, pull down to refresh.
-
-
-### HACS Dependencies
-
-The MD3 dashboard requires ~30 HACS frontend components. All are currently
-installed. See the upstream
-[README](dashboards/Material-Design-3-Dynamic-Mobile-Dashboard/README.md) for
-the full list. Key ones:
-
-Bubble Card, Button Card, Streamline Card, Mushroom, Material You Theme, Material
-You Utilities, Material Symbols, Navbar Card, Simple Swipe Card, Simple Tabs,
-Stack In Card, Vertical Stack In Card, Card Mod, Auto Entities, ApexCharts, Mini
-Graph Card, Timer Bar Card, Calendar Card Pro, Kiosk Mode, Layout Card, Config
-Template Card, Paper Buttons Row, My Cards Bundle, Mediocre Media Player Cards,
-WebRTC Camera, Lunar Phase Card, Weather Forecast Extended.
+Each dashboard has its own sync script that pushes files to the HA config
+share over SMB and reloads the relevant services. See the per-dashboard
+READMEs for details.
 
 ## Entity Discovery
 
