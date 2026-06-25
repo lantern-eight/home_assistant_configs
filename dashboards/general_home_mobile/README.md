@@ -681,6 +681,13 @@ the two theme Python scripts. It then runs `template/reload` and
 `command_line/reload`. The script uses its own `smbclient` connection,
 independent of any Finder mount.
 
+**Redaction handling:** The sync script un-redacts entity placeholders
+(e.g., `<entity_1>` → real names) **in memory only** before writing to HA.
+Local files on disk are never modified, so git sees no changes after a sync.
+This is different from the backup script's `-r` restore, which writes
+un-redacted content back to local files (and therefore shows up in
+`git diff`).
+
 ### Force-Refreshing the Dashboard
 
 HA caches the Lovelace YAML config. After deploying a dashboard change, you
