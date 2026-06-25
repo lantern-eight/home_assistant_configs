@@ -1,5 +1,21 @@
 # Agent instructions
 
+## General
+
+- Prefer 88-character line length for prose and code in this repo.
+
+## Home Assistant
+
+- **Hard restarts take ~5 minutes.** After triggering an HA restart
+  (e.g. `sync.py -r`), don't actively poll — use `Bash` with
+  `run_in_background` to wait:
+  ```bash
+  until curl -s -o /dev/null -w "%{http_code}" \
+    http://<ip>:<port>/api/ 2>/dev/null \
+    | grep -q "401\|200"; do sleep 5; done
+  ```
+  You'll be notified when it completes.
+
 ## Home Assistant config backup and automations
 
 Relevant when working under `home_assistant_backup/**`, `home_assistant_backup_comments/**`, or `dashboards/**`.
