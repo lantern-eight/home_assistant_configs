@@ -64,7 +64,7 @@ x-theme-bg-card: &id001
         }
         {% endif %}
       }
-x-theme-card-style: |
+x-theme-card-style: &theme_card_style |
   {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
   {% endif %}
@@ -116,7 +116,7 @@ x-theme-card-style: |
       {% endif %}
     }
   }
-x-theme-exempt-style: |
+x-theme-exempt-style: &theme_exempt_style |
   ha-card {
     background: none !important;
     backdrop-filter: none !important;
@@ -127,13 +127,13 @@ x-theme-exempt-style: |
   ha-card::before {
     content: none !important;
   }
-x-theme-card-transparent: |
+x-theme-card-transparent: &theme_card_transparent |
   ha-card {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
   }
-x-theme-chrome-style: |
+x-theme-chrome-style: &theme_chrome_style |
   {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
   {% endif %}
@@ -196,58 +196,7 @@ views:
       mode: vertical
       card_mod:
         style:
-          .: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          .: *theme_card_style
           hui-vertical-stack-card$: |
             #root > * {
               margin: 0 !important;
@@ -270,12 +219,7 @@ views:
           hourly_group_size: 2
         card_mod:
           style:
-            .: |
-              ha-card {
-                background: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-              }
+            .: *theme_card_transparent
             $: |
               .wfc-current-secondary-info {
                 display: none !important;
@@ -410,58 +354,7 @@ views:
         mode: vertical
         card_mod:
           style:
-            .: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            .: *theme_card_style
             hui-vertical-stack-card$: |
               #root > * {
                 margin: 0 !important;
@@ -473,17 +366,7 @@ views:
           subtitle: Monitoring active
           icon: mdi:door-open
           card_mod:
-            style: |
-              ha-card {
-                background: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-                border: none !important;
-              }
-              ha-card::before {
-                content: none !important;
-              }
+            style: *theme_exempt_style
         - type: entities
           entities:
           - entity: binary_sensor.<entity_3>s_door_door
@@ -495,58 +378,7 @@ views:
             icon: mdi:door
             secondary_info: last-changed
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
     - type: conditional
       conditions:
       - condition: state
@@ -684,58 +516,7 @@ views:
             duration: 30min
         card_mod:
           style:
-            .: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            .: *theme_card_style
             $: |
               #header {
                 background: rgba(var(--rgb-primary-text-color), 0.05);
@@ -768,58 +549,7 @@ views:
       mode: vertical
       card_mod:
         style:
-          .: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          .: *theme_card_style
           hui-vertical-stack-card$: |
             #root > * {
               margin: 0 !important;
@@ -836,17 +566,7 @@ views:
           action: navigate
           navigation_path: /general-home/climate
         card_mod:
-          style: |
-            ha-card {
-              background: none !important;
-              backdrop-filter: none !important;
-              -webkit-backdrop-filter: none !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-            ha-card::before {
-              content: none !important;
-            }
+          style: *theme_exempt_style
       - type: custom:button-card
         entity: sensor.living_room_thermostat_current_temperature
         show_icon: false
@@ -876,30 +596,10 @@ views:
             temp:
             - text-align: center
         card_mod:
-          style: |
-            ha-card {
-              background: none !important;
-              backdrop-filter: none !important;
-              -webkit-backdrop-filter: none !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-            ha-card::before {
-              content: none !important;
-            }
+          style: *theme_exempt_style
       - type: horizontal-stack
         card_mod:
-          style: |
-            ha-card {
-              background: none !important;
-              backdrop-filter: none !important;
-              -webkit-backdrop-filter: none !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-            ha-card::before {
-              content: none !important;
-            }
+          style: *theme_exempt_style
         cards:
         - type: custom:button-card
           entity: sensor.basement_humidity
@@ -1239,58 +939,7 @@ views:
         action: expand
       card_mod:
         style:
-          .: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          .: *theme_card_style
           $: |
             .header-container {
               background: rgba(var(--rgb-primary-text-color), 0.05);
@@ -1308,46 +957,7 @@ views:
       auto_close: ''
       back_open: true
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_dark_primary') }} 14%, {{ states('sensor.theme_dark_card_background') }}) !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_light_primary') }} 14%, {{ states('sensor.theme_light_card_background') }}) !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_chrome_style
       cards:
       - type: vertical-stack
         cards:
@@ -1359,58 +969,7 @@ views:
             action: navigate
             navigation_path: /general-home/home
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:stack-in-card
           mode: horizontal
           keep:
@@ -1419,58 +978,7 @@ views:
             box_shadow: true
           card_mod:
             style:
-              .: |
-                {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                {% endif %}
-                @media (prefers-color-scheme: dark) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_dark_primary') }};
-                    --accent-color: {{ states('sensor.theme_dark_accent') }};
-                    --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                    --success-color: {{ states('sensor.theme_dark_success') }};
-                    --warning-color: {{ states('sensor.theme_dark_warning') }};
-                    --error-color: {{ states('sensor.theme_dark_error') }};
-                    --info-color: {{ states('sensor.theme_dark_info') }};
-                    border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_dark_card_background') }} !important;
-                    border: {{ states('sensor.theme_dark_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
-                @media (prefers-color-scheme: light) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_light_primary') }};
-                    --accent-color: {{ states('sensor.theme_light_accent') }};
-                    --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                    --success-color: {{ states('sensor.theme_light_success') }};
-                    --warning-color: {{ states('sensor.theme_light_warning') }};
-                    --error-color: {{ states('sensor.theme_light_error') }};
-                    --info-color: {{ states('sensor.theme_light_info') }};
-                    border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_light_card_background') }} !important;
-                    border: {{ states('sensor.theme_light_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
+              .: *theme_card_style
               hui-horizontal-stack$: |
                 #root {
                   display: flex !important;
@@ -1488,17 +996,7 @@ views:
               navigation_path: /general-home/home
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 1 1 auto !important; width: 100%; }
           - type: custom:mushroom-entity-card
@@ -1511,17 +1009,7 @@ views:
               action: toggle
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 0 0 auto !important; margin-left: auto !important; }
         - type: custom:stack-in-card
@@ -1532,58 +1020,7 @@ views:
             box_shadow: true
           card_mod:
             style:
-              .: |
-                {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                {% endif %}
-                @media (prefers-color-scheme: dark) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_dark_primary') }};
-                    --accent-color: {{ states('sensor.theme_dark_accent') }};
-                    --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                    --success-color: {{ states('sensor.theme_dark_success') }};
-                    --warning-color: {{ states('sensor.theme_dark_warning') }};
-                    --error-color: {{ states('sensor.theme_dark_error') }};
-                    --info-color: {{ states('sensor.theme_dark_info') }};
-                    border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_dark_card_background') }} !important;
-                    border: {{ states('sensor.theme_dark_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
-                @media (prefers-color-scheme: light) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_light_primary') }};
-                    --accent-color: {{ states('sensor.theme_light_accent') }};
-                    --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                    --success-color: {{ states('sensor.theme_light_success') }};
-                    --warning-color: {{ states('sensor.theme_light_warning') }};
-                    --error-color: {{ states('sensor.theme_light_error') }};
-                    --info-color: {{ states('sensor.theme_light_info') }};
-                    border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_light_card_background') }} !important;
-                    border: {{ states('sensor.theme_light_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
+              .: *theme_card_style
               hui-horizontal-stack$: |
                 #root {
                   display: flex !important;
@@ -1601,17 +1038,7 @@ views:
               navigation_path: /general-home/home
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 1 1 auto !important; width: 100%; }
           - type: custom:mushroom-entity-card
@@ -1624,17 +1051,7 @@ views:
               action: toggle
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 0 0 auto !important; margin-left: auto !important; }
         - type: custom:stack-in-card
@@ -1645,58 +1062,7 @@ views:
             box_shadow: true
           card_mod:
             style:
-              .: |
-                {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                {% endif %}
-                @media (prefers-color-scheme: dark) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_dark_primary') }};
-                    --accent-color: {{ states('sensor.theme_dark_accent') }};
-                    --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                    --success-color: {{ states('sensor.theme_dark_success') }};
-                    --warning-color: {{ states('sensor.theme_dark_warning') }};
-                    --error-color: {{ states('sensor.theme_dark_error') }};
-                    --info-color: {{ states('sensor.theme_dark_info') }};
-                    border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_dark_card_background') }} !important;
-                    border: {{ states('sensor.theme_dark_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
-                @media (prefers-color-scheme: light) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_light_primary') }};
-                    --accent-color: {{ states('sensor.theme_light_accent') }};
-                    --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                    --success-color: {{ states('sensor.theme_light_success') }};
-                    --warning-color: {{ states('sensor.theme_light_warning') }};
-                    --error-color: {{ states('sensor.theme_light_error') }};
-                    --info-color: {{ states('sensor.theme_light_info') }};
-                    border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_light_card_background') }} !important;
-                    border: {{ states('sensor.theme_light_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
+              .: *theme_card_style
               hui-horizontal-stack$: |
                 #root {
                   display: flex !important;
@@ -1714,17 +1080,7 @@ views:
               navigation_path: /general-home/home
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 1 1 auto !important; width: 100%; }
           - type: custom:mushroom-entity-card
@@ -1737,17 +1093,7 @@ views:
               action: toggle
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 0 0 auto !important; margin-left: auto !important; }
         - type: custom:mushroom-template-card
@@ -1758,58 +1104,7 @@ views:
             action: navigate
             navigation_path: /general-home/home
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:stack-in-card
           mode: horizontal
           keep:
@@ -1818,58 +1113,7 @@ views:
             box_shadow: true
           card_mod:
             style:
-              .: |
-                {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                {% endif %}
-                @media (prefers-color-scheme: dark) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_dark_primary') }};
-                    --accent-color: {{ states('sensor.theme_dark_accent') }};
-                    --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                    --success-color: {{ states('sensor.theme_dark_success') }};
-                    --warning-color: {{ states('sensor.theme_dark_warning') }};
-                    --error-color: {{ states('sensor.theme_dark_error') }};
-                    --info-color: {{ states('sensor.theme_dark_info') }};
-                    border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_dark_card_background') }} !important;
-                    border: {{ states('sensor.theme_dark_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
-                @media (prefers-color-scheme: light) {
-                  ha-card {
-                    --primary-color: {{ states('sensor.theme_light_primary') }};
-                    --accent-color: {{ states('sensor.theme_light_accent') }};
-                    --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                    --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                    --success-color: {{ states('sensor.theme_light_success') }};
-                    --warning-color: {{ states('sensor.theme_light_warning') }};
-                    --error-color: {{ states('sensor.theme_light_error') }};
-                    --info-color: {{ states('sensor.theme_light_info') }};
-                    border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                    font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                    position: relative;
-                    overflow: hidden;
-                    background: {{ states('sensor.theme_light_card_background') }} !important;
-                    border: {{ states('sensor.theme_light_card_border') }} !important;
-                    box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                    {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                    {% if blur > 0 %}
-                    backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                    {% endif %}
-                  }
-                }
+              .: *theme_card_style
               hui-horizontal-stack$: |
                 #root {
                   display: flex !important;
@@ -1887,17 +1131,7 @@ views:
               navigation_path: /general-home/home
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 1 1 auto !important; width: 100%; }
           - type: custom:mushroom-entity-card
@@ -1910,17 +1144,7 @@ views:
               action: toggle
             card_mod:
               style:
-                .: |
-                  ha-card {
-                    background: none !important;
-                    backdrop-filter: none !important;
-                    -webkit-backdrop-filter: none !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                  }
-                  ha-card::before {
-                    content: none !important;
-                  }
+                .: *theme_exempt_style
                 $: |
                   :host { flex: 0 0 auto !important; margin-left: auto !important; }
     - type: custom:bubble-card
@@ -1931,46 +1155,7 @@ views:
       auto_close: ''
       back_open: true
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_dark_primary') }} 14%, {{ states('sensor.theme_dark_card_background') }}) !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_light_primary') }} 14%, {{ states('sensor.theme_light_card_background') }}) !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_chrome_style
       cards:
       - type: vertical-stack
         cards:
@@ -1983,58 +1168,7 @@ views:
             action: navigate
             navigation_path: /general-home/appearance
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-template-card
           primary: All Alerts
           secondary: View all conditional cards
@@ -2044,58 +1178,7 @@ views:
             action: navigate
             navigation_path: /general-home/all-alerts
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-template-card
           primary: Automations
           secondary: Enable or disable automations
@@ -2105,58 +1188,7 @@ views:
             action: navigate
             navigation_path: /general-home/automations
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-template-card
           primary: 3D Printer Farm
           secondary: Cyberdeck dashboard
@@ -2166,58 +1198,7 @@ views:
             action: navigate
             navigation_path: /cyber-deck/farm-ctl
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-template-card
           primary: Home Assistant
           secondary: Default dashboard (exit kiosk)
@@ -2227,103 +1208,13 @@ views:
             action: navigate
             navigation_path: /lovelace/0
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
   - type: grid
     column_span: 1
     cards:
     - type: custom:navbar-card
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_dark_primary') }} 14%, {{ states('sensor.theme_dark_card_background') }}) !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: color-mix(in srgb, {{ states('sensor.theme_light_primary') }} 14%, {{ states('sensor.theme_light_card_background') }}) !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_chrome_style
       desktop:
         position: bottom
         show_labels: true
@@ -2372,58 +1263,7 @@ views:
     - type: thermostat
       entity: climate.living_room_thermostat
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-              --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-              --success-color: {{ states('sensor.theme_dark_success') }};
-              --warning-color: {{ states('sensor.theme_dark_warning') }};
-              --error-color: {{ states('sensor.theme_dark_error') }};
-              --info-color: {{ states('sensor.theme_dark_info') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_dark_card_background') }} !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              --state-on-color: {{ states('sensor.theme_light_state_on') }};
-              --state-off-color: {{ states('sensor.theme_light_state_off') }};
-              --success-color: {{ states('sensor.theme_light_success') }};
-              --warning-color: {{ states('sensor.theme_light_warning') }};
-              --error-color: {{ states('sensor.theme_light_error') }};
-              --info-color: {{ states('sensor.theme_light_info') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_light_card_background') }} !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_card_style
       features:
       - type: climate-hvac-modes
         hvac_modes:
@@ -2434,58 +1274,7 @@ views:
       - type: target-temperature
     - type: custom:mini-graph-card
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-              --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-              --success-color: {{ states('sensor.theme_dark_success') }};
-              --warning-color: {{ states('sensor.theme_dark_warning') }};
-              --error-color: {{ states('sensor.theme_dark_error') }};
-              --info-color: {{ states('sensor.theme_dark_info') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_dark_card_background') }} !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              --state-on-color: {{ states('sensor.theme_light_state_on') }};
-              --state-off-color: {{ states('sensor.theme_light_state_off') }};
-              --success-color: {{ states('sensor.theme_light_success') }};
-              --warning-color: {{ states('sensor.theme_light_warning') }};
-              --error-color: {{ states('sensor.theme_light_error') }};
-              --info-color: {{ states('sensor.theme_light_info') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_light_card_background') }} !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_card_style
       entities:
       - entity: sensor.living_room_thermostat_current_temperature
         name: Indoor
@@ -2501,115 +1290,13 @@ views:
     - type: custom:mushroom-entity-card
       entity: sensor.living_room_thermostat_current_humidity
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-              --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-              --success-color: {{ states('sensor.theme_dark_success') }};
-              --warning-color: {{ states('sensor.theme_dark_warning') }};
-              --error-color: {{ states('sensor.theme_dark_error') }};
-              --info-color: {{ states('sensor.theme_dark_info') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_dark_card_background') }} !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              --state-on-color: {{ states('sensor.theme_light_state_on') }};
-              --state-off-color: {{ states('sensor.theme_light_state_off') }};
-              --success-color: {{ states('sensor.theme_light_success') }};
-              --warning-color: {{ states('sensor.theme_light_warning') }};
-              --error-color: {{ states('sensor.theme_light_error') }};
-              --info-color: {{ states('sensor.theme_light_info') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_light_card_background') }} !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_card_style
       name: Indoor Humidity
       icon: mdi:water-percent
     - type: custom:mushroom-entity-card
       entity: select.living_room_thermostat_current_mode
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-              --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-              --success-color: {{ states('sensor.theme_dark_success') }};
-              --warning-color: {{ states('sensor.theme_dark_warning') }};
-              --error-color: {{ states('sensor.theme_dark_error') }};
-              --info-color: {{ states('sensor.theme_dark_info') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_dark_card_background') }} !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              --state-on-color: {{ states('sensor.theme_light_state_on') }};
-              --state-off-color: {{ states('sensor.theme_light_state_off') }};
-              --success-color: {{ states('sensor.theme_light_success') }};
-              --warning-color: {{ states('sensor.theme_light_warning') }};
-              --error-color: {{ states('sensor.theme_light_error') }};
-              --info-color: {{ states('sensor.theme_light_info') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_light_card_background') }} !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_card_style
       name: <entity_17> Mode
       icon: mdi:thermostat
 - title: Security
@@ -2632,71 +1319,10 @@ views:
       title: Security
       subtitle: Door and entry monitoring
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: entities
       card_mod:
-        style: |
-          {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-          @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-          {% endif %}
-          @media (prefers-color-scheme: dark) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_dark_primary') }};
-              --accent-color: {{ states('sensor.theme_dark_accent') }};
-              --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-              --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-              --success-color: {{ states('sensor.theme_dark_success') }};
-              --warning-color: {{ states('sensor.theme_dark_warning') }};
-              --error-color: {{ states('sensor.theme_dark_error') }};
-              --info-color: {{ states('sensor.theme_dark_info') }};
-              border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_dark_card_background') }} !important;
-              border: {{ states('sensor.theme_dark_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
-          @media (prefers-color-scheme: light) {
-            ha-card {
-              --primary-color: {{ states('sensor.theme_light_primary') }};
-              --accent-color: {{ states('sensor.theme_light_accent') }};
-              --state-on-color: {{ states('sensor.theme_light_state_on') }};
-              --state-off-color: {{ states('sensor.theme_light_state_off') }};
-              --success-color: {{ states('sensor.theme_light_success') }};
-              --warning-color: {{ states('sensor.theme_light_warning') }};
-              --error-color: {{ states('sensor.theme_light_error') }};
-              --info-color: {{ states('sensor.theme_light_info') }};
-              border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-              font-family: {{ states('sensor.theme_light_card_font') }} !important;
-              position: relative;
-              overflow: hidden;
-              background: {{ states('sensor.theme_light_card_background') }} !important;
-              border: {{ states('sensor.theme_light_card_border') }} !important;
-              box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-              {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-              {% if blur > 0 %}
-              backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-              {% endif %}
-            }
-          }
+        style: *theme_card_style
       entities:
       - entity: binary_sensor.<entity_3>s_door_door
         name: <entity_3>'s Door
@@ -2727,58 +1353,7 @@ views:
       mode: vertical
       card_mod:
         style:
-          .: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          .: *theme_card_style
           hui-vertical-stack-card$: |
             #root > * {
               margin: 0 !important;
@@ -2790,17 +1365,7 @@ views:
         subtitle: Monitoring active
         icon: mdi:door-open
         card_mod:
-          style: |
-            ha-card {
-              background: none !important;
-              backdrop-filter: none !important;
-              -webkit-backdrop-filter: none !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-            ha-card::before {
-              content: none !important;
-            }
+          style: *theme_exempt_style
       - type: entities
         entities:
         - entity: binary_sensor.<entity_3>s_door_door
@@ -2812,58 +1377,7 @@ views:
           icon: mdi:door
           secondary_info: last-changed
         card_mod:
-          style: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          style: *theme_card_style
     - type: custom:apexcharts-card
       header:
         title: UV Index Today
@@ -2995,58 +1509,7 @@ views:
           duration: 30min
       card_mod:
         style:
-          .: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          .: *theme_card_style
           $: |
             #header {
               padding: 10px 20px 6px !important;
@@ -3093,31 +1556,11 @@ views:
       subtitle: Editing {{ states('input_select.theme_appearance_user') | title }}'s
         theme
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: custom:mushroom-chips-card
       alignment: center
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
       chips:
       - type: template
         content: <entity_1>
@@ -3157,17 +1600,7 @@ views:
       title: Style
       subtitle: Structural look
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: conditional
       conditions:
       - entity: input_select.theme_appearance_user
@@ -3490,17 +1923,7 @@ views:
       title: Palette
       subtitle: Color accents
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: custom:auto-entities
       card:
         type: grid
@@ -3571,17 +1994,7 @@ views:
       title: Background
       subtitle: Image or color behind cards
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: conditional
       conditions:
       - entity: input_select.theme_appearance_user
@@ -3930,17 +2343,7 @@ views:
       title: Card effects
       subtitle: Transparency and blur
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: conditional
       conditions:
       - entity: input_select.theme_appearance_user
@@ -3959,58 +2362,7 @@ views:
             action: more-info
             entity: input_number.theme_card_opacity_<entity_1>
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-chips-card
           alignment: end
           chips:
@@ -4031,17 +2383,7 @@ views:
                   {% endif %}
                 }
           card_mod:
-            style: |
-              ha-card {
-                background: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-                border: none !important;
-              }
-              ha-card::before {
-                content: none !important;
-              }
+            style: *theme_exempt_style
         - type: custom:mushroom-template-card
           primary: Blur
           secondary: |
@@ -4053,58 +2395,7 @@ views:
             action: more-info
             entity: input_number.theme_card_blur_<entity_1>
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-chips-card
           alignment: end
           chips:
@@ -4125,17 +2416,7 @@ views:
                   {% endif %}
                 }
           card_mod:
-            style: |
-              ha-card {
-                background: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-                border: none !important;
-              }
-              ha-card::before {
-                content: none !important;
-              }
+            style: *theme_exempt_style
     - type: conditional
       conditions:
       - entity: input_select.theme_appearance_user
@@ -4154,58 +2435,7 @@ views:
             action: more-info
             entity: input_number.theme_card_opacity_<entity_2>
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-chips-card
           alignment: end
           chips:
@@ -4226,17 +2456,7 @@ views:
                   {% endif %}
                 }
           card_mod:
-            style: |
-              ha-card {
-                background: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-                border: none !important;
-              }
-              ha-card::before {
-                content: none !important;
-              }
+            style: *theme_exempt_style
         - type: custom:mushroom-template-card
           primary: Blur
           secondary: |
@@ -4248,58 +2468,7 @@ views:
             action: more-info
             entity: input_number.theme_card_blur_<entity_2>
           card_mod:
-            style: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
-                }
-              }
+            style: *theme_card_style
         - type: custom:mushroom-chips-card
           alignment: end
           chips:
@@ -4320,17 +2489,7 @@ views:
                   {% endif %}
                 }
           card_mod:
-            style: |
-              ha-card {
-                background: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-                border: none !important;
-              }
-              ha-card::before {
-                content: none !important;
-              }
+            style: *theme_exempt_style
 - title: Automations
   path: automations
   icon: mdi:robot-outline
@@ -4353,73 +2512,12 @@ views:
       subtitle: Use the switch to enable or disable
       icon: mdi:robot-outline
       card_mod:
-        style: |
-          ha-card {
-            background: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          ha-card::before {
-            content: none !important;
-          }
+        style: *theme_exempt_style
     - type: custom:auto-entities
       card:
         type: entities
         card_mod:
-          style: |
-            {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-            {% endif %}
-            @media (prefers-color-scheme: dark) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_dark_primary') }};
-                --accent-color: {{ states('sensor.theme_dark_accent') }};
-                --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                --success-color: {{ states('sensor.theme_dark_success') }};
-                --warning-color: {{ states('sensor.theme_dark_warning') }};
-                --error-color: {{ states('sensor.theme_dark_error') }};
-                --info-color: {{ states('sensor.theme_dark_info') }};
-                border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_dark_card_background') }} !important;
-                border: {{ states('sensor.theme_dark_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              ha-card {
-                --primary-color: {{ states('sensor.theme_light_primary') }};
-                --accent-color: {{ states('sensor.theme_light_accent') }};
-                --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                --success-color: {{ states('sensor.theme_light_success') }};
-                --warning-color: {{ states('sensor.theme_light_warning') }};
-                --error-color: {{ states('sensor.theme_light_error') }};
-                --info-color: {{ states('sensor.theme_light_info') }};
-                border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-                font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                position: relative;
-                overflow: hidden;
-                background: {{ states('sensor.theme_light_card_background') }} !important;
-                border: {{ states('sensor.theme_light_card_border') }} !important;
-                box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                {% if blur > 0 %}
-                backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                {% endif %}
-              }
-            }
+          style: *theme_card_style
       sort:
         method: friendly_name
         ignore_case: true
