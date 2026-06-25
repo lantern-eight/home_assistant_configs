@@ -594,6 +594,7 @@ views:
           fill:
             opacity:
             - 0
+            - 0
             - 0.7
           annotations:
             yaxis:
@@ -669,18 +670,31 @@ views:
           opacity: 0
           stroke_width: 2
           stroke_dash: 6
+          unit: ' '
           show:
             in_header: raw
+            legend_value: false
           data_generator: |
             return entity.attributes.time
               .map((t, i) => [new Date(t).getTime(), entity.attributes.uv_index[i]])
               .filter((p) => p[0] >= start.getTime() && p[0] <= end.getTime());
         - entity: sensor.<entity_10>_uv_index
-          name: Measured
+          name: Current
+          unit: ' '
+          color: '#FF9800'
+          show:
+            in_header: true
+            in_chart: false
+        - entity: sensor.<entity_10>_uv_index
+          name: Actual
           type: area
           color: '#FF9800'
           stroke_width: 2
           extend_to: now
+          unit: ' '
+          show:
+            in_header: false
+            legend_value: false
           group_by:
             func: avg
             duration: 30min
@@ -2891,6 +2905,7 @@ views:
         fill:
           opacity:
           - 0
+          - 0
           - 0.7
         annotations:
           yaxis:
@@ -2966,18 +2981,31 @@ views:
         opacity: 0
         stroke_width: 2
         stroke_dash: 6
+        unit: ' '
         show:
           in_header: raw
+          legend_value: false
         data_generator: |
           return entity.attributes.time
             .map((t, i) => [new Date(t).getTime(), entity.attributes.uv_index[i]])
             .filter((p) => p[0] >= start.getTime() && p[0] <= end.getTime());
       - entity: sensor.<entity_10>_uv_index
-        name: Measured
+        name: Current
+        unit: ' '
+        color: '#FF9800'
+        show:
+          in_header: true
+          in_chart: false
+      - entity: sensor.<entity_10>_uv_index
+        name: Actual
         type: area
         color: '#FF9800'
         stroke_width: 2
         extend_to: now
+        unit: ' '
+        show:
+          in_header: false
+          legend_value: false
         group_by:
           func: avg
           duration: 30min
