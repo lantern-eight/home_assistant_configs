@@ -364,18 +364,10 @@ views:
                   --warning-color: {{ states('sensor.theme_dark_warning') }};
                   --error-color: {{ states('sensor.theme_dark_error') }};
                   --info-color: {{ states('sensor.theme_dark_info') }};
-                  border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
                   font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_dark_card_background') }} !important;
-                  border: {{ states('sensor.theme_dark_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
+                  background: transparent !important;
+                  border: none !important;
+                  box-shadow: none !important;
                 }
               }
               @media (prefers-color-scheme: light) {
@@ -388,18 +380,10 @@ views:
                   --warning-color: {{ states('sensor.theme_light_warning') }};
                   --error-color: {{ states('sensor.theme_light_error') }};
                   --info-color: {{ states('sensor.theme_light_info') }};
-                  border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
                   font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  position: relative;
-                  overflow: hidden;
-                  background: {{ states('sensor.theme_light_card_background') }} !important;
-                  border: {{ states('sensor.theme_light_card_border') }} !important;
-                  box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-                  {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-                  {% if blur > 0 %}
-                  backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-                  {% endif %}
+                  background: transparent !important;
+                  border: none !important;
+                  box-shadow: none !important;
                 }
               }
             $: |
