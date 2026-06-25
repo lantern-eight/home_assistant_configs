@@ -12,6 +12,7 @@ frontend:
   # card_mod applying to every card, so this must be reliable.
   extra_module_url:
     - /hacsfiles/lovelace-card-mod/card-mod.js
+    - /local/popup_history_fix.js
 
 automation: !include automations.yaml
 script: !include scripts.yaml

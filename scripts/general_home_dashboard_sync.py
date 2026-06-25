@@ -30,6 +30,7 @@ FILE_MAP = {
   'dashboard.yaml': 'dashboards/general_home_mobile/dashboard.yaml',
   'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
   'theme_sensors.yaml': 'template_sensors/theme_sensors.yaml',
+  'popup_history_fix.js': 'www/popup_history_fix.js',
 }
 
 SCRIPT_MAP = {

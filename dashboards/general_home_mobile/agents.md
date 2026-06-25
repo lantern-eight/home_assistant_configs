@@ -58,6 +58,7 @@ name-derived entity ID. Don't assume the unique_id matches.
 | `dashboard.yaml` | All views, YAML anchor definitions, card definitions (~2850 lines) |
 | `theme_sensors.yaml` | Per-property template sensors for dark/light users (~435 lines) |
 | `sensors.yaml` | Non-theme sensors (conditional card manager, room light switches) |
+| `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`) |
 | `ha_config_additions.yaml` | Documents all required HA helpers, sensors, automations |
 | `README.md` | Full public-facing documentation |
 

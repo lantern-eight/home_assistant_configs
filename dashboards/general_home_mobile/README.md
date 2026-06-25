@@ -40,7 +40,7 @@ card_mod)
 - [Setup](#setup)
   - [Dashboard Registration](#1-dashboard-registration)
   - [HACS Cards](#2-hacs-cards)
-  - [card_mod Load Order Fix](#3-card_mod-load-order-fix)
+  - [card_mod Load Order Fix and Popup History Fix](#3-card_mod-load-order-fix-and-popup-history-fix)
   - [Theme Helpers](#4-theme-helpers)
   - [Template Sensors](#5-template-sensors)
   - [Background Image Pipeline](#6-background-image-pipeline)
@@ -60,6 +60,7 @@ card_mod)
   - [Per-Property Sensors, Not One Big CSS Sensor](#per-property-sensors-not-one-big-css-sensor)
   - [YAML Anchors and Card Tiering](#yaml-anchors-and-card-tiering)
   - [Background Overlay Card](#background-overlay-card)
+  - [Popup History Fix](#popup-history-fix-back-button-behavior)
   - [Duplicate Picker Sections](#duplicate-picker-sections)
 - [Deployment](#deployment)
 - [Gotchas](#gotchas)
@@ -144,10 +145,16 @@ lovelace:
 Install all cards listed in [Required HACS Integrations](#required-hacs-integrations).
 Most install via HACS as Lovelace resources. Restart HA after installing.
 
-### 3. card_mod Load Order Fix
+### 3. card_mod Load Order Fix and Popup History Fix
 
-**This is critical.** Without this, card_mod will intermittently fail to style
-cards (the calendar, navbar, and background card are especially affected).
+**card_mod load order is critical.** Without loading it early, card_mod will
+intermittently fail to style cards (the calendar, navbar, and background card
+are especially affected).
+
+The popup history fix module prevents bubble-card popups from reopening when
+using the system back button (intentional design decision). See
+[Popup History Fix](#popup-history-fix-back-button-behavior) in Architecture
+for details.
 
 Add to `configuration.yaml`:
 
@@ -156,9 +163,10 @@ frontend:
   themes: !include_dir_merge_named themes
   extra_module_url:
     - /hacsfiles/lovelace-card-mod/card-mod.js
+    - /local/popup_history_fix.js
 ```
 
-This loads card_mod during frontend bootstrap, before any cards render. Without
+card_mod is loaded during frontend bootstrap, before any cards render. Without
 it, card_mod loads as a Lovelace resource in parallel with card rendering, and
 any card class that instantiates before card_mod patches it will be permanently
 unstyled for that page load.
@@ -641,6 +649,42 @@ background color and (for the Glow style) the radial-gradient blob overlay.
 There is one `*theme_bg_card` per view (6 total). They must remain as the
 first card in each view.
 
+### Popup History Fix (Back Button Behavior)
+
+The Rooms and More buttons in the bottom navbar open bubble-card popups
+triggered by URL hashes (`#rooms`, `#more`). This creates a browser history
+problem: tapping More (`home` → `home#more`) then navigating to a subpage
+like Appearance (`home#more` → `appearance`) means pressing the system back
+button lands on `home#more` — which reopens the popup instead of returning
+to a clean home page.
+
+Bubble-card's `back_open` setting does not fix this. It controls whether
+pressing back while the popup is open closes it, but the popup always opens
+when the URL hash matches — that's its core mechanism. The hash in the
+browser history is the root cause.
+
+**Fix:** A small JavaScript module (`popup_history_fix.js`) intercepts
+`history.pushState`. When a navigation happens while the current URL has a
+popup hash (`#more` or `#rooms`), the module calls `replaceState` to strip
+the hash from the current history entry before the new page is pushed. The
+history becomes `home` → `appearance` (the `#more` entry is overwritten),
+so system back goes to a clean `home` URL with no popup.
+
+The module is loaded via `frontend.extra_module_url` in `configuration.yaml`
+alongside card-mod. It's a global `pushState` override scoped to the two
+known popup hashes. If HA's frontend ever migrates from `history.pushState`
+to the Navigation API, this module would silently stop working (but not
+break anything) and would need to be updated.
+
+**Alternatives considered:**
+- `back_open: false` on bubble-card — tested, did not prevent hash-triggered
+  opening
+- Converting popups to subviews — would fix history naturally but loses the
+  slide-up popup UX
+- browser_mod popups — no URL hashes, but adds a heavy dependency
+- CSS-only drawer via card_mod — would need to reimplement bubble-card's
+  popup behavior manually
+
 ### Duplicate Picker Sections
 
 The Appearance subview has **two complete copies** of every picker section
@@ -676,10 +720,10 @@ uv run python scripts/general_home_dashboard_sync.py
 uv run python scripts/general_home_dashboard_sync.py -r
 ```
 
-The script syncs: `dashboard.yaml`, `sensors.yaml`, `theme_sensors.yaml`, and
-the two theme Python scripts. It then runs `template/reload` and
-`command_line/reload`. The script uses its own `smbclient` connection,
-independent of any Finder mount.
+The script syncs: `dashboard.yaml`, `sensors.yaml`, `theme_sensors.yaml`,
+`popup_history_fix.js` (to `www/`), and the two theme Python scripts. It then runs
+`template/reload` and `command_line/reload`. The script uses its own `smbclient`
+connection, independent of any Finder mount.
 
 **Redaction handling:** The sync script un-redacts entity placeholders
 (e.g., `<entity_1>` → real names) **in memory only** before writing to HA.
@@ -805,6 +849,7 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 | `dashboard.yaml` | All views, theme YAML anchors, and card definitions (~2850 lines) |
 | `theme_sensors.yaml` | Per-property template sensors for dark and light users (~435 lines) |
 | `sensors.yaml` | Non-theme template sensors (conditional card manager, room light switches) |
+| `popup_history_fix.js` | Fixes system-back reopening bubble-card popups (deployed to `www/`) |
 | `ha_config_additions.yaml` | Documents all required HA helpers, sensors, automations, and config |
 | `README.md` | This file |
 
@@ -820,7 +865,8 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 
 | Path | Purpose |
 |------|---------|
-| `configuration.yaml` | Must include `frontend.extra_module_url` for card_mod |
+| `configuration.yaml` | Must include `frontend.extra_module_url` for card_mod and popup history fix |
+| `www/popup_history_fix.js` | Deployed copy of popup history fix module |
 | `template_sensors/theme_sensors.yaml` | Deployed copy of theme sensors |
 | `template_sensors/general_home_sensors.yaml` | Deployed copy of general sensors |
 | `www/themes/backgrounds/` | User-uploaded background images |
