@@ -216,7 +216,16 @@ _LiteralDumper.add_representer(str, _literal_str_representer)
 
 
 def normalize_yaml_escapes(content: str) -> str:
-  '''Round-trip YAML to convert escape sequences (e.g. \\n) to actual characters.'''
+  '''Round-trip YAML to restore human-readable multi-line formatting.
+
+  HA storage-mode files (automations, scripts) collapse multi-line
+  strings into single lines with escaped newlines on save. This
+  round-trips through PyYAML with a literal-block dumper to expand
+  them back into readable block-scalar (|) form.
+
+  Only intended for home_assistant_backup/ files; safe_load resolves anchors
+  and dump writes the expanded form, destroying YAML aliases.
+  '''
   if '\\n' not in content:
     return content
   try:
@@ -246,6 +255,7 @@ def _process_backup_files(
   dest_dir: str,
   redact_entities: list[str],
   entity_map: dict | None = None,
+  normalize_yaml: bool = True,
 ) -> None:
   '''Post-process backup files to redact sensitive info and shorten IDs.'''
   LOGGER.info('Starting post-processing of backup files', extra={'redact_count': len(redact_entities)})
@@ -267,7 +277,7 @@ def _process_backup_files(
         content = shorten_ids(content, id_map)
         content = redact_entities_in_text(content, redact_entities, entities_map)
         content = neutralize_pronouns(content)
-        if file.endswith('.yaml'):
+        if normalize_yaml and file.endswith('.yaml'):
           content = normalize_yaml_escapes(content)
 
         if content != original:
@@ -420,7 +430,11 @@ def _run_sanitize() -> None:
 
   for dir_path in _iter_sanitize_dirs():
     _status(f'Redacting files in {dir_path}')
-    _process_backup_files(dir_path, REDACT_ENTITIES, entity_map)
+    normalize = dir_path != DASHBOARDS_DIR
+    _process_backup_files(
+      dir_path, REDACT_ENTITIES, entity_map,
+      normalize_yaml=normalize,
+    )
 
   if entity_map['ids'] or entity_map['entities']:
     _status(f'Saving entity map to {ENTITY_MAP_PATH}')
