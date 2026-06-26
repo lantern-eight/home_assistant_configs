@@ -205,6 +205,18 @@ x-theme-chrome-style: &theme_chrome_style |
       {% endif %}
     }
   }
+x-palette-tile-styles: &palette_tile_styles
+  name:
+    - font-size: 11px
+    - color: var(--secondary-text-color)
+    - text-align: center
+  grid:
+    - grid-template-areas: '"dots" "n"'
+    - grid-template-rows: min-content min-content
+    - justify-items: center
+  custom_fields:
+    dots:
+      - margin-bottom: 6px
 kiosk_mode:
   hide_header: true
   hide_sidebar: true
@@ -1984,72 +1996,456 @@ views:
       subtitle: Color accents
       card_mod:
         style: *theme_exempt_style
-    - type: custom:auto-entities
+    - type: conditional
+      conditions:
+      - entity: input_select.theme_appearance_user
+        state: <entity_1>
       card:
         type: grid
         columns: 4
         square: false
-      card_param: cards
-      filter:
-        template: |
-          {% set user = states('input_select.theme_appearance_user') %} {% set palette_entity = 'input_select.theme_palette_' ~ user %} {% set swatches = {
-            'Indigo': ['#6a74d3', '#8890dc', '#76d698', '#ea7287'],
-            'Ocean': ['#0077b6', '#00b4d8', '#48cae4', '#e07070'],
-            'Sunset': ['#e07040', '#d4a03c', '#f4a261', '#8a8a9a'],
-            'Forest': ['#2d6a4f', '#74a67a', '#52b788', '#a08080'],
-            'Rose': ['#c9607a', '#a86090', '#d4849a', '#8a8a9a'],
-            'Mono': ['#7a7a8a', '#9a9aaa', '#e0e0e0', '#5a5a6a'],
-            'Cyberdeck': ['#00e5ff', '#e91e8c', '#00ff88', '#ffd700'],
-            'Mint': ['#7ec8a0', '#a8a0d6', '#90ddb0', '#b0a0a0']
-          } %} {% set palette_names = ['Indigo', 'Ocean', 'Sunset', 'Forest', 'Rose', 'Mono', 'Cyberdeck', 'Mint'] %} {% set ns = namespace(cards=[]) %} {% for name in palette_names %}
-            {% set colors = swatches[name] %}
-            {% set color_list = colors | map('tojson') | join(', ') %}
-            {% set dots_tpl = "[[[\n  const colors = [" ~ color_list ~ "];\n  const dot = (c) => `<div style=\"width:8px;height:8px;border-radius:50%;background:${c}\"></div>`;\n  return `<div style=\"display:flex;flex-direction:column;align-items:center;gap:3px;\">${colors.map(dot).join('')}</div>`;\n]]]" %}
-            {% set ns.cards = ns.cards + [{
-              'type': 'custom:button-card',
-              'entity': palette_entity,
-              'name': name,
-              'show_icon': false,
-              'show_state': false,
-              'show_name': true,
-              'tap_action': {
-                'action': 'call-service',
-                'service': 'input_select.select_option',
-                'service_data': {
-                  'entity_id': palette_entity,
-                  'option': name
-                }
-              },
-              'custom_fields': {
-                'dots': dots_tpl
-              },
-              'styles': {
-                'card': [
-                  {'padding': '10px 4px'}
-                ],
-                'name': [
-                  {'font-size': '11px'},
-                  {'color': 'var(--secondary-text-color)'},
-                  {'text-align': 'center'}
-                ],
-                'grid': [
-                  {'grid-template-areas': '"dots" "n"'},
-                  {'grid-template-rows': 'min-content min-content'},
-                  {'justify-items': 'center'}
-                ],
-                'custom_fields': {
-                  'dots': [
-                    {'margin-bottom': '6px'}
-                  ]
-                }
-              },
-              'card_mod': {
-                'style': "ha-card { " ~
-                  ("border: 2px solid var(--primary-color) !important;" if is_state(palette_entity, name) else "") ~
-                  " }"
-              }
-            }] %}
-          {% endfor %} {{ ns.cards }}
+        cards:
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Indigo
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Indigo
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Indigo' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Ocean
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Ocean
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Ocean' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Sunset
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Sunset
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Sunset' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Forest
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Forest
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Forest' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Rose
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Rose
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Rose' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Mono
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Mono
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Mono' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Cyberdeck
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Cyberdeck
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Cyberdeck' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_1>
+          name: Mint
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_1>
+              option: Mint
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Mint' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+    - type: conditional
+      conditions:
+      - entity: input_select.theme_appearance_user
+        state: <entity_2>
+      card:
+        type: grid
+        columns: 4
+        square: false
+        cards:
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Indigo
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Indigo
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Indigo' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Ocean
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Ocean
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Ocean' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Sunset
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Sunset
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Sunset' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Forest
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Forest
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Forest' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Rose
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Rose
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Rose' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Mono
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Mono
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Mono' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Cyberdeck
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Cyberdeck
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Cyberdeck' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
+        - type: custom:button-card
+          entity: input_select.theme_palette_<entity_2>
+          name: Mint
+          show_icon: false
+          show_state: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_palette_<entity_2>
+              option: Mint
+          custom_fields:
+            dots: |
+              [[[
+                const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
+                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              ]]]
+          styles:
+            <<: *palette_tile_styles
+            card:
+              - padding: 10px 4px
+              - outline: "[[[return entity.state === 'Mint' ? '2px solid var(--primary-color)' : 'none']]]"
+              - outline-offset: '-2px'
+          card_mod:
+            style: *theme_card_style
     - type: custom:mushroom-title-card
       title: Background
       subtitle: Image or color behind cards
