@@ -117,12 +117,44 @@ x-theme-card-style: &theme_card_style |
     }
   }
 x-theme-exempt-style: &theme_exempt_style |
-  ha-card {
-    background: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border: none !important;
+  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  {% endif %}
+  @media (prefers-color-scheme: dark) {
+    ha-card {
+      --primary-color: {{ states('sensor.theme_dark_primary') }};
+      --accent-color: {{ states('sensor.theme_dark_accent') }};
+      --state-on-color: {{ states('sensor.theme_dark_state_on') }};
+      --state-off-color: {{ states('sensor.theme_dark_state_off') }};
+      --success-color: {{ states('sensor.theme_dark_success') }};
+      --warning-color: {{ states('sensor.theme_dark_warning') }};
+      --error-color: {{ states('sensor.theme_dark_error') }};
+      --info-color: {{ states('sensor.theme_dark_info') }};
+      font-family: {{ states('sensor.theme_dark_card_font') }} !important;
+      background: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    ha-card {
+      --primary-color: {{ states('sensor.theme_light_primary') }};
+      --accent-color: {{ states('sensor.theme_light_accent') }};
+      --state-on-color: {{ states('sensor.theme_light_state_on') }};
+      --state-off-color: {{ states('sensor.theme_light_state_off') }};
+      --success-color: {{ states('sensor.theme_light_success') }};
+      --warning-color: {{ states('sensor.theme_light_warning') }};
+      --error-color: {{ states('sensor.theme_light_error') }};
+      --info-color: {{ states('sensor.theme_light_info') }};
+      font-family: {{ states('sensor.theme_light_card_font') }} !important;
+      background: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
   }
   ha-card::before {
     content: none !important;
@@ -1609,6 +1641,20 @@ views:
         type: grid
         columns: 2
         square: false
+        card_mod:
+          style: |
+            @media (prefers-color-scheme: dark) {
+              :host {
+                --primary-color:
+                  {{ states('sensor.theme_dark_primary') }};
+              }
+            }
+            @media (prefers-color-scheme: light) {
+              :host {
+                --primary-color:
+                  {{ states('sensor.theme_light_primary') }};
+              }
+            }
         cards:
         - type: custom:mushroom-template-card
           primary: Clean
@@ -1743,7 +1789,7 @@ views:
                 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
                 ha-card {
                   {% if is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-                  border: 2px solid #00e5ff !important;
+                  border: 2px solid var(--primary-color) !important;
                   box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
                   {% endif %}
                   background: #0f1018 !important;
@@ -1768,6 +1814,20 @@ views:
         type: grid
         columns: 2
         square: false
+        card_mod:
+          style: |
+            @media (prefers-color-scheme: dark) {
+              :host {
+                --primary-color:
+                  {{ states('sensor.theme_dark_primary') }};
+              }
+            }
+            @media (prefers-color-scheme: light) {
+              :host {
+                --primary-color:
+                  {{ states('sensor.theme_light_primary') }};
+              }
+            }
         cards:
         - type: custom:mushroom-template-card
           primary: Clean
@@ -1902,7 +1962,7 @@ views:
                 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
                 ha-card {
                   {% if is_state('input_select.theme_style_<entity_2>', 'Neon') %}
-                  border: 2px solid #00e5ff !important;
+                  border: 2px solid var(--primary-color) !important;
                   box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
                   {% endif %}
                   background: #0f1018 !important;
@@ -2017,12 +2077,15 @@ views:
                 entity_id: input_text.theme_background_<entity_1>
                 value: auto
             card_mod:
-              style: |
-                ha-card {
-                  {% if states('input_text.theme_background_<entity_1>') in ['auto', 'unknown', 'unavailable', ''] %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                }
+              style:
+                .: *theme_card_style
+                $: |
+                  ha-card {
+                    {% if states('input_text.theme_background_<entity_1>') in ['auto', 'unknown', 'unavailable', ''] %}
+                    outline: 2px solid var(--primary-color) !important;
+                    outline-offset: -2px;
+                    {% endif %}
+                  }
           - type: custom:mushroom-template-card
             primary: None
             secondary: Default HA
@@ -2034,18 +2097,26 @@ views:
                 entity_id: input_text.theme_background_<entity_1>
                 value: none
             card_mod:
-              style: |
-                ha-card {
-                  {% if is_state('input_text.theme_background_<entity_1>', 'none') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                }
+              style:
+                .: *theme_card_style
+                $: |
+                  ha-card {
+                    {% if is_state('input_text.theme_background_<entity_1>', 'none') %}
+                    outline: 2px solid var(--primary-color) !important;
+                    outline-offset: -2px;
+                    {% endif %}
+                  }
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Solid colors
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
@@ -2078,8 +2149,13 @@ views:
           title: ''
           subtitle: Palette shades
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
@@ -2128,18 +2204,26 @@ views:
             action: more-info
             entity: input_text.theme_background_<entity_1>
           card_mod:
-            style: |
-              ha-card {
-                {% if states('input_text.theme_background_<entity_1>').startswith('#') %}
-                border: 2px solid var(--primary-color) !important;
-                {% endif %}
-              }
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if states('input_text.theme_background_<entity_1>').startswith('#') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Background images
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
@@ -2189,12 +2273,15 @@ views:
                 entity_id: input_text.theme_background_<entity_2>
                 value: auto
             card_mod:
-              style: |
-                ha-card {
-                  {% if states('input_text.theme_background_<entity_2>') in ['auto', 'unknown', 'unavailable', ''] %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                }
+              style:
+                .: *theme_card_style
+                $: |
+                  ha-card {
+                    {% if states('input_text.theme_background_<entity_2>') in ['auto', 'unknown', 'unavailable', ''] %}
+                    outline: 2px solid var(--primary-color) !important;
+                    outline-offset: -2px;
+                    {% endif %}
+                  }
           - type: custom:mushroom-template-card
             primary: None
             secondary: Default HA
@@ -2206,18 +2293,26 @@ views:
                 entity_id: input_text.theme_background_<entity_2>
                 value: none
             card_mod:
-              style: |
-                ha-card {
-                  {% if is_state('input_text.theme_background_<entity_2>', 'none') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                }
+              style:
+                .: *theme_card_style
+                $: |
+                  ha-card {
+                    {% if is_state('input_text.theme_background_<entity_2>', 'none') %}
+                    outline: 2px solid var(--primary-color) !important;
+                    outline-offset: -2px;
+                    {% endif %}
+                  }
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Solid colors
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
@@ -2250,8 +2345,13 @@ views:
           title: ''
           subtitle: Palette shades
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
@@ -2300,18 +2400,26 @@ views:
             action: more-info
             entity: input_text.theme_background_<entity_2>
           card_mod:
-            style: |
-              ha-card {
-                {% if states('input_text.theme_background_<entity_2>').startswith('#') %}
-                border: 2px solid var(--primary-color) !important;
-                {% endif %}
-              }
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if states('input_text.theme_background_<entity_2>').startswith('#') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Background images
           card_mod:
-            style: |
-              ha-card { margin-top: -8px !important; margin-bottom: -8px !important; }
+            style:
+              .: *theme_exempt_style
+              $: |
+                ha-card {
+                  margin-top: -8px !important;
+                  margin-bottom: -8px !important;
+                }
         - type: custom:auto-entities
           card:
             type: grid
