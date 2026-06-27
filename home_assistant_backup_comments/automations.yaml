@@ -319,13 +319,21 @@ actions:
   #    automation can restore them. If another door is already open, the
   #    snapshot was taken on that earlier open — do NOT overwrite it, or we'd
   #    capture the disruption color and "restore" to red later.
+  #
+  #    Scene-age guard: also skip the snapshot if the scene was created or
+  #    restored less than 3 seconds ago. A rapid close→reopen can race the
+  #    LIFX state update — the bulbs are still red in HA's state machine
+  #    when scene.create runs, poisoning every future restore.
   - choose:
       - conditions:
           - condition: template
             value_template: >
               {% set others = all_doors | reject('equalto', trigger.entity_id) | list %}
               {% set others_open = others | map('states') | select('equalto', 'on') | list | length %}
-              {{ others_open == 0 }}
+              {% set scene_ent = states.scene.house_state_pre_door_disruption %}
+              {% set scene_age = (as_timestamp(now()) - as_timestamp(scene_ent.last_changed))
+                 if scene_ent is not none else 999 %}
+              {{ others_open == 0 and scene_age > 3 }}
         sequence:
           - action: scene.create
             data:

@@ -489,7 +489,9 @@
     - conditions:
       - condition: template
         value_template: |
-          {% set others = all_doors | reject('equalto', trigger.entity_id) | list %} {% set others_open = others | map('states') | select('equalto', 'on') | list | length %} {{ others_open == 0 }}
+          {% set others = all_doors | reject('equalto', trigger.entity_id) | list %} {% set others_open = others | map('states') | select('equalto', 'on') | list | length %} {% set scene_ent = states.scene.house_state_pre_door_disruption %} {% set scene_age = (as_timestamp(now()) - as_timestamp(scene_ent.last_changed))
+             if scene_ent is not none else 999 %}
+          {{ others_open == 0 and scene_age > 3 }}
       sequence:
       - action: scene.create
         data:
