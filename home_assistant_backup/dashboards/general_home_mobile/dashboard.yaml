@@ -990,7 +990,8 @@ views:
               margin: 0 -16px;
               padding: 0 16px;
             }
-  - type: grid
+  - &popups
+    type: grid
     column_span: 1
     cards:
     - type: custom:bubble-card
@@ -1256,7 +1257,8 @@ views:
   - type: grid
     column_span: 1
     cards:
-    - type: custom:navbar-card
+    - &navbar
+      type: custom:navbar-card
       card_mod:
         style: *theme_chrome_style
       desktop:
@@ -1301,6 +1303,7 @@ views:
     column_span: 1
     cards:
     - *id001
+  - *popups
   - type: grid
     column_span: 1
     cards:
@@ -1343,6 +1346,10 @@ views:
         style: *theme_card_style
       name: <entity_17> Mode
       icon: mdi:thermostat
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
 - title: Security
   path: security
   icon: mdi:shield-home
@@ -1356,6 +1363,7 @@ views:
     column_span: 1
     cards:
     - *id001
+  - *popups
   - type: grid
     column_span: 1
     cards:
@@ -1376,6 +1384,10 @@ views:
         name: <entity_4>'s Door
         icon: mdi:door
         secondary_info: last-changed
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
 - title: All Alerts
   path: all-alerts
   icon: mdi:bell-ring
@@ -1390,6 +1402,7 @@ views:
     column_span: 1
     cards:
     - *id001
+  - *popups
   - type: grid
     column_span: 1
     cards:
@@ -1578,6 +1591,10 @@ views:
             #uom {
               display: none !important;
             }
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
 - title: Appearance
   path: appearance
   icon: mdi:palette-outline
@@ -1592,6 +1609,7 @@ views:
     column_span: 1
     cards:
     - *id001
+  - *popups
   - type: grid
     column_span: 1
     cards:
@@ -2994,6 +3012,10 @@ views:
                 }
           card_mod:
             style: *theme_exempt_style
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
 - title: Automations
   path: automations
   icon: mdi:robot-outline
@@ -3008,6 +3030,7 @@ views:
     column_span: 1
     cards:
     - *id001
+  - *popups
   - type: grid
     column_span: 1
     cards:
@@ -3029,3 +3052,7 @@ views:
         include:
         - domain: automation
       show_empty: false
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
