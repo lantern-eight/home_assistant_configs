@@ -662,3 +662,14 @@
     entity_id: sensor.theme_backgrounds
   action:
   - service: shell_command.generate_theme_thumbnails
+- id: refresh_uv_forecast
+  alias: Refresh UV Forecast
+  description: ''
+  triggers:
+  - platform: time
+    at: 06:55:00
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: sensor.openmeteo_hourly_uv_forecast
+  mode: single
