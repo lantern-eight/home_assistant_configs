@@ -489,7 +489,9 @@
     - conditions:
       - condition: template
         value_template: |
-          {% set others = all_doors | reject('equalto', trigger.entity_id) | list %} {% set others_open = others | map('states') | select('equalto', 'on') | list | length %} {{ others_open == 0 }}
+          {% set others = all_doors | reject('equalto', trigger.entity_id) | list %} {% set others_open = others | map('states') | select('equalto', 'on') | list | length %} {% set scene_ent = states.scene.house_state_pre_door_disruption %} {% set scene_age = (as_timestamp(now()) - as_timestamp(scene_ent.last_changed))
+             if scene_ent is not none else 999 %}
+          {{ others_open == 0 and scene_age > 3 }}
       sequence:
       - action: scene.create
         data:
@@ -660,3 +662,14 @@
     entity_id: sensor.theme_backgrounds
   action:
   - service: shell_command.generate_theme_thumbnails
+- id: refresh_uv_forecast
+  alias: Refresh UV Forecast
+  description: ''
+  triggers:
+  - platform: time
+    at: 06:55:00
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: sensor.openmeteo_hourly_uv_forecast
+  mode: single
