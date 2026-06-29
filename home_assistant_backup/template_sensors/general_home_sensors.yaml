@@ -181,8 +181,8 @@
         {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
         {% set lc = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
         {% if lc > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('sensor.centauri_carbon_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('sensor.centauri_carbon_2_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+        {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+        {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
         {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
         {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
         {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
@@ -209,21 +209,21 @@
           {% if lc > 0 %}
             {% set ns.items = ns.items + [{'id':'lights','label':lc ~ ' Light' ~ ('s' if lc != 1 else '') ~ ' On','icon':'mdi:lightbulb-group','severity':'blue','promoted':false,'sort_key':'2_lights'}] %}
           {% endif %}
-          {% if is_state('sensor.centauri_carbon_current_status', 'printing') %}
-            {% set prog = states('sensor.centauri_carbon_percent_complete') | float(0) | round(0) | int %}
-            {% set raw_min = states('sensor.centauri_carbon_remaining_print_time') | float(0) %}
+          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}
+            {% set prog = states('sensor.<entity_23>_percent_complete') | float(0) | round(0) | int %}
+            {% set raw_min = states('sensor.<entity_23>_remaining_print_time') | float(0) %}
             {% set hrs = (raw_min / 60) | int %}
             {% set mins = (raw_min % 60) | int %}
             {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left') if hrs > 0 else (mins ~ 'm left') %}
-            {% set ns.items = ns.items + [{'id':'printer_cc1','label':'CC1 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_cc1','progress':prog,'time_remaining':tr}] %}
+            {% set ns.items = ns.items + [{'id':'printer_<entity_20>','label':'<entity_20> 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_20>','progress':prog,'time_remaining':tr}] %}
           {% endif %}
-          {% if is_state('sensor.centauri_carbon_2_current_status', 'printing') %}
-            {% set prog = states('sensor.centauri_carbon_2_percent_complete') | float(0) | round(0) | int %}
-            {% set raw_min = states('sensor.centauri_carbon_2_remaining_print_time') | float(0) %}
+          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}
+            {% set prog = states('sensor.<entity_22>_percent_complete') | float(0) | round(0) | int %}
+            {% set raw_min = states('sensor.<entity_22>_remaining_print_time') | float(0) %}
             {% set hrs = (raw_min / 60) | int %}
             {% set mins = (raw_min % 60) | int %}
             {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left') if hrs > 0 else (mins ~ 'm left') %}
-            {% set ns.items = ns.items + [{'id':'printer_cc2','label':'CC2 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_cc2','progress':prog,'time_remaining':tr}] %}
+            {% set ns.items = ns.items + [{'id':'printer_<entity_21>','label':'<entity_21> 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_21>','progress':prog,'time_remaining':tr}] %}
           {% endif %}
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
           {% if hvac_action in ['heating', 'cooling'] %}
@@ -245,8 +245,8 @@
           {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set lc = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
           {% if lc > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.centauri_carbon_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.centauri_carbon_2_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
           {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
@@ -264,8 +264,8 @@
           {{ 1 if lc > 0 else 0 }}
         green_count: >
           {% set ns = namespace(count=0) %}
-          {% if is_state('sensor.centauri_carbon_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.centauri_carbon_2_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
           {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}

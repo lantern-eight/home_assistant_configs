@@ -176,103 +176,8 @@ unstyled for that page load.
 
 ### 4. Theme Helpers
 
-> **Package migration:** These helpers are now defined in
-> `general_home_mobile.yaml` and deployed to `packages/` by the sync script.
-> The manual setup below is kept as reference for the helper structure.
-
-Create these helpers in `configuration.yaml`. You need one set per user.
-Replace `<user1>` and `<user2>` with your household members' names. `<user1>`
-should be the person who uses dark mode; `<user2>` should be the light mode
-user. Not yet figured out a good way to automatically detect the user so for now
-it uses the setting of the browser's light/dark mode setting to determine the user.
-
-```yaml
-input_select:
-  theme_appearance_user:
-    name: "Theme Appearance User"
-    options:
-      - "<user2>"
-      - "<user1>"
-    initial: "<user2>"
-    icon: mdi:account-switch
-
-  theme_style_<user1>:
-    name: "Theme Style (<user1>)"
-    options: [Clean, Glass, Dark, Glow, Neon]
-    initial: Clean
-    icon: mdi:palette-swatch-variant
-  theme_style_<user2>:
-    name: "Theme Style (<user2>)"
-    options: [Clean, Glass, Dark, Glow, Neon]
-    initial: Clean
-    icon: mdi:palette-swatch-variant
-
-  theme_palette_<user1>:
-    name: "Theme Palette (<user1>)"
-    options: [Indigo, Ocean, Sunset, Forest, Rose, Mono, Cyberdeck, Mint]
-    initial: Indigo
-    icon: mdi:palette
-  theme_palette_<user2>:
-    name: "Theme Palette (<user2>)"
-    options: [Indigo, Ocean, Sunset, Forest, Rose, Mono, Cyberdeck, Mint]
-    initial: Indigo
-    icon: mdi:palette
-
-input_text:
-  theme_background_<user1>:
-    name: "Theme Background (<user1>)"
-    initial: "auto"
-    max: 255
-    icon: mdi:image
-  theme_background_<user2>:
-    name: "Theme Background (<user2>)"
-    initial: "auto"
-    max: 255
-    icon: mdi:image
-
-input_number:
-  theme_card_opacity_<user1>:
-    name: "Card Opacity (<user1>)"
-    min: -1
-    max: 100
-    step: 5
-    initial: -1
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_opacity_<user2>:
-    name: "Card Opacity (<user2>)"
-    min: -1
-    max: 100
-    step: 5
-    initial: -1
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_blur_<user1>:
-    name: "Card Blur (<user1>)"
-    min: -1
-    max: 30
-    step: 1
-    initial: -1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-  theme_card_blur_<user2>:
-    name: "Card Blur (<user2>)"
-    min: -1
-    max: 30
-    step: 1
-    initial: -1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-```
-
-> **Note on `initial:`** — helpers defined with `initial:` reset to that value
-> on every HA restart. If you want theme preferences to persist across
-> restarts, **remove the `initial:` lines** (HA will restore the last-set
-> value instead).
+> **Package:** These helpers are defined in `general_home_mobile.yaml` and deployed to
+> `packages/` by the sync script.
 
 ### 5. Template Sensors
 
@@ -308,42 +213,7 @@ To enable custom background images on the Appearance page:
 /config/www/themes/backgrounds/thumbs/   # auto-generated thumbnails
 ```
 
-> **Package migration:** Steps b, c, and d below are now in the
-> `general_home_mobile.yaml` package. Only step a (folder creation) and step e
-> (script deployment) still require manual action.
-
-**b) Add a command_line sensor** to detect available backgrounds:
-```yaml
-command_line:
-  - sensor:
-      name: theme backgrounds
-      command: "python3 /config/scripts/list_theme_backgrounds.py"
-      scan_interval: 30
-      value_template: "{{ value_json.count | int(0) }}"
-      json_attributes:
-        - count
-        - file_list
-```
-
-**c) Add a shell command** for thumbnail generation:
-```yaml
-shell_command:
-  generate_theme_thumbnails: "python3 /config/scripts/generate_theme_thumbnails.py"
-```
-
-**d) Add an automation** to regenerate thumbnails when files change:
-```yaml
-automation:
-  - id: theme_generate_background_thumbnails
-    alias: "Theme: Generate background thumbnails"
-    trigger:
-      - platform: state
-        entity_id: sensor.theme_backgrounds
-    action:
-      - service: shell_command.generate_theme_thumbnails
-```
-
-**e) Deploy the Python scripts** from this repo:
+**b) Deploy the Python scripts** from this repo:
 - `scripts/list_theme_backgrounds.py` → `/config/scripts/`
 - `scripts/generate_theme_thumbnails.py` → `/config/scripts/`
 
@@ -357,50 +227,17 @@ HA serves everything under `/config/www/` at `/local/`:
 
 ### 7. Conditional Card Helpers
 
-> **Package migration:** These helpers and their toggle automations are now in
-> the `general_home_mobile.yaml` package.
+> **Package migration:** These helpers and their toggle automations are in the
+> `general_home_mobile.yaml` package.
 
 The Home view has conditional cards that show/hide based on time of day and
 sensor values. A priority-managed template sensor controls which cards are
 visible (max 5 at a time).
 
-```yaml
-input_boolean:
-  cond_bedtime_doors:
-    name: "Conditional: Bedtime Doors"
-    icon: mdi:door-open
-  cond_uv_index:
-    name: "Conditional: UV Index"
-    icon: mdi:weather-sunny-alert
-```
-
-Create automations to toggle these at appropriate times (e.g., bedtime doors
-ON at 7:30 PM, OFF at 7:00 AM; UV index ON at 7:00 AM, OFF at 5:00 PM). See
-`ha_config_additions.yaml` for example automations.
 
 ### 8. REST Sensor (UV Forecast)
 
-> **Package migration:** This REST sensor and its refresh automation are now in
-> the `general_home_mobile.yaml` package. The `secrets.yaml` entry below is
-> still required.
-
-The UV index chart uses an Open-Meteo REST sensor:
-
-```yaml
-rest:
-  - resource: !secret openmeteo_uv_url
-    scan_interval: 86400
-    sensor:
-      - name: "OpenMeteo Hourly UV Forecast"
-        unique_id: openmeteo_hourly_uv_forecast
-        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
-        unit_of_measurement: "UV index"
-        icon: mdi:sun-wireless
-        json_attributes_path: "$.hourly"
-        json_attributes:
-          - time
-          - uv_index
-```
+> **Package:** This REST sensor is in the `general_home_mobile.yaml` package.
 
 In `secrets.yaml`:
 ```yaml
@@ -594,7 +431,7 @@ state-driven.
    severity, inside a themed `stack-in-card`. Tapping toggles an expanded
    list showing labels, icons, progress bars, and time remaining.
 
-### Severity Colors (semantic, not theme-dependent)
+### Severity Colors
 
 | Color | Hex | Meaning | Examples |
 |-------|-----|---------|----------|

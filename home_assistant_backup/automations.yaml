@@ -164,8 +164,8 @@
   alias: 3D Print Complete Notification
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_print_status
-    - sensor.centauri_carbon_2_print_status
+    - sensor.<entity_23>_print_status
+    - sensor.<entity_22>_print_status
     to: complete
     trigger: state
   actions:
@@ -199,8 +199,8 @@
   alias: Cache 3D Print Filename
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_file_name
-    - sensor.centauri_carbon_2_file_name
+    - sensor.<entity_23>_file_name
+    - sensor.<entity_22>_file_name
     trigger: state
   conditions:
   - condition: template
@@ -221,8 +221,8 @@
   alias: 3D Print Halfway Notification
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_percent_complete
-    - sensor.centauri_carbon_2_percent_complete
+    - sensor.<entity_23>_percent_complete
+    - sensor.<entity_22>_percent_complete
     above: 49
     below: 57
     trigger: numeric_state
@@ -262,10 +262,10 @@
   alias: 3D Print Failure Alert
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_print_error
-    - sensor.centauri_carbon_2_print_error
-    - sensor.centauri_carbon_error_status_reason
-    - sensor.centauri_carbon_2_error_status_reason
+    - sensor.<entity_23>_print_error
+    - sensor.<entity_22>_print_error
+    - sensor.<entity_23>_error_status_reason
+    - sensor.<entity_22>_error_status_reason
     trigger: state
   conditions:
   - condition: template
@@ -304,8 +304,8 @@
   alias: 3D Printer Light On, On Start
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_print_status
-    - sensor.centauri_carbon_2_print_status
+    - sensor.<entity_23>_print_status
+    - sensor.<entity_22>_print_status
     to: printing
     trigger: state
   conditions:
@@ -330,17 +330,17 @@
     action: input_boolean.turn_on
   mode: single
 - id: '1774417251044'
-  alias: CC1 Spoolman Update
+  alias: <entity_20> Spoolman Update
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_print_status
+    - sensor.<entity_23>_print_status
     to: complete
     trigger: state
   conditions: []
   actions:
   - variables:
       filename: |
-        {{ states('input_text.centauri_carbon_last_file') | replace('.gcode', '') }}
+        {{ states('input_text.<entity_23>_last_file') | replace('.gcode', '') }}
       parts: '{{ filename.split(''_'') }}'
       weight_grams: '{{ parts[-1] | replace(''g'', '''') | float(0) }}'
       filament_name: '{{ parts[-2] | default('''') }}'
@@ -359,22 +359,22 @@
     default:
     - action: persistent_notification.create
       data:
-        title: 'Spoolman: CC1 filename parse failed'
+        title: 'Spoolman: <entity_20> filename parse failed'
         message: |
-          Could not parse filament name and weight from filename "{{ states('input_text.centauri_carbon_last_file') }}". Expected format: [model]_[FilamentName-With-Hyphens]_[weight]g.gcode
+          Could not parse filament name and weight from filename "{{ states('input_text.<entity_23>_last_file') }}". Expected format: [model]_[FilamentName-With-Hyphens]_[weight]g.gcode
   mode: single
 - id: '1774710338472'
-  alias: CC2 Spoolman Update
+  alias: <entity_21> Spoolman Update
   description: ''
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_2_print_status
+    - sensor.<entity_22>_print_status
     to: complete
     trigger: state
   conditions: []
   actions:
   - variables:
-      raw_data: '{{ states(''input_text.centauri_carbon_2_cached_slot_data'') }}'
+      raw_data: '{{ states(''input_text.<entity_22>_cached_slot_data'') }}'
   - choose:
     - conditions:
       - condition: template
@@ -406,16 +406,16 @@
     default:
     - action: persistent_notification.create
       data:
-        title: 'Spoolman: CC2 no cached slot data'
+        title: 'Spoolman: <entity_21> no cached slot data'
         message: |
-          CC2 print completed but no cached slot data was found. Filament usage was not tracked. Make sure the gcode capture proxy is configured and the "Cache CC2 Slot Data" automation is enabled.
+          <entity_21> print completed but no cached slot data was found. Filament usage was not tracked. Make sure the gcode capture proxy is configured and the "Cache <entity_21> Slot Data" automation is enabled.
   mode: single
 - id: '1774740101980'
-  alias: Cache CC2 Slot Data
+  alias: Cache <entity_21> Slot Data
   description: ''
   triggers:
   - entity_id:
-    - sensor.centauri_carbon_2_a1_grams
+    - sensor.<entity_22>_a1_grams
     trigger: state
   conditions:
   - condition: template
@@ -424,18 +424,18 @@
   actions:
   - action: input_text.set_value
     target:
-      entity_id: input_text.centauri_carbon_2_cached_slot_data
+      entity_id: input_text.<entity_22>_cached_slot_data
     data:
       value: |
-        {% set n1 = states('sensor.centauri_carbon_2_a1_name') %} {% set n2 = states('sensor.centauri_carbon_2_a2_name') %} {% set n3 = states('sensor.centauri_carbon_2_a3_name') %} {% set n4 = states('sensor.centauri_carbon_2_a4_name') %} {{ {
+        {% set n1 = states('sensor.<entity_22>_a1_name') %} {% set n2 = states('sensor.<entity_22>_a2_name') %} {% set n3 = states('sensor.<entity_22>_a3_name') %} {% set n4 = states('sensor.<entity_22>_a4_name') %} {{ {
           'a1': {'name': '' if n1 in ['unknown','unavailable'] else n1,
-                 'grams': states('sensor.centauri_carbon_2_a1_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a1_grams') | float(0) | round(2)},
           'a2': {'name': '' if n2 in ['unknown','unavailable'] else n2,
-                 'grams': states('sensor.centauri_carbon_2_a2_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a2_grams') | float(0) | round(2)},
           'a3': {'name': '' if n3 in ['unknown','unavailable'] else n3,
-                 'grams': states('sensor.centauri_carbon_2_a3_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a3_grams') | float(0) | round(2)},
           'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
-                 'grams': states('sensor.centauri_carbon_2_a4_grams') | float(0) | round(2)}
+                 'grams': states('sensor.<entity_22>_a4_grams') | float(0) | round(2)}
         } | to_json }}
   mode: single
 - id: '1776350087907'

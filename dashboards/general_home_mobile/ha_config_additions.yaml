@@ -2,8 +2,8 @@
 # HA configuration.yaml additions for the General Home Mobile dashboard
 # =============================================================================
 # Merge these blocks into your HA configuration.yaml, then restart.
-# Most config has moved to the general_home_mobile.yaml package — only
-# items that can't live in a package remain here.
+# Most config is in the general_home_mobile.yaml package — only items that
+# can't live in a package remain here.
 # =============================================================================
 
 # --- 1. Dashboard registration ---
@@ -32,13 +32,6 @@
 # homeassistant:
 #   packages:
 #     general_home_mobile: !include packages/general_home_mobile.yaml
-#
-# Before enabling, remove the corresponding blocks from
-# configuration.yaml (input_boolean, input_select, input_text,
-# input_number, rest, command_line, shell_command) and the 6
-# automations from automations.yaml (Cond: Bedtime Doors ON/OFF,
-# Cond: UV Index ON/OFF, Refresh UV Forecast, Theme: Generate
-# background thumbnails).
 
 # --- 4. Secrets ---
 # The package REST sensor uses !secret openmeteo_uv_url. Add to secrets.yaml:

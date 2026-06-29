@@ -96,7 +96,7 @@ list via button-card JS templates.
 4. If it has progress: include `progress` (0-100) and optional
    `time_remaining` in the item dict
 
-### Severity colors (semantic, not theme-dependent)
+### Severity colors
 
 | Color | Hex | Meaning |
 |-------|-----|---------|

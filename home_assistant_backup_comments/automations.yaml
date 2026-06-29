@@ -9,10 +9,10 @@ alias: 3D Print Failure Alert
 mode: parallel
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_print_error
-      - sensor.centauri_carbon_2_print_error
-      - sensor.centauri_carbon_error_status_reason
-      - sensor.centauri_carbon_2_error_status_reason
+      - sensor.<entity_23>_print_error
+      - sensor.<entity_22>_print_error
+      - sensor.<entity_23>_error_status_reason
+      - sensor.<entity_22>_error_status_reason
     trigger: state
 conditions:
   - condition: template
@@ -60,7 +60,7 @@ actions:
 # 3D Print Complete Notification
 # ----------------------
 # Also re-arms the halfway and print-light latches for the next print. We deliberately
-# do NOT reset these latches on `to: printing` — the CC2's print_status bounces
+# do NOT reset these latches on `to: printing` — the <entity_21>'s print_status bounces
 # Printing↔Idle during multi-color filament swaps, and a mid-print reset combined
 # with any sensor jitter on percent_complete leads to duplicate halfway notifications
 # (and would re-turn on the chamber light after a filament swap if you had turned it
@@ -70,8 +70,8 @@ alias: 3D Print Complete Notification
 mode: parallel
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_print_status
-      - sensor.centauri_carbon_2_print_status
+      - sensor.<entity_23>_print_status
+      - sensor.<entity_22>_print_status
     to: complete
     trigger: state
 actions:
@@ -111,7 +111,7 @@ actions:
 # 3D Printer Light On, On Start
 # ----------------------
 # Turn the chamber light on once per print job, not on every print_status bounce to
-# `printing`. CC2 in particular bounces Printing↔Idle during multi-color filament
+# `printing`. <entity_21> in particular bounces Printing↔Idle during multi-color filament
 # swaps, which re-fired the old automation and turned the light back on even if you
 # had turned it off mid-print.
 #
@@ -122,14 +122,14 @@ actions:
 # mode: single (NOT parallel) — same race-prevention rationale as halfway.
 #
 # Required helpers (create in HA Settings → Devices & Services → Helpers):
-#   - input_boolean.centauri_carbon_light_on_for_print
-#   - input_boolean.centauri_carbon_2_light_on_for_print
+#   - input_boolean.<entity_23>_light_on_for_print
+#   - input_boolean.<entity_22>_light_on_for_print
 alias: 3D Printer Light On, On Start
 mode: single
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_print_status
-      - sensor.centauri_carbon_2_print_status
+      - sensor.<entity_23>_print_status
+      - sensor.<entity_22>_print_status
     to: printing
     trigger: state
 conditions:
@@ -166,8 +166,8 @@ alias: 3D Print Halfway Notification
 mode: single
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_percent_complete
-      - sensor.centauri_carbon_2_percent_complete
+      - sensor.<entity_23>_percent_complete
+      - sensor.<entity_22>_percent_complete
     # Any percent update runs the automation; conditions below implement the real
     # trigger.
     trigger: state
@@ -179,7 +179,7 @@ conditions:
       {# Percent before/after this update; missing from_state treated as 0 (cold start). #}
       {% set previous = (trigger.from_state.state if trigger.from_state else 0) | float(0) %}
       {% set current = trigger.to_state.state | float(0) %}
-      {# e.g. input_boolean.centauri_carbon_2_half_notified — must be off or we already notified. #}
+      {# e.g. input_boolean.<entity_22>_half_notified — must be off or we already notified. #}
       {% set half_notified_entity_id = 'input_boolean.' ~ (trigger.entity_id
           | replace('sensor.', '')
           | replace('_percent_complete', '_half_notified')) %}
@@ -187,7 +187,7 @@ conditions:
 actions:
   # 1. Define variables first so we don't have to copy-paste the logic
   - variables:
-      # Clean up the entity ID to get the base name (e.g., centauri_carbon)
+      # Clean up the entity ID to get the base name (e.g., <entity_23>)
       base_name: >
         {{ trigger.entity_id
           | replace('sensor.', '')

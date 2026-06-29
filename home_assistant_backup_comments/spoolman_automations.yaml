@@ -3,9 +3,9 @@
 # Automations and scripts that push filament usage data from Elegoo printers
 # to Spoolman via its REST API + the HA service (spoolman.use_spool_filament).
 #
-# CC2: Per-slot grams from the gcode capture proxy, cached before print
+# <entity_21>: Per-slot grams from the gcode capture proxy, cached before print
 #       completes (slot sensors clear to "unknown" on completion).
-# CC1: Filament name + weight parsed from a custom filename template.
+# <entity_20>: Filament name + weight parsed from a custom filename template.
 #       Slicer template: [input_filename_base]_{filament_preset[0]}_{total_weight}g
 #
 # Matching: Both automations resolve Spoolman spools by filament name and
@@ -16,11 +16,11 @@
 #           notification fires.
 #
 # Required helpers (create in HA UI -> Settings -> Devices -> Helpers):
-#   - input_text.centauri_carbon_2_cached_slot_data (max length: 255)
-#     Stores a JSON blob of CC2 per-slot filament names and grams.
+#   - input_text.<entity_22>_cached_slot_data (max length: 255)
+#     Stores a JSON blob of <entity_21> per-slot filament names and grams.
 #
 # Required integrations:
-#   - Elegoo Printer (with CC2 gcode proxy URL configured)
+#   - Elegoo Printer (with <entity_21> gcode proxy URL configured)
 #   - Spoolman Home Assistant (https://github.com/Disane87/spoolman-homeassistant)
 #
 # Required rest_command (add to configuration.yaml):
@@ -34,7 +34,7 @@
 # ============================================================================
 # SCRIPT: Update Spoolman From Filament Name
 # ============================================================================
-# Reusable script called by both CC2 and CC1 automations. Takes a filament
+# Reusable script called by both <entity_21> and <entity_20> automations. Takes a filament
 # name and weight, queries the Spoolman REST API for matching non-archived
 # spools, then cascades the deduction across them: lowest remaining_weight
 # first (random tie-break for equal weights), draining each spool to 0
@@ -179,18 +179,18 @@ update_spoolman_from_filament_name:
 
 ---
 # ============================================================================
-# AUTOMATION: Cache CC2 Slot Data
+# AUTOMATION: Cache <entity_21> Slot Data
 # ============================================================================
-# The CC2 per-slot sensors (A1-A4 grams and names) are populated when proxy
+# The <entity_21> per-slot sensors (A1-A4 grams and names) are populated when proxy
 # data is fetched at print start but clear to "unknown" on print complete.
 # This caches the slot data into an input_text helper as a JSON blob so the
 # Spoolman push automation can read it after completion.
 
-alias: Cache CC2 Slot Data
+alias: Cache <entity_21> Slot Data
 mode: single
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_2_a1_grams
+      - sensor.<entity_22>_a1_grams
     trigger: state
 conditions:
   - condition: template
@@ -199,43 +199,43 @@ conditions:
 actions:
   - action: input_text.set_value
     target:
-      entity_id: input_text.centauri_carbon_2_cached_slot_data
+      entity_id: input_text.<entity_22>_cached_slot_data
     data:
       value: >
-        {% set n1 = states('sensor.centauri_carbon_2_a1_name') %}
-        {% set n2 = states('sensor.centauri_carbon_2_a2_name') %}
-        {% set n3 = states('sensor.centauri_carbon_2_a3_name') %}
-        {% set n4 = states('sensor.centauri_carbon_2_a4_name') %}
+        {% set n1 = states('sensor.<entity_22>_a1_name') %}
+        {% set n2 = states('sensor.<entity_22>_a2_name') %}
+        {% set n3 = states('sensor.<entity_22>_a3_name') %}
+        {% set n4 = states('sensor.<entity_22>_a4_name') %}
         {{ {
           'a1': {'name': '' if n1 in ['unknown','unavailable'] else n1,
-                 'grams': states('sensor.centauri_carbon_2_a1_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a1_grams') | float(0) | round(2)},
           'a2': {'name': '' if n2 in ['unknown','unavailable'] else n2,
-                 'grams': states('sensor.centauri_carbon_2_a2_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a2_grams') | float(0) | round(2)},
           'a3': {'name': '' if n3 in ['unknown','unavailable'] else n3,
-                 'grams': states('sensor.centauri_carbon_2_a3_grams') | float(0) | round(2)},
+                 'grams': states('sensor.<entity_22>_a3_grams') | float(0) | round(2)},
           'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
-                 'grams': states('sensor.centauri_carbon_2_a4_grams') | float(0) | round(2)}
+                 'grams': states('sensor.<entity_22>_a4_grams') | float(0) | round(2)}
         } | to_json }}
 
 
 ---
 # ============================================================================
-# AUTOMATION: CC2 Spoolman Update
+# AUTOMATION: <entity_21> Spoolman Update
 # ============================================================================
-# On CC2 print complete, reads the cached per-slot data and pushes usage to
+# On <entity_21> print complete, reads the cached per-slot data and pushes usage to
 # Spoolman for each slot that consumed filament.
 
-alias: CC2 Spoolman Update
+alias: <entity_21> Spoolman Update
 mode: single
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_2_print_status
+      - sensor.<entity_22>_print_status
     to: complete
     trigger: state
 conditions: []
 actions:
   - variables:
-      raw_data: "{{ states('input_text.centauri_carbon_2_cached_slot_data') }}"
+      raw_data: "{{ states('input_text.<entity_22>_cached_slot_data') }}"
 
   # Guard: make sure we have cached data
   - choose:
@@ -268,39 +268,39 @@ actions:
     default:
       - action: persistent_notification.create
         data:
-          title: "Spoolman: CC2 no cached slot data"
+          title: "Spoolman: <entity_21> no cached slot data"
           message: >
-            CC2 print completed but no cached slot data was found.
+            <entity_21> print completed but no cached slot data was found.
             Filament usage was not tracked. Make sure the gcode capture
-            proxy is configured and the "Cache CC2 Slot Data" automation
+            proxy is configured and the "Cache <entity_21> Slot Data" automation
             is enabled.
 
 
 ---
 # ============================================================================
-# AUTOMATION: CC1 Spoolman Update
+# AUTOMATION: <entity_20> Spoolman Update
 # ============================================================================
-# On CC1 print complete, parses the filament name and weight from the cached
+# On <entity_20> print complete, parses the filament name and weight from the cached
 # filename (set by the existing "Cache 3D Print Filename" automation).
 #
-# Expected filename format: CC1_benchy_ElegooPLA-Basic-White_2.50g.gcode
+# Expected filename format: <entity_20>_benchy_ElegooPLA-Basic-White_2.50g.gcode
 # Slicer template:          [input_filename_base]_{filament_preset[0]}_{total_weight}g
 #
 # Parsing: split on "_", weight is last token (Ng), filament name is
 # second-to-last token (always hyphenated, never contains underscores).
 
-alias: CC1 Spoolman Update
+alias: <entity_20> Spoolman Update
 mode: single
 triggers:
   - entity_id:
-      - sensor.centauri_carbon_print_status
+      - sensor.<entity_23>_print_status
     to: complete
     trigger: state
 conditions: []
 actions:
   - variables:
       filename: >
-        {{ states('input_text.centauri_carbon_last_file') | replace('.gcode', '') }}
+        {{ states('input_text.<entity_23>_last_file') | replace('.gcode', '') }}
       parts: "{{ filename.split('_') }}"
       weight_grams: "{{ parts[-1] | replace('g', '') | float(0) }}"
       filament_name: "{{ parts[-2] | default('') }}"
@@ -320,8 +320,8 @@ actions:
     default:
       - action: persistent_notification.create
         data:
-          title: "Spoolman: CC1 filename parse failed"
+          title: "Spoolman: <entity_20> filename parse failed"
           message: >
             Could not parse filament name and weight from filename
-            "{{ states('input_text.centauri_carbon_last_file') }}".
+            "{{ states('input_text.<entity_23>_last_file') }}".
             Expected format: [model]_[FilamentName-With-Hyphens]_[weight]g.gcode
