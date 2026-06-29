@@ -1,5 +1,6 @@
 """Sync General Home Mobile dashboard and sensors to Home Assistant via SMB."""
 
+import json
 import logging
 import sys
 from getopt import GetoptError, getopt
@@ -11,8 +12,15 @@ import yaml
 
 from utils import LOGGER
 
+try:
+  from websockets.sync.client import connect as ws_connect
+  HAS_WEBSOCKETS = True
+except ImportError:
+  HAS_WEBSOCKETS = False
+
 USAGE = (
-  'Usage: uv run python scripts/general_home_dashboard_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
+  'Usage: uv run python scripts/general_home_dashboard_sync.py [-d] [-l LEVEL] [-r] [-c] [-h]\n'
+  '  -c, --categories Apply categories and labels from registry_metadata.yaml\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
   '  -r, --restart    Restart HA after sync (required on first deploy or sensor changes)\n'
@@ -30,6 +38,7 @@ FILE_MAP = {
   'dashboard.yaml': 'dashboards/general_home_mobile/dashboard.yaml',
   'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
   'theme_sensors.yaml': 'template_sensors/theme_sensors.yaml',
+  'general_home_mobile.yaml': 'packages/general_home_mobile.yaml',
   'popup_history_fix.js': 'www/popup_history_fix.js',
 }
 
@@ -188,31 +197,158 @@ def _restart_ha(token: str) -> bool:
     return False
 
 
+def _apply_registry_metadata(cfg: dict) -> None:
+  """Create and assign categories/labels from registry_metadata.yaml via WebSocket."""
+  if not HAS_WEBSOCKETS:
+    LOGGER.error('websockets library required for -c flag: run `uv sync`')
+    sys.exit(1)
+
+  metadata_path = DASHBOARD_DIR / 'registry_metadata.yaml'
+  if not metadata_path.exists():
+    LOGGER.warning('registry_metadata.yaml not found, skipping category/label sync')
+    return
+
+  with open(metadata_path) as f:
+    metadata = yaml.safe_load(f) or {}
+
+  categories_def = metadata.get('categories', {})
+  labels_def = metadata.get('labels', {})
+  entities_def = metadata.get('entities', {})
+
+  if not entities_def:
+    LOGGER.info('No entities in registry_metadata.yaml, skipping')
+    return
+
+  entities_resolved = {}
+  for entity_id, props in entities_def.items():
+    entities_resolved[_restore_content(entity_id)] = props
+
+  token = cfg['token']
+  if not token or token == 'your_token_here':
+    LOGGER.warning('No valid HA token; skipping category/label sync')
+    return
+
+  ws_uri = HA_BASE_URL.replace('http', 'ws', 1) + '/api/websocket'
+  msg_id = 0
+
+  def send_cmd(ws, cmd):
+    nonlocal msg_id
+    msg_id += 1
+    cmd['id'] = msg_id
+    ws.send(json.dumps(cmd))
+    resp = json.loads(ws.recv())
+    while resp.get('id') != msg_id:
+      resp = json.loads(ws.recv())
+    if not resp.get('success', True):
+      LOGGER.warning('WS command failed', extra={'cmd': cmd.get('type'), 'error': resp.get('error')})
+    return resp
+
+  with ws_connect(ws_uri) as ws:
+    auth_req = json.loads(ws.recv())
+    if auth_req.get('type') != 'auth_required':
+      LOGGER.error('Unexpected WS response: %s', auth_req.get('type'))
+      return
+    ws.send(json.dumps({'type': 'auth', 'access_token': token}))
+    auth_resp = json.loads(ws.recv())
+    if auth_resp.get('type') != 'auth_ok':
+      LOGGER.error('WS auth failed: %s', auth_resp)
+      return
+    LOGGER.info('WebSocket authenticated')
+
+    existing_labels = send_cmd(ws, {'type': 'config/label_registry/list'})
+    label_map = {l['name']: l['label_id'] for l in (existing_labels.get('result') or [])}
+    for name, props in labels_def.items():
+      if name not in label_map:
+        resp = send_cmd(ws, {
+          'type': 'config/label_registry/create',
+          'name': name,
+          'color': props.get('color', 'grey'),
+          'icon': props.get('icon', ''),
+        })
+        if resp.get('success'):
+          label_map[name] = resp['result']['label_id']
+          LOGGER.info('Created label', extra={'label': name})
+      else:
+        LOGGER.debug('Label exists', extra={'label': name})
+
+    scopes = set()
+    for props in categories_def.values():
+      scopes.add(props.get('scope', 'helpers'))
+    cat_map = {}
+    for scope in scopes:
+      existing = send_cmd(ws, {'type': 'config/category_registry/list', 'scope': scope})
+      for c in (existing.get('result') or []):
+        cat_map[(scope, c['name'])] = c['category_id']
+    for name, props in categories_def.items():
+      scope = props.get('scope', 'helpers')
+      if (scope, name) not in cat_map:
+        resp = send_cmd(ws, {
+          'type': 'config/category_registry/create',
+          'scope': scope,
+          'name': name,
+          'icon': props.get('icon', ''),
+        })
+        if resp.get('success'):
+          cat_map[(scope, name)] = resp['result']['category_id']
+          LOGGER.info('Created category', extra={'category': name, 'scope': scope})
+      else:
+        LOGGER.debug('Category exists', extra={'category': name})
+
+    for entity_id, props in entities_resolved.items():
+      label_ids = [label_map[l] for l in props.get('labels', []) if l in label_map]
+      update_cmd = {
+        'type': 'config/entity_registry/update',
+        'entity_id': entity_id,
+        'labels': label_ids,
+      }
+      entity_cat = props.get('category', '')
+      if entity_cat:
+        domain = entity_id.split('.')[0]
+        scope = 'helpers' if domain.startswith('input_') else domain
+        cat_id = cat_map.get((scope, entity_cat))
+        if cat_id:
+          update_cmd['categories'] = {scope: cat_id}
+      resp = send_cmd(ws, update_cmd)
+      if resp.get('success'):
+        LOGGER.info('Updated entity metadata', extra={'entity': entity_id})
+      else:
+        LOGGER.warning('Failed to update entity', extra={
+          'entity': entity_id, 'error': resp.get('error'),
+        })
+
+  LOGGER.info('Category/label sync complete')
+
+
 def main(argv: list[str] | None = None) -> None:
   """
   Sync General Home Mobile dashboard to Home Assistant.
 
   Uploads dashboard.yaml and template sensors via SMB.
   Use --restart on first deploy or after editing sensors/configuration.
+  Use --categories to create/assign categories and labels via WebSocket.
 
   Example:
     > uv run python general_home_dashboard_sync.py           # sync dashboard only
     > uv run python general_home_dashboard_sync.py -r         # sync + restart HA
+    > uv run python general_home_dashboard_sync.py -c         # sync + apply categories/labels
     > uv run python general_home_dashboard_sync.py -d         # sync with debug logging
   """
   argv = argv if argv is not None else sys.argv[1:]
 
   try:
-    opts, _ = getopt(argv, 'hdl:r', ['help', 'debug', 'log-level=', 'restart'])
+    opts, _ = getopt(argv, 'hcdl:r', ['help', 'categories', 'debug', 'log-level=', 'restart'])
   except GetoptError:
     LOGGER.error('Invalid options. %s', USAGE)
     sys.exit(1)
 
   do_restart = False
+  do_categories = False
   for opt, arg in opts:
     if opt in ('-h', '--help'):
       print(USAGE)
       sys.exit(0)
+    if opt in ('-c', '--categories'):
+      do_categories = True
     if opt in ('-d', '--debug'):
       LOGGER.setLevel(logging.DEBUG)
     if opt in ('-l', '--log-level'):
@@ -233,6 +369,9 @@ def main(argv: list[str] | None = None) -> None:
   LOGGER.info('Syncing General Home Mobile dashboard to HA')
   count = _sync_files(cfg)
   LOGGER.info('Sync complete', extra={'files_synced': count})
+
+  if do_categories:
+    _apply_registry_metadata(cfg)
 
   if do_restart:
     _restart_ha(cfg['token'])

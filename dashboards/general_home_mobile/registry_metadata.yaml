@@ -1,0 +1,134 @@
+# =============================================================================
+# Registry Metadata — Categories & Labels for General Home Mobile
+# =============================================================================
+# Parsed by the sync script (-c flag) and applied via WebSocket.
+# HA categories and labels live in .storage/, not YAML — this file is
+# the source of truth for what should exist and how entities map.
+#
+# Entity IDs use the same <entity_N> placeholders as other project files;
+# the sync script un-redacts them before calling the HA API.
+# =============================================================================
+
+categories:
+  GenMobile Dashboard Notifications:
+    scope: helpers
+    icon: mdi:bell
+  GenMobile Theme System:
+    scope: helpers
+    icon: mdi:palette
+
+labels:
+  gm-dashboard:
+    color: blue
+    icon: mdi:cellphone
+  gm-per-user:
+    color: grey
+    icon: mdi:account-multiple
+  gm-theme:
+    color: purple
+    icon: mdi:palette
+  gm-conditional-cards:
+    color: orange
+    icon: mdi:cards
+  gm-notifications:
+    color: red
+    icon: mdi:bell-ring
+  gm-theme-preferences:
+    color: purple
+    icon: mdi:palette-swatch-variant
+  gm-theme-customization:
+    color: purple
+    icon: mdi:tune-variant
+
+entities:
+  input_boolean.cond_bedtime_doors:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-conditional-cards
+  input_boolean.cond_uv_index:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-conditional-cards
+  input_boolean.notification_expanded:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-notifications
+  input_select.theme_appearance_user:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<entity_1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<entity_2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<entity_1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<entity_2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_text.theme_background_<entity_1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_text.theme_background_<entity_2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<entity_1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<entity_2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<entity_1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<entity_2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
