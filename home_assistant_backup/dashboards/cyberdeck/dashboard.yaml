@@ -313,7 +313,7 @@ button_card_templates:
             - opacity: "0.3"
             - pointer-events: "none"
 
-  # ── spools strip (variables: printer = cc1 | cc2) ─────────────
+  # ── spools strip (variables: printer = <entity_20> | <entity_21>) ─────────────
   unit_spools:
     template: cyberdeck_base
     extra_styles: |
@@ -329,17 +329,17 @@ button_card_templates:
     custom_fields:
       spools: |
         [[[
-          const printer = variables.printer || 'cc1';
+          const printer = variables.printer || '<entity_20>';
           let out = '<div style="padding:10px 14px 12px;border-top:1px solid rgba(0,229,255,0.08);">';
           out += '<div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;margin-bottom:8px;">SPOOLS.LOADED</div>';
-          if (printer === 'cc1') {
-            const cc1Name = states['sensor.cc1_loaded_filament_name'];
-            const cc1Grams = states['sensor.cc1_spoolman_grams'];
-            if (cc1Name && cc1Name.state && !['unknown','unavailable'].includes(cc1Name.state)) {
-              const g = cc1Grams ? parseFloat(cc1Grams.state) || 0 : 0;
+          if (printer === '<entity_20>') {
+            const <entity_20>Name = states['sensor.<entity_20>_loaded_filament_name'];
+            const <entity_20>Grams = states['sensor.<entity_20>_spoolman_grams'];
+            if (<entity_20>Name && <entity_20>Name.state && !['unknown','unavailable'].includes(<entity_20>Name.state)) {
+              const g = <entity_20>Grams ? parseFloat(<entity_20>Grams.state) || 0 : 0;
               out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                 <span style="width:8px;height:8px;border-radius:50%;background:var(--cyberdeck-cyan);flex-shrink:0;"></span>
-                <span style="color:var(--cyberdeck-text);font-size:11px;flex:1;">${cc1Name.state.toUpperCase()}</span>
+                <span style="color:var(--cyberdeck-text);font-size:11px;flex:1;">${<entity_20>Name.state.toUpperCase()}</span>
                 <span style="color:var(--cyberdeck-text-dim);font-size:11px;">${g > 0 ? g.toFixed(0)+'g' : '—'}</span>
               </div>`;
             } else {
@@ -347,21 +347,21 @@ button_card_templates:
             }
           } else {
             const slots = [
-              { name: states['sensor.centauri_carbon_2_a1_name'],
-                color: states['sensor.centauri_carbon_2_a1_color'],
-                grams: states['sensor.cc2_a1_spoolman_grams'] },
-              { name: states['sensor.centauri_carbon_2_a2_name'],
-                color: states['sensor.centauri_carbon_2_a2_color'],
-                grams: states['sensor.cc2_a2_spoolman_grams'] },
-              { name: states['sensor.centauri_carbon_2_a3_name'],
-                color: states['sensor.centauri_carbon_2_a3_color'],
-                grams: states['sensor.cc2_a3_spoolman_grams'] },
-              { name: states['sensor.centauri_carbon_2_a4_name'],
-                color: states['sensor.centauri_carbon_2_a4_color'],
-                grams: states['sensor.cc2_a4_spoolman_grams'] },
+              { name: states['sensor.<entity_22>_a1_name'],
+                color: states['sensor.<entity_22>_a1_color'],
+                grams: states['sensor.<entity_21>_a1_spoolman_grams'] },
+              { name: states['sensor.<entity_22>_a2_name'],
+                color: states['sensor.<entity_22>_a2_color'],
+                grams: states['sensor.<entity_21>_a2_spoolman_grams'] },
+              { name: states['sensor.<entity_22>_a3_name'],
+                color: states['sensor.<entity_22>_a3_color'],
+                grams: states['sensor.<entity_21>_a3_spoolman_grams'] },
+              { name: states['sensor.<entity_22>_a4_name'],
+                color: states['sensor.<entity_22>_a4_color'],
+                grams: states['sensor.<entity_21>_a4_spoolman_grams'] },
             ];
 
-            const activeE = states['sensor.centauri_carbon_2_active_filament_color'];
+            const activeE = states['sensor.<entity_22>_active_filament_color'];
             const activeColor = (activeE && activeE.state && activeE.state.startsWith('#'))
                                 ? activeE.state : null;
             const uid = 'holo-' + Math.random().toString(36).slice(2,8);
@@ -836,7 +836,7 @@ views:
               ignore_case: true
             filter:
               include:
-                - entity_id: sensor.centauri_carbon_current_status
+                - entity_id: sensor.<entity_23>_current_status
                   options:
                     type: custom:stack-in-card
                     card_mod:
@@ -847,8 +847,8 @@ views:
                           border-radius: 6px !important;
                           margin: 8px 8px 4px !important;
                           overflow: hidden !important;
-                          {% if is_state('sensor.centauri_carbon_current_status','unavailable') or
-                                is_state('sensor.centauri_carbon_current_status','unknown') %}
+                          {% if is_state('sensor.<entity_23>_current_status','unavailable') or
+                                is_state('sensor.<entity_23>_current_status','unknown') %}
                             opacity: 0.45;
                           {% endif %}
                         }
@@ -857,22 +857,22 @@ views:
                       - type: horizontal-stack
                         cards:
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_current_status
+                            entity: sensor.<entity_23>_current_status
                             template: unit_label
                             variables:
                               unit: "U.01"
                               label: "CC.01"
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_current_status
+                            entity: sensor.<entity_23>_current_status
                             template: unit_status_pill
                             variables:
-                              status_entity: sensor.centauri_carbon_current_status
+                              status_entity: sensor.<entity_23>_current_status
 
                       # ── camera (full width), cover + job row below ──
                       - type: vertical-stack
                         cards:
                           - type: picture-entity
-                            entity: camera.centauri_carbon_chamber_camera
+                            entity: camera.<entity_23>_chamber_camera
                             camera_view: live
                             show_name: false
                             show_state: false
@@ -945,13 +945,13 @@ views:
                                 }
                             cards:
                               - type: custom:button-card
-                                entity: image.centauri_carbon_cover_image
+                                entity: image.<entity_23>_cover_image
                                 template: cyberdeck_base
                                 show_entity_picture: false
                                 custom_fields:
                                   cover: |
                                     [[[
-                                      const e = states['image.centauri_carbon_cover_image'];
+                                      const e = states['image.<entity_23>_cover_image'];
                                       if (!e || !e.attributes || !e.attributes.entity_picture) return '';
                                       const url = e.attributes.entity_picture;
                                       return `
@@ -990,15 +990,15 @@ views:
                                       box-sizing: border-box !important;
                                     }
                               - type: custom:button-card
-                                entity: sensor.centauri_carbon_percent_complete
+                                entity: sensor.<entity_23>_percent_complete
                                 template: unit_job_info
                                 variables:
-                                  pct_entity: sensor.centauri_carbon_percent_complete
-                                  file_entity: sensor.centauri_carbon_file_name
-                                  eta_entity: sensor.centauri_carbon_remaining_print_time
-                                  end_entity: sensor.centauri_carbon_end_time
-                                  status_entity: sensor.centauri_carbon_current_status
-                                  cost_entity: sensor.centauri_carbon_total_filament_cost
+                                  pct_entity: sensor.<entity_23>_percent_complete
+                                  file_entity: sensor.<entity_23>_file_name
+                                  eta_entity: sensor.<entity_23>_remaining_print_time
+                                  end_entity: sensor.<entity_23>_end_time
+                                  status_entity: sensor.<entity_23>_current_status
+                                  cost_entity: sensor.<entity_23>_total_filament_cost
                                 styles:
                                   card:
                                     - margin: "0 14px 0 0 !important"
@@ -1026,18 +1026,18 @@ views:
                             }
                         cards:
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_percent_complete
+                            entity: sensor.<entity_23>_percent_complete
                             template: unit_progress_bar
                             variables:
-                              pct_entity: sensor.centauri_carbon_percent_complete
-                              status_entity: sensor.centauri_carbon_current_status
+                              pct_entity: sensor.<entity_23>_percent_complete
+                              status_entity: sensor.<entity_23>_current_status
 
                       # ── telemetry sparklines ──
                       - type: horizontal-stack
                         cards:
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_box_temp
+                              - entity: sensor.<entity_23>_box_temp
                                 color: "#e8a910"
                             name: CHMBR
                             icon: false
@@ -1077,7 +1077,7 @@ views:
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_nozzle_temperature
+                              - entity: sensor.<entity_23>_nozzle_temperature
                                 color: "#00ff88"
                             name: NZZL
                             icon: false
@@ -1116,7 +1116,7 @@ views:
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_bed_temperature
+                              - entity: sensor.<entity_23>_bed_temperature
                                 color: "#e91e8c"
                             name: BED
                             icon: false
@@ -1172,7 +1172,7 @@ views:
                             }
                         cards:
                           - type: custom:button-card
-                            entity: button.centauri_carbon_pause_print
+                            entity: button.<entity_23>_pause_print
                             name: HOLD
                             template: control_btn
                             variables:
@@ -1181,9 +1181,9 @@ views:
                               action: call-service
                               service: button.press
                               service_data:
-                                entity_id: button.centauri_carbon_pause_print
+                                entity_id: button.<entity_23>_pause_print
                           - type: custom:button-card
-                            entity: button.centauri_carbon_stop_print
+                            entity: button.<entity_23>_stop_print
                             name: ABORT
                             template: control_btn
                             variables:
@@ -1192,11 +1192,11 @@ views:
                               action: call-service
                               service: button.press
                               service_data:
-                                entity_id: button.centauri_carbon_stop_print
+                                entity_id: button.<entity_23>_stop_print
                               confirmation:
-                                text: "ABORT print on CC1?"
+                                text: "ABORT print on <entity_20>?"
                           - type: custom:button-card
-                            entity: light.centauri_carbon_chamber_light
+                            entity: light.<entity_23>_chamber_light
                             name: LAMP
                             template: control_btn
                             variables:
@@ -1206,11 +1206,11 @@ views:
 
                       # ── spools loaded ──
                       - type: custom:button-card
-                        entity: sensor.cc1_spoolman_grams
+                        entity: sensor.<entity_20>_spoolman_grams
                         template: unit_spools
                         variables:
-                          printer: cc1
-                - entity_id: sensor.centauri_carbon_2_current_status
+                          printer: <entity_20>
+                - entity_id: sensor.<entity_22>_current_status
                   options:
                     type: custom:stack-in-card
                     card_mod:
@@ -1221,8 +1221,8 @@ views:
                           border-radius: 6px !important;
                           margin: 4px 8px !important;
                           overflow: hidden !important;
-                          {% if is_state('sensor.centauri_carbon_2_current_status','unavailable') or
-                                is_state('sensor.centauri_carbon_2_current_status','unknown') %}
+                          {% if is_state('sensor.<entity_22>_current_status','unavailable') or
+                                is_state('sensor.<entity_22>_current_status','unknown') %}
                             opacity: 0.45;
                           {% endif %}
                         }
@@ -1231,22 +1231,22 @@ views:
                       - type: horizontal-stack
                         cards:
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_2_current_status
+                            entity: sensor.<entity_22>_current_status
                             template: unit_label
                             variables:
                               unit: "U.02"
                               label: "CC.02"
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_2_current_status
+                            entity: sensor.<entity_22>_current_status
                             template: unit_status_pill
                             variables:
-                              status_entity: sensor.centauri_carbon_2_current_status
+                              status_entity: sensor.<entity_22>_current_status
 
                       # ── camera (full width), cover + job row below ──
                       - type: vertical-stack
                         cards:
                           - type: picture-entity
-                            entity: camera.centauri_carbon_2_chamber_camera
+                            entity: camera.<entity_22>_chamber_camera
                             camera_view: live
                             show_name: false
                             show_state: false
@@ -1319,13 +1319,13 @@ views:
                                 }
                             cards:
                               - type: custom:button-card
-                                entity: image.centauri_carbon_2_cover_image
+                                entity: image.<entity_22>_cover_image
                                 template: cyberdeck_base
                                 show_entity_picture: false
                                 custom_fields:
                                   cover: |
                                     [[[
-                                      const e = states['image.centauri_carbon_2_cover_image'];
+                                      const e = states['image.<entity_22>_cover_image'];
                                       if (!e || !e.attributes || !e.attributes.entity_picture) return '';
                                       const url = e.attributes.entity_picture;
                                       return `
@@ -1364,15 +1364,15 @@ views:
                                       box-sizing: border-box !important;
                                     }
                               - type: custom:button-card
-                                entity: sensor.centauri_carbon_2_percent_complete
+                                entity: sensor.<entity_22>_percent_complete
                                 template: unit_job_info
                                 variables:
-                                  pct_entity: sensor.centauri_carbon_2_percent_complete
-                                  file_entity: sensor.centauri_carbon_2_file_name
-                                  eta_entity: sensor.centauri_carbon_2_remaining_print_time
-                                  end_entity: sensor.centauri_carbon_2_end_time
-                                  status_entity: sensor.centauri_carbon_2_current_status
-                                  cost_entity: sensor.centauri_carbon_2_total_filament_cost
+                                  pct_entity: sensor.<entity_22>_percent_complete
+                                  file_entity: sensor.<entity_22>_file_name
+                                  eta_entity: sensor.<entity_22>_remaining_print_time
+                                  end_entity: sensor.<entity_22>_end_time
+                                  status_entity: sensor.<entity_22>_current_status
+                                  cost_entity: sensor.<entity_22>_total_filament_cost
                                 styles:
                                   card:
                                     - margin: "0 14px 0 0 !important"
@@ -1400,18 +1400,18 @@ views:
                             }
                         cards:
                           - type: custom:button-card
-                            entity: sensor.centauri_carbon_2_percent_complete
+                            entity: sensor.<entity_22>_percent_complete
                             template: unit_progress_bar
                             variables:
-                              pct_entity: sensor.centauri_carbon_2_percent_complete
-                              status_entity: sensor.centauri_carbon_2_current_status
+                              pct_entity: sensor.<entity_22>_percent_complete
+                              status_entity: sensor.<entity_22>_current_status
 
                       # ── telemetry sparklines ──
                       - type: horizontal-stack
                         cards:
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_2_box_temp
+                              - entity: sensor.<entity_22>_box_temp
                                 color: "#e8a910"
                             name: CHMBR
                             icon: false
@@ -1451,7 +1451,7 @@ views:
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_2_nozzle_temperature
+                              - entity: sensor.<entity_22>_nozzle_temperature
                                 color: "#00ff88"
                             name: NZZL
                             icon: false
@@ -1490,7 +1490,7 @@ views:
                                 .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
                           - type: custom:mini-graph-card
                             entities:
-                              - entity: sensor.centauri_carbon_2_bed_temperature
+                              - entity: sensor.<entity_22>_bed_temperature
                                 color: "#e91e8c"
                             name: BED
                             icon: false
@@ -1546,7 +1546,7 @@ views:
                             }
                         cards:
                           - type: custom:button-card
-                            entity: button.centauri_carbon_2_pause_print
+                            entity: button.<entity_22>_pause_print
                             name: HOLD
                             template: control_btn
                             variables:
@@ -1555,9 +1555,9 @@ views:
                               action: call-service
                               service: button.press
                               service_data:
-                                entity_id: button.centauri_carbon_2_pause_print
+                                entity_id: button.<entity_22>_pause_print
                           - type: custom:button-card
-                            entity: button.centauri_carbon_2_stop_print
+                            entity: button.<entity_22>_stop_print
                             name: ABORT
                             template: control_btn
                             variables:
@@ -1566,11 +1566,11 @@ views:
                               action: call-service
                               service: button.press
                               service_data:
-                                entity_id: button.centauri_carbon_2_stop_print
+                                entity_id: button.<entity_22>_stop_print
                               confirmation:
-                                text: "ABORT print on CC2?"
+                                text: "ABORT print on <entity_21>?"
                           - type: custom:button-card
-                            entity: light.centauri_carbon_2_chamber_light
+                            entity: light.<entity_22>_chamber_light
                             name: LAMP
                             template: control_btn
                             variables:
@@ -1580,10 +1580,10 @@ views:
 
                       # ── spools loaded ──
                       - type: custom:button-card
-                        entity: sensor.cc2_a1_spoolman_grams
+                        entity: sensor.<entity_21>_a1_spoolman_grams
                         template: unit_spools
                         variables:
-                          printer: cc2
+                          printer: <entity_21>
 
           # ══════════════════════════════════════════════════════
           #  FILAMENT INVENTORY (all Spoolman spools — segmented bars)
@@ -1693,10 +1693,10 @@ views:
                       - width: "100%"
               - type: logbook
                 entities:
-                  - sensor.centauri_carbon_current_status
-                  - sensor.centauri_carbon_print_status
-                  - sensor.centauri_carbon_2_current_status
-                  - sensor.centauri_carbon_2_print_status
+                  - sensor.<entity_23>_current_status
+                  - sensor.<entity_23>_print_status
+                  - sensor.<entity_22>_current_status
+                  - sensor.<entity_22>_print_status
                 hours_to_show: 24
                 card_mod:
                   style: |

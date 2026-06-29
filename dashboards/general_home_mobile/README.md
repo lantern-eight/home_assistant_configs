@@ -55,6 +55,7 @@ card_mod)
   - [Backgrounds](#backgrounds)
   - [Card Opacity and Blur](#card-opacity-and-blur)
   - [Appearance Subview](#appearance-subview)
+- [Notification System](#notification-system)
 - [Architecture](#architecture)
   - [Why Card-Level, Not View-Level](#why-card-level-not-view-level)
   - [Per-Property Sensors, Not One Big CSS Sensor](#per-property-sensors-not-one-big-css-sensor)
@@ -85,12 +86,12 @@ and More open as bubble-card popups rather than navigating to separate views.
 
 **Home view contents** (top to bottom):
 - Background overlay card (invisible, paints the viewport background)
-- Clock/weather card (`clock-weather-card`)
-- Absolute humidity graph (`mini-graph-card`)
-- UV index chart (`apexcharts-card`, conditional — daytime only)
+- "Home" title
+- Notification area (promoted chips + dot counter, state-driven)
+- Weather card (`weather-forecast-card` + absolute humidity graph)
+- Conditional cards (bedtime door status, UV alerts — priority-managed)
 - Air quality indicators (humidity, CO2, chemicals, PM2.5, radon)
 - Calendar (`calendar-card-pro`)
-- Conditional cards (bedtime door status, UV alerts — priority-managed)
 - Bottom navbar
 
 **Rooms popup:** Room cards with light toggles. Uses template switches that
@@ -175,99 +176,8 @@ unstyled for that page load.
 
 ### 4. Theme Helpers
 
-Create these helpers in `configuration.yaml`. You need one set per user.
-Replace `<user1>` and `<user2>` with your household members' names. `<user1>`
-should be the person who uses dark mode; `<user2>` should be the light mode
-user. Not yet figured out a good way to automatically detect the user so for now
-it uses the setting of the browser's light/dark mode setting to determine the user.
-
-```yaml
-input_select:
-  theme_appearance_user:
-    name: "Theme Appearance User"
-    options:
-      - "<user2>"
-      - "<user1>"
-    initial: "<user2>"
-    icon: mdi:account-switch
-
-  theme_style_<user1>:
-    name: "Theme Style (<user1>)"
-    options: [Clean, Glass, Dark, Glow, Neon]
-    initial: Clean
-    icon: mdi:palette-swatch-variant
-  theme_style_<user2>:
-    name: "Theme Style (<user2>)"
-    options: [Clean, Glass, Dark, Glow, Neon]
-    initial: Clean
-    icon: mdi:palette-swatch-variant
-
-  theme_palette_<user1>:
-    name: "Theme Palette (<user1>)"
-    options: [Indigo, Ocean, Sunset, Forest, Rose, Mono, Cyberdeck, Mint]
-    initial: Indigo
-    icon: mdi:palette
-  theme_palette_<user2>:
-    name: "Theme Palette (<user2>)"
-    options: [Indigo, Ocean, Sunset, Forest, Rose, Mono, Cyberdeck, Mint]
-    initial: Indigo
-    icon: mdi:palette
-
-input_text:
-  theme_background_<user1>:
-    name: "Theme Background (<user1>)"
-    initial: "auto"
-    max: 255
-    icon: mdi:image
-  theme_background_<user2>:
-    name: "Theme Background (<user2>)"
-    initial: "auto"
-    max: 255
-    icon: mdi:image
-
-input_number:
-  theme_card_opacity_<user1>:
-    name: "Card Opacity (<user1>)"
-    min: -1
-    max: 100
-    step: 5
-    initial: -1
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_opacity_<user2>:
-    name: "Card Opacity (<user2>)"
-    min: -1
-    max: 100
-    step: 5
-    initial: -1
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_blur_<user1>:
-    name: "Card Blur (<user1>)"
-    min: -1
-    max: 30
-    step: 1
-    initial: -1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-  theme_card_blur_<user2>:
-    name: "Card Blur (<user2>)"
-    min: -1
-    max: 30
-    step: 1
-    initial: -1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-```
-
-> **Note on `initial:`** — helpers defined with `initial:` reset to that value
-> on every HA restart. If you want theme preferences to persist across
-> restarts, **remove the `initial:` lines** (HA will restore the last-set
-> value instead).
+> **Package:** These helpers are defined in `general_home_mobile.yaml` and deployed to
+> `packages/` by the sync script.
 
 ### 5. Template Sensors
 
@@ -303,38 +213,7 @@ To enable custom background images on the Appearance page:
 /config/www/themes/backgrounds/thumbs/   # auto-generated thumbnails
 ```
 
-**b) Add a command_line sensor** to detect available backgrounds:
-```yaml
-command_line:
-  - sensor:
-      name: theme backgrounds
-      command: "python3 /config/scripts/list_theme_backgrounds.py"
-      scan_interval: 30
-      value_template: "{{ value_json.count | int(0) }}"
-      json_attributes:
-        - count
-        - file_list
-```
-
-**c) Add a shell command** for thumbnail generation:
-```yaml
-shell_command:
-  generate_theme_thumbnails: "python3 /config/scripts/generate_theme_thumbnails.py"
-```
-
-**d) Add an automation** to regenerate thumbnails when files change:
-```yaml
-automation:
-  - id: theme_generate_background_thumbnails
-    alias: "Theme: Generate background thumbnails"
-    trigger:
-      - platform: state
-        entity_id: sensor.theme_backgrounds
-    action:
-      - service: shell_command.generate_theme_thumbnails
-```
-
-**e) Deploy the Python scripts** from this repo:
+**b) Deploy the Python scripts** from this repo:
 - `scripts/list_theme_backgrounds.py` → `/config/scripts/`
 - `scripts/generate_theme_thumbnails.py` → `/config/scripts/`
 
@@ -348,43 +227,17 @@ HA serves everything under `/config/www/` at `/local/`:
 
 ### 7. Conditional Card Helpers
 
+> **Package migration:** These helpers and their toggle automations are in the
+> `general_home_mobile.yaml` package.
+
 The Home view has conditional cards that show/hide based on time of day and
 sensor values. A priority-managed template sensor controls which cards are
 visible (max 5 at a time).
 
-```yaml
-input_boolean:
-  cond_bedtime_doors:
-    name: "Conditional: Bedtime Doors"
-    icon: mdi:door-open
-  cond_uv_index:
-    name: "Conditional: UV Index"
-    icon: mdi:weather-sunny-alert
-```
-
-Create automations to toggle these at appropriate times (e.g., bedtime doors
-ON at 7:30 PM, OFF at 7:00 AM; UV index ON at 7:00 AM, OFF at 5:00 PM). See
-`ha_config_additions.yaml` for example automations.
 
 ### 8. REST Sensor (UV Forecast)
 
-The UV index chart uses an Open-Meteo REST sensor:
-
-```yaml
-rest:
-  - resource: !secret openmeteo_uv_url
-    scan_interval: 86400
-    sensor:
-      - name: "OpenMeteo Hourly UV Forecast"
-        unique_id: openmeteo_hourly_uv_forecast
-        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
-        unit_of_measurement: "UV index"
-        icon: mdi:sun-wireless
-        json_attributes_path: "$.hourly"
-        json_attributes:
-          - time
-          - uv_index
-```
+> **Package:** This REST sensor is in the `general_home_mobile.yaml` package.
 
 In `secrets.yaml`:
 ```yaml
@@ -563,6 +416,56 @@ Accessed from More popup > Appearance. Layout:
 
 ---
 
+## Notification System
+
+A two-tier status bar between the "Home" title and the weather card. Items
+appear and disappear based on entity state — no manual dismiss, fully
+state-driven.
+
+### Two Tiers
+
+1. **Promoted chips** — red severity items (door open) shown as standalone
+   `button-card` chips above the dot counter. Each is a `type: conditional`
+   card gated on the entity's state.
+2. **Dot counter** — all other items rendered as colored dots grouped by
+   severity, inside a themed `stack-in-card`. Tapping toggles an expanded
+   list showing labels, icons, progress bars, and time remaining.
+
+### Severity Colors
+
+| Color | Hex | Meaning | Examples |
+|-------|-----|---------|----------|
+| Red | `#ef6461` | Urgent/critical | Doors open |
+| Amber | `#e8a840` | Warning/attention | Vacuum running |
+| Blue | `#6b9fff` | Informational | Lights on |
+| Green | `#3ecf8e` | Normal/running | 3D printer, HVAC, power draw |
+
+### Expand/Collapse
+
+`input_boolean.notification_expanded` controls the expanded list visibility.
+Tapping the dot counter toggles it. No `initial:` set, so the value persists
+across HA restarts.
+
+### Adding a New Notification Item
+
+1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
+   (both `state` and `items` attribute — they evaluate independently)
+2. Assign a severity: red (urgent), amber (warning), blue (info), green (normal)
+3. If promoted (red): also add a `type: conditional` chip card in
+   `dashboard.yaml` using `*theme_chip_style`
+4. If it has progress: include `progress` (0-100) and optional
+   `time_remaining` in the item dict
+
+### Key Entities
+
+- `sensor.dashboard_notifications` — aggregation sensor (state = count,
+  attrs = items list)
+- `input_boolean.notification_expanded` — expand/collapse toggle
+- `&theme_chip_style` — YAML anchor for promoted chip cards (theme chrome
+  without background/border)
+
+---
+
 ## Architecture
 
 ### Why Card-Level, Not View-Level
@@ -617,6 +520,7 @@ anchors at the top of `dashboard.yaml`:
 | Anchor | Tier | Purpose | Used on |
 |--------|------|---------|---------|
 | `&theme_card_style` | Tier 1 | Full themed treatment — palette colors, style surfaces, blur | Content cards (weather, graphs, calendar, entity cards, etc.) |
+| `&theme_chip_style` | Tier 1.5 | Theme chrome without background/border — for severity-colored chips | Promoted notification chips |
 | `&theme_chrome_style` | Tier 2 | Restrained treatment — tinted background, reduced blur (40% of content) | Navbar, bubble-card popup shells |
 | `&theme_exempt_style` | Tier 3 | Strips all styling — transparent background, no border/shadow | Headings, chips, title cards, glance cards |
 | `&theme_card_transparent` | — | Transparent background, no border | Wrapper cards (stack-in-card used for grouping) |
@@ -716,14 +620,22 @@ the relevant services:
 # Deploy dashboard + sensors + scripts, reload templates
 uv run python scripts/general_home_dashboard_sync.py
 
+# Deploy + apply categories and labels to helpers
+uv run python scripts/general_home_dashboard_sync.py -c
+
 # Deploy + restart HA (needed for configuration.yaml / frontend changes)
 uv run python scripts/general_home_dashboard_sync.py -r
 ```
 
 The script syncs: `dashboard.yaml`, `sensors.yaml`, `theme_sensors.yaml`,
-`popup_history_fix.js` (to `www/`), and the two theme Python scripts. It then runs
-`template/reload` and `command_line/reload`. The script uses its own `smbclient`
-connection, independent of any Finder mount.
+`general_home_mobile.yaml` (to `packages/`), `popup_history_fix.js` (to `www/`),
+and the two theme Python scripts. It then runs `template/reload` and
+`command_line/reload`. With `-c`, it also creates categories and labels via WebSocket and assigns
+them to helper entities. WebSocket is needed because HA categories and labels
+are registry-only objects (stored in `.storage/`, not configurable via YAML) —
+the only way to create or assign them programmatically is through the
+WebSocket API. The script uses its own `smbclient` connection, independent of
+any Finder mount.
 
 **Redaction handling:** The sync script un-redacts entity placeholders
 (e.g., `<entity_1>` → real names) **in memory only** before writing to HA.
@@ -848,9 +760,11 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 |------|---------|
 | `dashboard.yaml` | All views, theme YAML anchors, and card definitions (~2850 lines) |
 | `theme_sensors.yaml` | Per-property template sensors for dark and light users (~435 lines) |
-| `sensors.yaml` | Non-theme template sensors (conditional card manager, room light switches) |
+| `sensors.yaml` | Non-theme template sensors (conditional card manager, notification aggregator, room light switches) |
+| `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
+| `registry_metadata.yaml` | Category and label definitions applied via sync script `-c` flag |
 | `popup_history_fix.js` | Fixes system-back reopening bubble-card popups (deployed to `www/`) |
-| `ha_config_additions.yaml` | Documents all required HA helpers, sensors, automations, and config |
+| `ha_config_additions.yaml` | Remaining HA config that can't go in a package |
 | `README.md` | This file |
 
 ### Scripts (in repo `scripts/` directory)
@@ -866,6 +780,7 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 | Path | Purpose |
 |------|---------|
 | `configuration.yaml` | Must include `frontend.extra_module_url` for card_mod and popup history fix |
+| `packages/general_home_mobile.yaml` | Deployed package (helpers, sensors, shell_command, automations) |
 | `www/popup_history_fix.js` | Deployed copy of popup history fix module |
 | `template_sensors/theme_sensors.yaml` | Deployed copy of theme sensors |
 | `template_sensors/general_home_sensors.yaml` | Deployed copy of general sensors |

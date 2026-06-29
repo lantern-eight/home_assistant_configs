@@ -57,24 +57,59 @@ name-derived entity ID. Don't assume the unique_id matches.
 |------|-------------|
 | `dashboard.yaml` | All views, YAML anchor definitions, card definitions (~2850 lines) |
 | `theme_sensors.yaml` | Per-property template sensors for dark/light users (~435 lines) |
-| `sensors.yaml` | Non-theme sensors (conditional card manager, room light switches) |
+| `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
+| `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
+| `registry_metadata.yaml` | Category and label definitions for helpers (applied via sync script `-c`) |
 | `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`) |
-| `ha_config_additions.yaml` | Documents all required HA helpers, sensors, automations |
+| `ha_config_additions.yaml` | Remaining HA config that can't go in a package (dashboard registration, secrets, frontend module) |
 | `README.md` | Full public-facing documentation |
 
 ## YAML Anchor System
 
-Five anchors defined at the top of `dashboard.yaml` control card theming:
+Six anchors defined at the top of `dashboard.yaml` control card theming:
 
 | Anchor | Purpose |
 |--------|---------|
 | `&theme_card_style` | Full themed treatment — use on content cards |
+| `&theme_chip_style` | Theme chrome without background/border — for severity-colored chips |
 | `&theme_chrome_style` | Restrained treatment — use on navbar, popup shells |
 | `&theme_exempt_style` | Strips all styling — use on headings, chips, titles |
 | `&theme_card_transparent` | Transparent, no border — use on wrapper cards |
 | `&theme_bg_card` | Background overlay — must be first card in every view |
 
 To theme a new card: `card_mod: style: *theme_card_style`
+
+## Notification System
+
+A two-tier status bar above the weather card. `sensor.dashboard_notifications`
+aggregates all items; its `items` attribute drives the dot counter and expanded
+list via button-card JS templates.
+
+### Adding a new notification item
+
+1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
+   (both `state` and `items` attribute — they evaluate independently)
+2. Assign severity: red (urgent/promoted), amber (warning), blue (info),
+   green (normal)
+3. If promoted: also add a `type: conditional` chip card in `dashboard.yaml`
+   using `*theme_chip_style`
+4. If it has progress: include `progress` (0-100) and optional
+   `time_remaining` in the item dict
+
+### Severity colors
+
+| Color | Hex | Meaning |
+|-------|-----|---------|
+| Red | `#ef6461` | Urgent/critical — doors open, security |
+| Amber | `#e8a840` | Warning/attention — vacuum running |
+| Blue | `#6b9fff` | Informational — lights on |
+| Green | `#3ecf8e` | Normal/running — printer, HVAC, power |
+
+### Key entities
+
+- `sensor.dashboard_notifications` — aggregation sensor (state = count, attrs = items list)
+- `input_boolean.notification_expanded` — expand/collapse toggle
+- `&theme_chip_style` — YAML anchor for promoted chip cards (theme chrome without bg/border)
 
 ## Entity Naming
 
@@ -99,6 +134,9 @@ card_radius, card_font.
 ```bash
 # Deploy dashboard + sensors + scripts, reload templates
 uv run python scripts/general_home_dashboard_sync.py
+
+# Deploy + apply categories and labels to helpers
+uv run python scripts/general_home_dashboard_sync.py -c
 
 # Deploy + full HA restart (for configuration.yaml / frontend changes)
 uv run python scripts/general_home_dashboard_sync.py -r

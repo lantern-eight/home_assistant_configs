@@ -6,18 +6,18 @@
       unique_id: printer_farm_online_count
       state: >
         {% set printers = [
-          'sensor.centauri_carbon_current_status',
-          'sensor.centauri_carbon_2_current_status'
+          'sensor.<entity_23>_current_status',
+          'sensor.<entity_22>_current_status'
         ] %}
         {{ printers | map('states')
            | reject('in', ['unknown','unavailable'])
            | list | count }}
 
-    - name: "CC2 A1 Spoolman Grams"
-      unique_id: cc2_a1_spoolman_grams
+    - name: "<entity_21> A1 Spoolman Grams"
+      unique_id: <entity_21>_a1_spoolman_grams
       unit_of_measurement: "g"
       state: >
-        {% set slot_name = states('sensor.centauri_carbon_2_a1_name') %}
+        {% set slot_name = states('sensor.<entity_22>_a1_name') %}
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -32,14 +32,14 @@
              if match | length > 0 else 'unknown' }}
         {% endif %}
       attributes:
-        slot_name: "{{ states('sensor.centauri_carbon_2_a1_name') }}"
-        slot_color: "{{ states('sensor.centauri_carbon_2_a1_color') }}"
+        slot_name: "{{ states('sensor.<entity_22>_a1_name') }}"
+        slot_color: "{{ states('sensor.<entity_22>_a1_color') }}"
 
-    - name: "CC2 A2 Spoolman Grams"
-      unique_id: cc2_a2_spoolman_grams
+    - name: "<entity_21> A2 Spoolman Grams"
+      unique_id: <entity_21>_a2_spoolman_grams
       unit_of_measurement: "g"
       state: >
-        {% set slot_name = states('sensor.centauri_carbon_2_a2_name') %}
+        {% set slot_name = states('sensor.<entity_22>_a2_name') %}
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -54,14 +54,14 @@
              if match | length > 0 else 'unknown' }}
         {% endif %}
       attributes:
-        slot_name: "{{ states('sensor.centauri_carbon_2_a2_name') }}"
-        slot_color: "{{ states('sensor.centauri_carbon_2_a2_color') }}"
+        slot_name: "{{ states('sensor.<entity_22>_a2_name') }}"
+        slot_color: "{{ states('sensor.<entity_22>_a2_color') }}"
 
-    - name: "CC2 A3 Spoolman Grams"
-      unique_id: cc2_a3_spoolman_grams
+    - name: "<entity_21> A3 Spoolman Grams"
+      unique_id: <entity_21>_a3_spoolman_grams
       unit_of_measurement: "g"
       state: >
-        {% set slot_name = states('sensor.centauri_carbon_2_a3_name') %}
+        {% set slot_name = states('sensor.<entity_22>_a3_name') %}
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -76,14 +76,14 @@
              if match | length > 0 else 'unknown' }}
         {% endif %}
       attributes:
-        slot_name: "{{ states('sensor.centauri_carbon_2_a3_name') }}"
-        slot_color: "{{ states('sensor.centauri_carbon_2_a3_color') }}"
+        slot_name: "{{ states('sensor.<entity_22>_a3_name') }}"
+        slot_color: "{{ states('sensor.<entity_22>_a3_color') }}"
 
-    - name: "CC2 A4 Spoolman Grams"
-      unique_id: cc2_a4_spoolman_grams
+    - name: "<entity_21> A4 Spoolman Grams"
+      unique_id: <entity_21>_a4_spoolman_grams
       unit_of_measurement: "g"
       state: >
-        {% set slot_name = states('sensor.centauri_carbon_2_a4_name') %}
+        {% set slot_name = states('sensor.<entity_22>_a4_name') %}
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -98,13 +98,13 @@
              if match | length > 0 else 'unknown' }}
         {% endif %}
       attributes:
-        slot_name: "{{ states('sensor.centauri_carbon_2_a4_name') }}"
-        slot_color: "{{ states('sensor.centauri_carbon_2_a4_color') }}"
+        slot_name: "{{ states('sensor.<entity_22>_a4_name') }}"
+        slot_color: "{{ states('sensor.<entity_22>_a4_color') }}"
 
-    - name: "CC1 Loaded Filament Name"
-      unique_id: cc1_loaded_filament_name
+    - name: "<entity_20> Loaded Filament Name"
+      unique_id: <entity_20>_loaded_filament_name
       state: >
-        {% set raw = states('input_text.centauri_carbon_last_file') %}
+        {% set raw = states('input_text.<entity_23>_last_file') %}
         {% if raw in ['unknown','unavailable',''] %}
           Unknown
         {% else %}
@@ -117,11 +117,11 @@
           {% endif %}
         {% endif %}
 
-    - name: "CC1 Spoolman Grams"
-      unique_id: cc1_spoolman_grams
+    - name: "<entity_20> Spoolman Grams"
+      unique_id: <entity_20>_spoolman_grams
       unit_of_measurement: "g"
       state: >
-        {% set fil_name = states('sensor.cc1_loaded_filament_name') %}
+        {% set fil_name = states('sensor.<entity_20>_loaded_filament_name') %}
         {% if fil_name in ['unknown','unavailable','Unknown',''] %}
           unknown
         {% else %}
