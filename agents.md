@@ -8,13 +8,19 @@
 
 - **Hard restarts take ~5 minutes.** After triggering an HA restart
   (e.g. `sync.py -r`), don't actively poll — use `Bash` with
-  `run_in_background` to wait:
+  `run_in_background` to wait. The web server comes up early, but
+  integrations keep loading after that. Check the `state` field from
+  `/api/config` — it reads `STARTING` until all integrations are
+  loaded, then switches to `RUNNING`:
   ```bash
-  until curl -s -o /dev/null -w "%{http_code}" \
-    http://<ip>:<port>/api/ 2>/dev/null \
-    | grep -q "401\|200"; do sleep 5; done
+  TOKEN=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['token'])")
+  until curl -s "http://<ip>:8123/api/config" \
+    -H "Authorization: Bearer $TOKEN" 2>/dev/null \
+    | grep -q '"state":"RUNNING"'; do sleep 5; done
   ```
-  You'll be notified when it completes.
+  A plain health-ping (`/api/` returning 200/401) is NOT enough — it
+  fires when the web server starts, before integrations finish loading.
+  You'll be notified when the background command completes.
 
 ## Home Assistant config backup and automations
 

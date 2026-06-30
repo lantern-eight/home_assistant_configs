@@ -447,15 +447,57 @@ Tapping the dot counter toggles it. The `popup_history_fix.js` module
 auto-collapses the tray on page load and navigation, so it always starts
 collapsed after a refresh.
 
+### Conditional Display: Two Tiers
+
+The dashboard has two ways to conditionally show information when it becomes
+relevant. Both are part of the same system — choose the tier that fits the
+amount of detail:
+
+**Notification items** (collapsible header bar) — for small, glanceable
+status: a count, a label, maybe a progress bar. These appear as colored
+dots in the header and expand into a list. Examples: vacuum running, lights on,
+power draw.
+
+**Conditional cards** — for information-rich content that need more space: charts,
+entity lists, multi-sensor readouts. Examples: UV index forecast chart.
+
+Both tiers show on the **Conditionals page** (`/general-home/conditionals`)
+as a combined view of all items whether active or not.
+
 ### Adding a New Notification Item
 
 1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
-   (both `state` and `items` attribute — they evaluate independently)
-2. Assign a severity: red (urgent), amber (warning), blue (info), green (normal)
+   (both `state` and `items` attribute — they evaluate independently).
+   Also update `dot_count` and the matching `{severity}_count` attribute.
+2. Assign a severity: red (urgent), amber (warning), blue (info), green
+   (normal)
 3. If promoted (red): also add a `type: conditional` chip card in
    `dashboard.yaml` using `*theme_chip_style`
 4. If it has progress: include `progress` (0-100) and optional
    `time_remaining` in the item dict
+
+5. The item must always be present in `items` with an `active` flag
+   (true when triggered, false when idle). The Home view JS filters
+   to active items; the Conditionals page shows everything. Use the
+   item's severity when active, `green` when idle.
+
+Notification items do not need a conditional card or an input_boolean.
+They appear in the header bar automatically when their `active` flag
+is true.
+
+### Adding a New Conditional Card
+
+Use this when the item needs a full card visualization (chart, entity
+list, etc.), not just a notification dot.
+
+1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
+2. Add on/off automations (time- or state-triggered) in the same file
+3. Add the card entry to `sensor.dashboard_conditional_visible` in
+   `sensors.yaml` (state, visible_ids, all_cards, active_count)
+4. Add the conditional card in the `dashboard.yaml` Home view, gated on
+   the input_boolean
+5. Add an unconditional copy of the card to the Conditionals page in
+   `dashboard.yaml` (the Conditionals page always shows all cards)
 
 ### Key Entities
 

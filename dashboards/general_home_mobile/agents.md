@@ -79,22 +79,60 @@ Six anchors defined at the top of `dashboard.yaml` control card theming:
 
 To theme a new card: `card_mod: style: *theme_card_style`
 
-## Notification System
+## Conditional Display System
 
-A two-tier status bar above the weather card. `sensor.dashboard_notifications`
-aggregates all items; its `items` attribute drives the dot counter and expanded
-list via button-card JS templates.
+Information is shown conditionally in two tiers — pick the one that fits
+the detail level:
 
-### Adding a new notification item
+**Notification items** (header bar) — small, glanceable: a count, a
+label, maybe a progress bar. Dots in the header expand into a list.
+Use for things like counts, vacuum running, lights on.
 
-1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
-   (both `state` and `items` attribute — they evaluate independently)
+**Conditional cards** — information-rich content that needs more space:
+charts, entity lists, multi-sensor readouts.
+
+Both tiers are visible on the Conditionals page
+(`/general-home/conditionals`) as a combined view — **always shown,
+even when inactive**. The Home view only shows active items; the
+Conditionals page shows everything the system tracks so you can see
+the full picture at a glance.
+
+Every notification item in the `items` attribute has an `active` flag.
+The Home view JS filters to `i.active`; the Conditionals page shows
+all items unfiltered. Inactive items use `green` severity and show
+their idle state (e.g. "0 Lightning Strikes", "Downstairs Vacuum").
+One item list, two views — no duplication.
+
+### Adding a notification item
+
+1. Add the entity check to `sensor.dashboard_notifications` in
+   `sensors.yaml` (both `state` and `items` attribute — they evaluate
+   independently). Also update `dot_count` and the matching
+   `{severity}_count` attribute.
 2. Assign severity: red (urgent/promoted), amber (warning), blue (info),
    green (normal)
-3. If promoted: also add a `type: conditional` chip card in `dashboard.yaml`
-   using `*theme_chip_style`
+3. If promoted: also add a `type: conditional` chip card in
+   `dashboard.yaml` using `*theme_chip_style`
 4. If it has progress: include `progress` (0-100) and optional
    `time_remaining` in the item dict
+
+No card, no input_boolean — notification items appear in the header
+automatically when their entity state is active.
+
+5. The item must always be present in `items` with an `active` flag
+   (true when triggered, false when idle). The Home view JS filters
+   to active items; the Conditionals page shows everything. Use the
+   item's severity when active, `green` when idle.
+
+### Adding a conditional card
+
+1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
+2. Add on/off automations (time- or state-triggered) in the same file
+3. Add the card entry to `sensor.dashboard_conditional_visible` in
+   `sensors.yaml` (state, visible_ids, all_cards, active_count)
+4. Add the conditional card in the Home view of `dashboard.yaml`, gated
+   on the input_boolean
+5. Add an unconditional copy to the Conditionals page in `dashboard.yaml`
 
 ### Severity colors
 

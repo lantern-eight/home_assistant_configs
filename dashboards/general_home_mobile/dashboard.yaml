@@ -380,7 +380,7 @@ views:
           custom_fields:
             dots: |
               [[[
-                const items = (entity.attributes.items || []).filter(i => !i.promoted);
+                const items = (entity.attributes.items || []).filter(i => i.active && !i.promoted);
                 if (!items.length) return '';
                 const colors = {red:'#ef6461', amber:'#e8a840', blue:'#6b9fff', green:'#3ecf8e'};
                 const order = ['red','amber','blue','green'];
@@ -429,7 +429,7 @@ views:
             custom_fields:
               list: |
                 [[[
-                  const items = (entity.attributes.items || []).filter(i => !i.promoted);
+                  const items = (entity.attributes.items || []).filter(i => i.active && !i.promoted);
                   const colors = {red:'#ef6461', amber:'#e8a840', blue:'#6b9fff', green:'#3ecf8e'};
                   let out = '<div style="display:flex;flex-direction:column;">';
                   for (const item of items.slice(0, 10)) {
@@ -1674,7 +1674,7 @@ views:
               out += '</div></div>';
             }
             if (!items.length) {
-              out += '<div style="text-align:center;padding:12px;font-size:13px;color:var(--secondary-text-color);">No active items</div>';
+              out += '<div style="text-align:center;padding:12px;font-size:13px;color:var(--secondary-text-color);">No items</div>';
             }
             out += '</div>';
             return out;
