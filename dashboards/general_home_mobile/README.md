@@ -443,8 +443,9 @@ state-driven.
 ### Expand/Collapse
 
 `input_boolean.notification_expanded` controls the expanded list visibility.
-Tapping the dot counter toggles it. No `initial:` set, so the value persists
-across HA restarts.
+Tapping the dot counter toggles it. The `popup_history_fix.js` module
+auto-collapses the tray on page load and navigation, so it always starts
+collapsed after a refresh.
 
 ### Adding a New Notification Item
 

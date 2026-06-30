@@ -9,13 +9,6 @@
 #     packages:
 #       general_home_mobile: !include packages/general_home_mobile.yaml
 #
-# Migration: remove the input_boolean, input_select, input_text,
-# input_number, rest, command_line, and shell_command blocks from
-# configuration.yaml that belong to this dashboard. Also remove the
-# 6 automations from automations.yaml (Cond: Bedtime Doors ON/OFF,
-# Cond: UV Index ON/OFF, Refresh UV Forecast, Theme: Generate
-# background thumbnails).
-#
 # No `initial:` on any helper — values persist across restarts.
 #
 # Categories and labels are defined in registry_metadata.yaml and
