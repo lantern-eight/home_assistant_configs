@@ -80,7 +80,7 @@ and More open as bubble-card popups rather than navigating to separate views.
 | **Home** | `/general-home/home` | Main view | Navbar tab |
 | **Climate** | `/general-home/climate` | Subview | Navbar tab |
 | **Security** | `/general-home/security` | Subview | Navbar tab |
-| **All Alerts** | `/general-home/all-alerts` | Subview | More popup |
+| **Conditionals** | `/general-home/conditionals` | Subview | More popup |
 | **Appearance** | `/general-home/appearance` | Subview | More popup |
 | **Automations** | `/general-home/automations` | Subview | More popup |
 
@@ -97,7 +97,7 @@ and More open as bubble-card popups rather than navigating to separate views.
 **Rooms popup:** Room cards with light toggles. Uses template switches that
 aggregate all lights in an HA area (excluding presence-detection LEDs).
 
-**More popup:** Navigation links to Appearance, All Alerts, Automations,
+**More popup:** Navigation links to Appearance, Conditionals, Automations,
 3D Printer Farm (links to the Cyberdeck dashboard), and core HA UI.
 
 ---
