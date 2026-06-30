@@ -400,8 +400,7 @@ views:
                   if (count > 30) out += `<span style="font-size:10px;color:var(--secondary-text-color);">+${count-30}</span>`;
                   out += '</div>';
                 }
-                out += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">`;
-                out += `<span style="font-size:11px;color:var(--secondary-text-color);">${items.length} items</span>`;
+                out += `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:2px;">`;
                 out += `<ha-icon icon="${chevron}" style="--mdc-icon-size:16px;color:var(--secondary-text-color);"></ha-icon>`;
                 out += '</div></div>';
                 return out;
