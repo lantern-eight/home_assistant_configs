@@ -1,4 +1,10 @@
-"""Sync General Home Mobile dashboard and sensors to Home Assistant via SMB."""
+"""Sync General Home Mobile dashboard and sensors to Home Assistant via SMB.
+
+Also syncs the repo-root packages/ directory — general-purpose HA packages
+(utility meters, house-wide helpers) that are not specific to one dashboard.
+Every *.yaml there is uploaded to HA's packages/ directory, where
+configuration.yaml loads the whole directory via `!include_dir_named`.
+"""
 
 import json
 import logging
@@ -31,6 +37,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / 'config.yaml'
 ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
 DASHBOARD_DIR = REPO_ROOT / 'dashboards' / 'general_home_mobile'
+PACKAGES_DIR = REPO_ROOT / 'packages'
 SCRIPTS_DIR = REPO_ROOT / 'scripts'
 HA_BASE_URL = 'http://homeassistant.local:8123'
 
@@ -92,6 +99,31 @@ def _restore_content(content: str) -> str:
   return content
 
 
+def _upload_file(smb_root: str, local_path: Path, remote_rel: str, restore: bool) -> bool:
+  """Upload one local file to the HA config share, creating remote dirs as needed.
+
+  With restore=True, <entity_N> placeholders are replaced with real values
+  before upload (for yaml pushed to HA). Scripts upload verbatim. Returns
+  True on success, False on failure (error is logged, not raised).
+  """
+  remote_path = rf'{smb_root}\{remote_rel.replace("/", chr(92))}'
+  remote_dir = remote_path.rsplit('\\', 1)[0]
+  _smb_makedirs(remote_dir)
+
+  try:
+    with open(local_path, 'r', encoding='utf-8') as src:
+      content = src.read()
+    if restore:
+      content = _restore_content(content)
+    with smbclient.open_file(remote_path, mode='w') as dst:
+      dst.write(content)
+    LOGGER.info('Synced', extra={'local': local_path.name, 'remote': remote_rel})
+    return True
+  except OSError as e:
+    LOGGER.error('Failed to sync', extra={'file': local_path.name, 'error': str(e)})
+    return False
+
+
 def _sync_files(cfg: dict) -> int:
   smb_server = cfg['smb_server']
   smb_share = cfg['smb_share']
@@ -119,40 +151,22 @@ def _sync_files(cfg: dict) -> int:
     if not local_path.exists():
       LOGGER.warning('Local file missing, skipping', extra={'file': str(local_path)})
       continue
-
-    remote_path = rf'{smb_root}\{remote_rel.replace("/", chr(92))}'
-    remote_dir = remote_path.rsplit('\\', 1)[0]
-    _smb_makedirs(remote_dir)
-
-    try:
-      with open(local_path, 'r', encoding='utf-8') as src:
-        content = _restore_content(src.read())
-      with smbclient.open_file(remote_path, mode='w') as dst:
-        dst.write(content)
+    if _upload_file(smb_root, local_path, remote_rel, restore=True):
       uploaded += 1
-      LOGGER.info('Synced', extra={'local': local_name, 'remote': remote_rel})
-    except OSError as e:
-      LOGGER.error('Failed to sync', extra={'file': local_name, 'error': str(e)})
+
+  # General HA packages (repo-root packages/) — every yaml file is a package,
+  # loaded by configuration.yaml via `packages: !include_dir_named packages`.
+  for local_path in sorted(PACKAGES_DIR.glob('*.yaml')):
+    if _upload_file(smb_root, local_path, f'packages/{local_path.name}', restore=True):
+      uploaded += 1
 
   for local_name, remote_rel in SCRIPT_MAP.items():
     local_path = SCRIPTS_DIR / local_name
     if not local_path.exists():
       LOGGER.warning('Local script missing, skipping', extra={'file': str(local_path)})
       continue
-
-    remote_path = rf'{smb_root}\{remote_rel.replace("/", chr(92))}'
-    remote_dir = remote_path.rsplit('\\', 1)[0]
-    _smb_makedirs(remote_dir)
-
-    try:
-      with open(local_path, 'r', encoding='utf-8') as src:
-        content = src.read()
-      with smbclient.open_file(remote_path, mode='w') as dst:
-        dst.write(content)
+    if _upload_file(smb_root, local_path, remote_rel, restore=False):
       uploaded += 1
-      LOGGER.info('Synced script', extra={'local': local_name, 'remote': remote_rel})
-    except OSError as e:
-      LOGGER.error('Failed to sync script', extra={'file': local_name, 'error': str(e)})
 
   smbclient.reset_connection_cache()
   return uploaded

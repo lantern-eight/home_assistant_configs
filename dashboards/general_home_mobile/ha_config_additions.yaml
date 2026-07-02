@@ -1,7 +1,7 @@
 # =============================================================================
 # HA configuration.yaml additions for the General Home Mobile dashboard
 # =============================================================================
-# Merge these blocks into your HA configuration.yaml, then restart.
+# Copy these blocks into your HA configuration.yaml, then restart.
 # Most config is in the general_home_mobile.yaml package — only items that
 # can't live in a package remain here.
 # =============================================================================
@@ -27,11 +27,9 @@
 # --- 3. Package include ---
 # Helpers, REST sensor, command_line sensor, shell_command, and
 # automations are all defined in general_home_mobile.yaml and synced
-# to packages/general_home_mobile.yaml.
-#
-# homeassistant:
-#   packages:
-#     general_home_mobile: !include packages/general_home_mobile.yaml
+# to packages/general_home_mobile.yaml. The HA configuration.yaml should
+# have a line to include packages/*.yaml:
+# packages: !include_dir_named packages
 
 # --- 4. Secrets ---
 # The package REST sensor uses !secret openmeteo_uv_url. Add to secrets.yaml:

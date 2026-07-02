@@ -189,6 +189,7 @@
         {% if power > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
         {% set ns.count = ns.count + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
         {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
+        {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
         {{ ns.count }}
       attributes:
         items: >
@@ -220,6 +221,11 @@
           {% set lightning_dist = states('sensor.<entity_10>_lightning_average_distance') | float(0) | round(1) %}
           {% set lightning_label = lightning_count | string ~ ' Lightning Strike' ~ ('s' if lightning_count != 1 else '') ~ ' (~' ~ lightning_dist | string ~ ' mi)' %}
           {% set ns.items = ns.items + [{'id':'lightning','active':lightning_count > 0,'label':lightning_label,'icon':'mdi:weather-lightning','severity':'amber' if lightning_count > 0 else 'green','promoted':false,'sort_key':'1_lightning'}] %}
+          {% set in_lawn_rain_season = now().month >= 3 and now().month <= 9 %}
+          {% set lawn_rain_this_week = states('sensor.lawn_rain_weekly') | float(0) | round(2) %}
+          {% set lawn_rain_last_week = state_attr('sensor.lawn_rain_weekly', 'last_period') | float(0) | round(2) %}
+          {% set lawn_rain_label = 'Lawn Rain: ' ~ lawn_rain_this_week ~ 'in | Last Week: ' ~ lawn_rain_last_week ~ 'in' %}
+          {% set ns.items = ns.items + [{'id':'lawn_rain','active':in_lawn_rain_season,'label':lawn_rain_label,'icon':'mdi:water','severity':'blue' if in_lawn_rain_season else 'green','promoted':false,'sort_key':'2_lawn_rain'}] %}
           {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
             {% set prog = states('sensor.balrog_cleaning_progress') | float(0) | round(0) | int %}
             {% set ns.items = ns.items + [{'id':'vacuum_balrog','active':true,'label':'Balrog','icon':'mdi:robot-vacuum','severity':'amber','promoted':false,'sort_key':'1_vacuum_balrog','progress':prog}] %}
@@ -280,6 +286,7 @@
           {% if power > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
           {% set ns.count = ns.count + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
           {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
           {{ ns.count }}
         red_count: >
           {% set ns = namespace(count=0) %}
@@ -313,6 +320,7 @@
               {% if sev not in ['Extreme', 'Severe'] %}{% set ns.count = ns.count + 1 %}{% endif %}
             {% endfor %}
           {% endif %}
+          {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
           {{ ns.count }}
         green_count: >
           {% set ns = namespace(count=0) %}

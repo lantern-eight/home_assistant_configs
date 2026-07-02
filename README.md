@@ -7,6 +7,7 @@ Home Assistant configuration backup, dashboard management, and tooling. Runs on 
 
 - [Setup](#setup)
 - [Backup](#backup)
+- [General HA Packages](#general-ha-packages)
 - [Dashboards](#dashboards)
   - [General Home Mobile](#general-home-mobile)
   - [Cyberdeck (3D Printer Farm)](#cyberdeck-3d-printer-farm)
@@ -88,6 +89,32 @@ The backup lands in `home_assistant_backup/`. A parallel
 `home_assistant_backup_comments/` directory preserves comment-annotated versions
 of automations (HA strips comments on save).
 
+## General HA Packages
+
+`packages/` at the repo root holds general-purpose HA config — house-wide
+sensors, utility meters, helpers — that is not specific to one dashboard.
+Dashboards consume these entities. General config goes in `packages/general.yaml`,
+one commented section per concern. A large coherent domain can graduate to its
+own file. Every yaml file in `packages/` is uploaded to HA's `packages/` directory
+by `scripts/general_home_dashboard_sync.py`, and HA loads the whole directory via
+`packages: !include_dir_named packages` — new files need no `configuration.yaml` edit,
+they'll be auto-picked up. Package changes require an HA restart.
+
+### Source of Truth vs. HA Backup Folder
+
+After a backup pull, deployed packages appear in `home_assistant_backup/packages/`,
+where ever packages are in the repo. So the general mobile dashboard's package and the
+repo level packages show up in there. They are not the files to edit, make it elsewhere
+and it will be synced to the backup folder.
+
+We put packages on the same level as `home_assistant_backup_comments` rather than in it
+because the comments directory exists to solve one specific problem: HA's UI editor
+rewrites `automations.yaml` on save, which strips comments, so an annotated version
+lives outside the backup folder to preserve comments. Package files don't have that
+problem, HA only reads them, never rewrites them, so comments persist. The flow is
+also the opposite direction: packages are authored in the repo and pushed, while the
+comments directory holds copies of files pulled from HA.
+
 ## Dashboards
 
 ### General Home Mobile
@@ -167,6 +194,9 @@ uv run pytest tests/ -v
 ├── dashboards/                      # Dashboards live here
 │   ├── cyberdeck/                   # 3D printer farm dashboard
 │   └── general_home_mobile/         # Mobile-first general home dashboard
+│
+├── packages/                        # General HA packages (house-wide sensors,
+│   └── general.yaml                 #   utility meters) — not dashboard-specific
 │
 ├── home_assistant_backup/           # Backup of HA config (redacted)
 │   ├── configuration.yaml

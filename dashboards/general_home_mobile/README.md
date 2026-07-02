@@ -810,6 +810,9 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 | `ha_config_additions.yaml` | Remaining HA config that can't go in a package |
 | `README.md` | This file |
 
+General-purpose sensors the dashboard consumes live in repo-root `packages/`, synced to
+HA's `packages/` directory by the same sync script.
+
 ### Scripts (in repo `scripts/` directory)
 
 | Script | Purpose |
@@ -824,6 +827,7 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 |------|---------|
 | `configuration.yaml` | Must include `frontend.extra_module_url` for card_mod and popup history fix |
 | `packages/general_home_mobile.yaml` | Deployed package (helpers, sensors, shell_command, automations) |
+| `packages/general.yaml` | Deployed general package (house-wide config, from repo-root `packages/`) |
 | `www/popup_history_fix.js` | Deployed copy of popup history fix module |
 | `template_sensors/theme_sensors.yaml` | Deployed copy of theme sensors |
 | `template_sensors/general_home_sensors.yaml` | Deployed copy of general sensors |

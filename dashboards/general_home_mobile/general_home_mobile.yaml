@@ -4,12 +4,11 @@
 # Synced to HA as: packages/general_home_mobile.yaml
 # Requires HA restart after changes (packages can't hot-reload).
 #
-# Include in configuration.yaml:
-#   homeassistant:
-#     packages:
-#       general_home_mobile: !include packages/general_home_mobile.yaml
+# Loaded automatically — configuration.yaml loads the whole packages directory.
+# This file is the `general_home_mobile` package. Dashboard-specific config
+# only. General house-wide config goes in repo-root packages/general.yaml.
 #
-# No `initial:` on any helper — values persist across restarts.
+# `initial:` not included on values that persist across restarts.
 #
 # Categories and labels are defined in registry_metadata.yaml and
 # applied by the sync script via WebSocket (-c flag).

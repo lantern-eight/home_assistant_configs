@@ -64,6 +64,10 @@ name-derived entity ID. Don't assume the unique_id matches.
 | `ha_config_additions.yaml` | Remaining HA config that can't go in a package (dashboard registration, secrets, frontend module) |
 | `README.md` | Full public-facing documentation |
 
+General-purpose sensors the dashboard merely consumes, do NOT belong in this
+directory — they live in repo-root `packages/` and are synced to HA's
+`packages/` directory by the same sync script. See the root `agents.md`.
+
 ## YAML Anchor System
 
 Six anchors defined at the top of `dashboard.yaml` control card theming:

@@ -1,0 +1,64 @@
+# =============================================================================
+# General — House-Wide HA Package
+# =============================================================================
+# General-purpose HA config that is not specific to one dashboard: utility
+# meters, house-wide sensors, helpers. A large coherent domain can graduate to
+# its own file in packages/, the configuration.yaml is set so it loads every
+# yaml file there automatically.
+#
+# Deployed to HA as: packages/general.yaml
+# Loaded by configuration.yaml via `packages: !include_dir_named packages`,
+# keyed by filename — this file is the `general` package.
+# Requires an HA restart after changes (packages can't hot-reload).
+#
+# =============================================================================
+
+# =============================================================================
+# Lawn Rain Tracking — Weekly Utility Meter
+# =============================================================================
+# Tracks cumulative rainfall from the yard's weather station on a weekly
+# cycle, resetting every Monday at midnight.
+#
+# Source sensor: sensor.<entity_10>_precipitation
+#   - Has state_class: "total" (a cumulative sensor with periodic resets)
+#   - Reports in inches
+#   - The weather station's precipitation sensor accumulates rain during each rain
+#     event and issues a "last_reset" timestamp when the accumulation
+#     period ends. This is normal behavior for "total" class sensors —
+#     the sensor value drops back to 0 after each reset and begins
+#     climbing again with new precipitation.
+#
+# How HA utility meters work with "total" sensors that reset:
+#   HA's utility meter system is designed to handle exactly this pattern.
+#   When the source sensor resets (its value drops and last_reset updates),
+#   HA does NOT zero out the utility meter. Instead, it:
+#     1. Detects the reset via the last_reset timestamp change
+#     2. Adds the final pre-reset value to the running meter total
+#     3. Starts tracking from the new post-reset baseline (usually 0)
+#   This means each rain event's full accumulation is captured even though
+#   the source sensor resets between events. The utility meter's weekly
+#   total is the sum of ALL rain events within the Monday–Sunday cycle.
+#
+# Why this matters:
+#   If the weather station reports 0.3 in of rain, resets, then reports 0.2 in more,
+#   the utility meter correctly shows 0.5in — not 0.2in. Without this
+#   understanding you might expect the meter to lose data on resets. It
+#   does not. HA's long-term statistics system tracks every increment.
+#
+# Weekly cycle behavior:
+#   - cycle: weekly resets on Monday at midnight (ISO 8601 week start)
+#   - No offset is needed — Monday is the default for weekly cycle
+#   - When the weekly reset occurs, the completed week's total moves to
+#     the "last_period" attribute and the meter state resets to 0
+#   - last_period persists all week until overwritten by the next Monday
+#     reset, giving a stable "last week" reference value
+#
+# Created entity: sensor.lawn_rain_weekly
+#   - state: cumulative rain in inches since Monday 00:00
+#   - last_period attribute: previous full week's total rain in inches
+
+utility_meter:
+  lawn_rain_weekly:
+    source: sensor.<entity_10>_precipitation
+    name: "Lawn Rain Weekly"
+    cycle: weekly

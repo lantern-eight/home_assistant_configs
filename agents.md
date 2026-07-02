@@ -22,6 +22,25 @@
   fires when the web server starts, before integrations finish loading.
   You'll be notified when the background command completes.
 
+## General HA packages (`packages/`)
+
+`packages/` at the repo root holds general-purpose HA config — house-wide
+sensors, utility meters, helpers — that is not specific to one dashboard.
+When adding a sensor that isn't inherently dashboard-specific, define it here, not in a
+dashboard's package file.
+
+- General config goes in `packages/general.yaml`, one commented section
+  per concern. A large coherent domain can graduate to its own file —
+  `!include_dir_named` picks up any new yaml file automatically.
+- Every `*.yaml` file in `packages/` is synced to HA's `packages/`
+  directory by `scripts/general_home_dashboard_sync.py`, which restores
+  `<entity_N>` placeholders from `entity_map.yaml` on push.
+- HA's `configuration.yaml` loads the whole directory via
+  `packages: !include_dir_named packages` — each file becomes a package
+  keyed by its filename. New files need no configuration.yaml edit.
+- Package changes require an HA restart (`sync.py -r`); they can't
+  hot-reload.
+
 ## Home Assistant config backup and automations
 
 Relevant when working under `home_assistant_backup/**`, `home_assistant_backup_comments/**`, or `dashboards/**`.
