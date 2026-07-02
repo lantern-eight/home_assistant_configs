@@ -62,3 +62,41 @@ utility_meter:
     source: sensor.<entity_10>_precipitation
     name: "Lawn Rain Weekly"
     cycle: weekly
+
+# =============================================================================
+# UV Index — REST Sensor + Daily Refresh
+# =============================================================================
+# Fetches the day's hourly UV forecast from Open-Meteo once per day
+# (scan_interval: 86 400 s). The sensor's state is the peak UV index for
+# the day; the full hourly breakdown is in the time / uv_index attributes.
+#
+# The refresh automation triggers at 06:55 so the forecast is current
+# before any morning automations that reference UV.
+#
+# Created entity: sensor.openmeteo_hourly_uv_forecast
+
+rest:
+  - resource: !secret openmeteo_uv_url
+    scan_interval: 86400
+    sensor:
+      - name: "OpenMeteo Hourly UV Forecast"
+        unique_id: openmeteo_hourly_uv_forecast
+        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
+        unit_of_measurement: "UV index"
+        icon: mdi:sun-wireless
+        json_attributes_path: "$.hourly"
+        json_attributes:
+          - time
+          - uv_index
+
+automation:
+  - id: refresh_uv_forecast
+    alias: "Refresh UV Forecast"
+    trigger:
+      - platform: time
+        at: "06:55:00"
+    action:
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.openmeteo_hourly_uv_forecast
+    mode: single
