@@ -110,6 +110,11 @@ IGNORE_PATTERNS = [
   'secrets.yaml',
   '*.august.conf',
   'custom_components',
+  'dashboards',
+  'packages',
+  'template_sensors',
+  'themes',
+  'www',
 ]
 
 

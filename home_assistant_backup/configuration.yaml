@@ -70,13 +70,6 @@ thermal_comfort:
         humidity_sensor: sensor.<entity_10>_humidity
         unique_id: F50...433
 
-# Spoolman
-rest_command:
-  spoolman_find_spools_by_name:
-    url: "http://<entity_12>/api/v1/spool?filament.name={{ filament_name | urlencode }}&allow_archived=false"
-    method: GET
-    content_type: "application/json"
-
 # HA packages — every yaml file in packages/ loads as its own package
 homeassistant:
   packages: !include_dir_named packages
