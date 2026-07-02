@@ -9,6 +9,7 @@
           'sensor.<entity_23>_current_status',
           'sensor.<entity_22>_current_status'
         ] %}
+
         {{ printers | map('states')
            | reject('in', ['unknown','unavailable'])
            | list | count }}
@@ -18,6 +19,7 @@
       unit_of_measurement: "g"
       state: >
         {% set slot_name = states('sensor.<entity_22>_a1_name') %}
+
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -28,6 +30,7 @@
             | rejectattr('attributes.archived', 'eq', true)
             | sort(attribute='attributes.remaining_weight', reverse=true)
             | list %}
+
           {{ match[0].attributes.remaining_weight | float(0) | round(1)
              if match | length > 0 else 'unknown' }}
         {% endif %}
@@ -40,6 +43,7 @@
       unit_of_measurement: "g"
       state: >
         {% set slot_name = states('sensor.<entity_22>_a2_name') %}
+
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -50,6 +54,7 @@
             | rejectattr('attributes.archived', 'eq', true)
             | sort(attribute='attributes.remaining_weight', reverse=true)
             | list %}
+
           {{ match[0].attributes.remaining_weight | float(0) | round(1)
              if match | length > 0 else 'unknown' }}
         {% endif %}
@@ -62,6 +67,7 @@
       unit_of_measurement: "g"
       state: >
         {% set slot_name = states('sensor.<entity_22>_a3_name') %}
+
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -72,6 +78,7 @@
             | rejectattr('attributes.archived', 'eq', true)
             | sort(attribute='attributes.remaining_weight', reverse=true)
             | list %}
+
           {{ match[0].attributes.remaining_weight | float(0) | round(1)
              if match | length > 0 else 'unknown' }}
         {% endif %}
@@ -84,6 +91,7 @@
       unit_of_measurement: "g"
       state: >
         {% set slot_name = states('sensor.<entity_22>_a4_name') %}
+
         {% if slot_name in ['unknown','unavailable',''] %}
           unknown
         {% else %}
@@ -94,6 +102,7 @@
             | rejectattr('attributes.archived', 'eq', true)
             | sort(attribute='attributes.remaining_weight', reverse=true)
             | list %}
+
           {{ match[0].attributes.remaining_weight | float(0) | round(1)
              if match | length > 0 else 'unknown' }}
         {% endif %}
@@ -105,11 +114,13 @@
       unique_id: <entity_20>_loaded_filament_name
       state: >
         {% set raw = states('input_text.<entity_23>_last_file') %}
+
         {% if raw in ['unknown','unavailable',''] %}
           Unknown
         {% else %}
           {% set base = raw | replace('.gcode','') %}
           {% set parts = base.split('_') %}
+
           {% if parts | length >= 2 %}
             {{ parts[1] | replace('-', ' ') | title }}
           {% else %}
@@ -122,6 +133,7 @@
       unit_of_measurement: "g"
       state: >
         {% set fil_name = states('sensor.<entity_20>_loaded_filament_name') %}
+
         {% if fil_name in ['unknown','unavailable','Unknown',''] %}
           unknown
         {% else %}
@@ -132,6 +144,7 @@
             | rejectattr('attributes.archived', 'eq', true)
             | sort(attribute='attributes.remaining_weight', reverse=true)
             | list %}
+
           {{ match[0].attributes.remaining_weight | float(0) | round(1)
              if match | length > 0 else 'unknown' }}
         {% endif %}

@@ -14,146 +14,334 @@
       unique_id: theme_dark_primary
       state: >
         {% set palettes = {
-          'Indigo': {'primary':'#6a74d3','accent':'#6a74d3','state_on':'rgb(118, 214, 152)','state_off':'rgb(234, 114, 135)','success':'rgb(118, 214, 152)','warning':'rgb(255, 219, 117)','error':'rgb(234, 114, 135)','info':'#6a74d3','glow1':'rgba(106, 116, 211, 0.40)','glow2':'rgba(130, 100, 220, 0.35)','glow3':'rgba(160, 140, 230, 0.25)','surface_light':'#f4f4f8','surface_dark':'#121218'},
-          'Ocean': {'primary':'#0077b6','accent':'#00b4d8','state_on':'#48cae4','state_off':'#e07070','success':'#52b788','warning':'#f4d35e','error':'#e07070','info':'#0096c7','glow1':'rgba(0, 180, 216, 0.38)','glow2':'rgba(0, 119, 182, 0.32)','glow3':'rgba(144, 224, 239, 0.25)','surface_light':'#f0f6fa','surface_dark':'#0a1218'},
-          'Sunset': {'primary':'#e07040','accent':'#d4a03c','state_on':'#f4a261','state_off':'#8a8a9a','success':'#76c893','warning':'#f4d35e','error':'#e76f51','info':'#e09050','glow1':'rgba(224, 112, 64, 0.38)','glow2':'rgba(212, 160, 60, 0.32)','glow3':'rgba(244, 162, 97, 0.25)','surface_light':'#faf6f2','surface_dark':'#141018'},
-          'Forest': {'primary':'#2d6a4f','accent':'#74a67a','state_on':'#52b788','state_off':'#a08080','success':'#40916c','warning':'#d4a03c','error':'#c0706a','info':'#2d6a4f','glow1':'rgba(45, 106, 79, 0.38)','glow2':'rgba(116, 166, 122, 0.32)','glow3':'rgba(82, 183, 136, 0.25)','surface_light':'#f2f6f3','surface_dark':'#0e1410'},
-          'Rose': {'primary':'#c9607a','accent':'#a86090','state_on':'#d4849a','state_off':'#8a8a9a','success':'#76c893','warning':'#f0c070','error':'#d45070','info':'#c080a0','glow1':'rgba(201, 96, 122, 0.38)','glow2':'rgba(168, 96, 144, 0.32)','glow3':'rgba(212, 132, 154, 0.25)','surface_light':'#faf4f6','surface_dark':'#140e12'},
-          'Mono': {'primary':'#7a7a8a','accent':'#9a9aaa','state_on':'#e0e0e0','state_off':'#5a5a6a','success':'#a0a0a0','warning':'#c0c0c0','error':'#909090','info':'#8a8a9a','glow1':'rgba(160, 160, 180, 0.30)','glow2':'rgba(140, 140, 160, 0.25)','glow3':'rgba(180, 180, 200, 0.20)','surface_light':'#f2f2f4','surface_dark':'#101014'},
-          'Cyberdeck': {'primary':'#00e5ff','accent':'#e91e8c','state_on':'#00ff88','state_off':'#3a3a4a','success':'#00ff88','warning':'#ffd700','error':'#ff003c','info':'#00e5ff','glow1':'rgba(255, 46, 200, 0.42)','glow2':'rgba(0, 224, 255, 0.34)','glow3':'rgba(182, 255, 60, 0.28)','surface_light':'#f0f4f8','surface_dark':'#070611'},
-          'Mint': {'primary':'#7ec8a0','accent':'#a8a0d6','state_on':'#90ddb0','state_off':'#b0a0a0','success':'#7ec8a0','warning':'#e0d090','error':'#d09090','info':'#a0c0d0','glow1':'rgba(126, 200, 160, 0.35)','glow2':'rgba(168, 160, 214, 0.30)','glow3':'rgba(160, 210, 190, 0.25)','surface_light':'#f4faf6','surface_dark':'#0e1210'}
+          'Indigo': {
+            'primary': '#6a74d3',
+            'accent': '#6a74d3',
+            'state_on': 'rgb(118, 214, 152)',
+            'state_off': 'rgb(234, 114, 135)',
+            'success': 'rgb(118, 214, 152)',
+            'warning': 'rgb(255, 219, 117)',
+            'error': 'rgb(234, 114, 135)',
+            'info': '#6a74d3',
+            'glow1': 'rgba(106, 116, 211, 0.40)',
+            'glow2': 'rgba(130, 100, 220, 0.35)',
+            'glow3': 'rgba(160, 140, 230, 0.25)',
+            'surface_light': '#f4f4f8',
+            'surface_dark': '#121218'
+          },
+          'Ocean': {
+            'primary': '#0077b6',
+            'accent': '#00b4d8',
+            'state_on': '#48cae4',
+            'state_off': '#e07070',
+            'success': '#52b788',
+            'warning': '#f4d35e',
+            'error': '#e07070',
+            'info': '#0096c7',
+            'glow1': 'rgba(0, 180, 216, 0.38)',
+            'glow2': 'rgba(0, 119, 182, 0.32)',
+            'glow3': 'rgba(144, 224, 239, 0.25)',
+            'surface_light': '#f0f6fa',
+            'surface_dark': '#0a1218'
+          },
+          'Sunset': {
+            'primary': '#e07040',
+            'accent': '#d4a03c',
+            'state_on': '#f4a261',
+            'state_off': '#8a8a9a',
+            'success': '#76c893',
+            'warning': '#f4d35e',
+            'error': '#e76f51',
+            'info': '#e09050',
+            'glow1': 'rgba(224, 112, 64, 0.38)',
+            'glow2': 'rgba(212, 160, 60, 0.32)',
+            'glow3': 'rgba(244, 162, 97, 0.25)',
+            'surface_light': '#faf6f2',
+            'surface_dark': '#141018'
+          },
+          'Forest': {
+            'primary': '#2d6a4f',
+            'accent': '#74a67a',
+            'state_on': '#52b788',
+            'state_off': '#a08080',
+            'success': '#40916c',
+            'warning': '#d4a03c',
+            'error': '#c0706a',
+            'info': '#2d6a4f',
+            'glow1': 'rgba(45, 106, 79, 0.38)',
+            'glow2': 'rgba(116, 166, 122, 0.32)',
+            'glow3': 'rgba(82, 183, 136, 0.25)',
+            'surface_light': '#f2f6f3',
+            'surface_dark': '#0e1410'
+          },
+          'Rose': {
+            'primary': '#c9607a',
+            'accent': '#a86090',
+            'state_on': '#d4849a',
+            'state_off': '#8a8a9a',
+            'success': '#76c893',
+            'warning': '#f0c070',
+            'error': '#d45070',
+            'info': '#c080a0',
+            'glow1': 'rgba(201, 96, 122, 0.38)',
+            'glow2': 'rgba(168, 96, 144, 0.32)',
+            'glow3': 'rgba(212, 132, 154, 0.25)',
+            'surface_light': '#faf4f6',
+            'surface_dark': '#140e12'
+          },
+          'Mono': {
+            'primary': '#7a7a8a',
+            'accent': '#9a9aaa',
+            'state_on': '#e0e0e0',
+            'state_off': '#5a5a6a',
+            'success': '#a0a0a0',
+            'warning': '#c0c0c0',
+            'error': '#909090',
+            'info': '#8a8a9a',
+            'glow1': 'rgba(160, 160, 180, 0.30)',
+            'glow2': 'rgba(140, 140, 160, 0.25)',
+            'glow3': 'rgba(180, 180, 200, 0.20)',
+            'surface_light': '#f2f2f4',
+            'surface_dark': '#101014'
+          },
+          'Cyberdeck': {
+            'primary': '#00e5ff',
+            'accent': '#e91e8c',
+            'state_on': '#00ff88',
+            'state_off': '#3a3a4a',
+            'success': '#00ff88',
+            'warning': '#ffd700',
+            'error': '#ff003c',
+            'info': '#00e5ff',
+            'glow1': 'rgba(255, 46, 200, 0.42)',
+            'glow2': 'rgba(0, 224, 255, 0.34)',
+            'glow3': 'rgba(182, 255, 60, 0.28)',
+            'surface_light': '#f0f4f8',
+            'surface_dark': '#070611'
+          },
+          'Mint': {
+            'primary': '#7ec8a0',
+            'accent': '#a8a0d6',
+            'state_on': '#90ddb0',
+            'state_off': '#b0a0a0',
+            'success': '#7ec8a0',
+            'warning': '#e0d090',
+            'error': '#d09090',
+            'info': '#a0c0d0',
+            'glow1': 'rgba(126, 200, 160, 0.35)',
+            'glow2': 'rgba(168, 160, 214, 0.30)',
+            'glow3': 'rgba(160, 210, 190, 0.25)',
+            'surface_light': '#f4faf6',
+            'surface_dark': '#0e1210'
+          }
         } %}
+
         {{ palettes.get(states('input_select.theme_palette_<entity_2>'), palettes['Indigo']).primary }}
 
     - name: "Theme Dark Accent"
       unique_id: theme_dark_accent
       state: >
         {% set palettes = {
-          'Indigo': {'accent':'#6a74d3'}, 'Ocean': {'accent':'#00b4d8'}, 'Sunset': {'accent':'#d4a03c'},
-          'Forest': {'accent':'#74a67a'}, 'Rose': {'accent':'#a86090'}, 'Mono': {'accent':'#9a9aaa'},
-          'Cyberdeck': {'accent':'#e91e8c'}, 'Mint': {'accent':'#a8a0d6'}
+          'Indigo': {'accent': '#6a74d3'},
+          'Ocean': {'accent': '#00b4d8'},
+          'Sunset': {'accent': '#d4a03c'},
+          'Forest': {'accent': '#74a67a'},
+          'Rose': {'accent': '#a86090'},
+          'Mono': {'accent': '#9a9aaa'},
+          'Cyberdeck': {'accent': '#e91e8c'},
+          'Mint': {'accent': '#a8a0d6'}
         } %}
+
         {{ palettes.get(states('input_select.theme_palette_<entity_2>'), palettes['Indigo']).accent }}
 
     - name: "Theme Dark State On"
       unique_id: theme_dark_state_on
       state: >
         {% set v = {
-          'Indigo': 'rgb(118, 214, 152)', 'Ocean': '#48cae4', 'Sunset': '#f4a261', 'Forest': '#52b788',
-          'Rose': '#d4849a', 'Mono': '#e0e0e0', 'Cyberdeck': '#00ff88', 'Mint': '#90ddb0'
+          'Indigo': 'rgb(118, 214, 152)',
+          'Ocean': '#48cae4',
+          'Sunset': '#f4a261',
+          'Forest': '#52b788',
+          'Rose': '#d4849a',
+          'Mono': '#e0e0e0',
+          'Cyberdeck': '#00ff88',
+          'Mint': '#90ddb0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark State Off"
       unique_id: theme_dark_state_off
       state: >
         {% set v = {
-          'Indigo': 'rgb(234, 114, 135)', 'Ocean': '#e07070', 'Sunset': '#8a8a9a', 'Forest': '#a08080',
-          'Rose': '#8a8a9a', 'Mono': '#5a5a6a', 'Cyberdeck': '#3a3a4a', 'Mint': '#b0a0a0'
+          'Indigo': 'rgb(234, 114, 135)',
+          'Ocean': '#e07070',
+          'Sunset': '#8a8a9a',
+          'Forest': '#a08080',
+          'Rose': '#8a8a9a',
+          'Mono': '#5a5a6a',
+          'Cyberdeck': '#3a3a4a',
+          'Mint': '#b0a0a0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Success"
       unique_id: theme_dark_success
       state: >
         {% set v = {
-          'Indigo': 'rgb(118, 214, 152)', 'Ocean': '#52b788', 'Sunset': '#76c893', 'Forest': '#40916c',
-          'Rose': '#76c893', 'Mono': '#a0a0a0', 'Cyberdeck': '#00ff88', 'Mint': '#7ec8a0'
+          'Indigo': 'rgb(118, 214, 152)',
+          'Ocean': '#52b788',
+          'Sunset': '#76c893',
+          'Forest': '#40916c',
+          'Rose': '#76c893',
+          'Mono': '#a0a0a0',
+          'Cyberdeck': '#00ff88',
+          'Mint': '#7ec8a0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Warning"
       unique_id: theme_dark_warning
       state: >
         {% set v = {
-          'Indigo': 'rgb(255, 219, 117)', 'Ocean': '#f4d35e', 'Sunset': '#f4d35e', 'Forest': '#d4a03c',
-          'Rose': '#f0c070', 'Mono': '#c0c0c0', 'Cyberdeck': '#ffd700', 'Mint': '#e0d090'
+          'Indigo': 'rgb(255, 219, 117)',
+          'Ocean': '#f4d35e',
+          'Sunset': '#f4d35e',
+          'Forest': '#d4a03c',
+          'Rose': '#f0c070',
+          'Mono': '#c0c0c0',
+          'Cyberdeck': '#ffd700',
+          'Mint': '#e0d090'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Error"
       unique_id: theme_dark_error
       state: >
         {% set v = {
-          'Indigo': 'rgb(234, 114, 135)', 'Ocean': '#e07070', 'Sunset': '#e76f51', 'Forest': '#c0706a',
-          'Rose': '#d45070', 'Mono': '#909090', 'Cyberdeck': '#ff003c', 'Mint': '#d09090'
+          'Indigo': 'rgb(234, 114, 135)',
+          'Ocean': '#e07070',
+          'Sunset': '#e76f51',
+          'Forest': '#c0706a',
+          'Rose': '#d45070',
+          'Mono': '#909090',
+          'Cyberdeck': '#ff003c',
+          'Mint': '#d09090'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Info"
       unique_id: theme_dark_info
       state: >
         {% set v = {
-          'Indigo': '#6a74d3', 'Ocean': '#0096c7', 'Sunset': '#e09050', 'Forest': '#2d6a4f',
-          'Rose': '#c080a0', 'Mono': '#8a8a9a', 'Cyberdeck': '#00e5ff', 'Mint': '#a0c0d0'
+          'Indigo': '#6a74d3',
+          'Ocean': '#0096c7',
+          'Sunset': '#e09050',
+          'Forest': '#2d6a4f',
+          'Rose': '#c080a0',
+          'Mono': '#8a8a9a',
+          'Cyberdeck': '#00e5ff',
+          'Mint': '#a0c0d0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Glow 1"
       unique_id: theme_dark_glow_1
       state: >
         {% set v = {
-          'Indigo': 'rgba(122, 132, 240, 0.62)', 'Ocean': 'rgba(0, 190, 230, 0.60)',
-          'Sunset': 'rgba(240, 120, 70, 0.60)', 'Forest': 'rgba(64, 160, 110, 0.58)',
-          'Rose': 'rgba(224, 104, 138, 0.62)', 'Mono': 'rgba(170, 170, 190, 0.46)',
-          'Cyberdeck': 'rgba(255, 46, 200, 0.66)', 'Mint': 'rgba(120, 220, 168, 0.58)'
+          'Indigo': 'rgba(122, 132, 240, 0.62)',
+          'Ocean': 'rgba(0, 190, 230, 0.60)',
+          'Sunset': 'rgba(240, 120, 70, 0.60)',
+          'Forest': 'rgba(64, 160, 110, 0.58)',
+          'Rose': 'rgba(224, 104, 138, 0.62)',
+          'Mono': 'rgba(170, 170, 190, 0.46)',
+          'Cyberdeck': 'rgba(255, 46, 200, 0.66)',
+          'Mint': 'rgba(120, 220, 168, 0.58)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Glow 2"
       unique_id: theme_dark_glow_2
       state: >
         {% set v = {
-          'Indigo': 'rgba(150, 116, 235, 0.54)', 'Ocean': 'rgba(0, 140, 205, 0.52)',
-          'Sunset': 'rgba(228, 172, 70, 0.52)', 'Forest': 'rgba(128, 182, 134, 0.50)',
-          'Rose': 'rgba(190, 110, 162, 0.52)', 'Mono': 'rgba(150, 150, 172, 0.40)',
-          'Cyberdeck': 'rgba(0, 224, 255, 0.56)', 'Mint': 'rgba(182, 172, 228, 0.50)'
+          'Indigo': 'rgba(150, 116, 235, 0.54)',
+          'Ocean': 'rgba(0, 140, 205, 0.52)',
+          'Sunset': 'rgba(228, 172, 70, 0.52)',
+          'Forest': 'rgba(128, 182, 134, 0.50)',
+          'Rose': 'rgba(190, 110, 162, 0.52)',
+          'Mono': 'rgba(150, 150, 172, 0.40)',
+          'Cyberdeck': 'rgba(0, 224, 255, 0.56)',
+          'Mint': 'rgba(182, 172, 228, 0.50)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Glow 3"
       unique_id: theme_dark_glow_3
       state: >
         {% set v = {
-          'Indigo': 'rgba(176, 150, 240, 0.42)', 'Ocean': 'rgba(120, 220, 240, 0.42)',
-          'Sunset': 'rgba(248, 170, 104, 0.42)', 'Forest': 'rgba(96, 200, 150, 0.40)',
-          'Rose': 'rgba(228, 142, 166, 0.42)', 'Mono': 'rgba(190, 190, 210, 0.32)',
-          'Cyberdeck': 'rgba(182, 255, 60, 0.46)', 'Mint': 'rgba(150, 224, 196, 0.40)'
+          'Indigo': 'rgba(176, 150, 240, 0.42)',
+          'Ocean': 'rgba(120, 220, 240, 0.42)',
+          'Sunset': 'rgba(248, 170, 104, 0.42)',
+          'Forest': 'rgba(96, 200, 150, 0.40)',
+          'Rose': 'rgba(228, 142, 166, 0.42)',
+          'Mono': 'rgba(190, 190, 210, 0.32)',
+          'Cyberdeck': 'rgba(182, 255, 60, 0.46)',
+          'Mint': 'rgba(150, 224, 196, 0.40)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_2>'), v['Indigo']) }}
 
     - name: "Theme Dark Lovelace Background"
       unique_id: theme_dark_lovelace_bg
       state: >
         {% set surfaces = {
-          'Indigo': '#121218', 'Ocean': '#0a1218', 'Sunset': '#141018',
-          'Forest': '#0e1410', 'Rose': '#140e12', 'Mono': '#101014',
-          'Cyberdeck': '#070611', 'Mint': '#0e1210'
+          'Indigo': '#121218',
+          'Ocean': '#0a1218',
+          'Sunset': '#141018',
+          'Forest': '#0e1410',
+          'Rose': '#140e12',
+          'Mono': '#101014',
+          'Cyberdeck': '#070611',
+          'Mint': '#0e1210'
         } %}
         {% set glass_bgs = {
-          'Indigo': '#1a1a42', 'Ocean': '#082842', 'Sunset': '#421a0c',
-          'Forest': '#0a3020', 'Rose': '#421230', 'Mono': '#1a1a1e',
-          'Cyberdeck': '#0a0828', 'Mint': '#0a3022'
+          'Indigo': '#1a1a42',
+          'Ocean': '#082842',
+          'Sunset': '#421a0c',
+          'Forest': '#0a3020',
+          'Rose': '#421230',
+          'Mono': '#1a1a1e',
+          'Cyberdeck': '#0a0828',
+          'Mint': '#0a3022'
         } %}
+
         {% set style = states('input_select.theme_style_<entity_2>') %}
         {% set bg = states('input_text.theme_background_<entity_2>') %}
         {% set pal = states('input_select.theme_palette_<entity_2>') %}
+
         {% if bg == 'none' %}
-        transparent
+          transparent
         {% elif bg.startswith('#') %}
-        {{ bg }}
+          {{ bg }}
         {% elif bg not in ['unknown', 'unavailable', 'auto', ''] %}
-        center / cover no-repeat fixed url('/local/themes/backgrounds/{{ bg }}')
+          center / cover no-repeat fixed url('/local/themes/backgrounds/{{ bg }}')
         {% elif style == 'Glass' %}
-        {{ glass_bgs.get(pal, '#1a1a42') }}
+          {{ glass_bgs.get(pal, '#1a1a42') }}
         {% elif style == 'Glow' %}
-        #070611
+          #070611
         {% elif style == 'Neon' %}
-        #07070d
+          #07070d
         {% elif style == 'Dark' %}
-        #0a0a0f
+          #0a0a0f
         {% else %}
-        {{ surfaces.get(pal, '#121218') }}
+          {{ surfaces.get(pal, '#121218') }}
         {% endif %}
 
     - name: "Theme Dark Glow Active"
@@ -161,6 +349,7 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
         {% set bg = states('input_text.theme_background_<entity_2>') %}
+
         {{ 'on' if style == 'Glow' and bg in ['unknown', 'unavailable', 'auto', ''] else 'off' }}
 
     - name: "Theme Dark Card Opacity"
@@ -169,7 +358,14 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
         {% set v = states('input_number.theme_card_opacity_<entity_2>') | float(-1) %}
-        {% set d = {'Clean': 95, 'Glass': 18, 'Dark': 100, 'Glow': 75, 'Neon': 70} %}
+        {% set d = {
+          'Clean': 95,
+          'Glass': 18,
+          'Dark': 100,
+          'Glow': 75,
+          'Neon': 70
+        } %}
+
         {{ d.get(style, 95) if v < 0 else v | int }}
 
     - name: "Theme Dark Card Blur"
@@ -178,7 +374,14 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
         {% set v = states('input_number.theme_card_blur_<entity_2>') | float(-1) %}
-        {% set d = {'Clean': 0, 'Glass': 12, 'Dark': 0, 'Glow': 2, 'Neon': 0} %}
+        {% set d = {
+          'Clean': 0,
+          'Glass': 12,
+          'Dark': 0,
+          'Glow': 2,
+          'Neon': 0
+        } %}
+
         {{ d.get(style, 0) if v < 0 else v | int }}
 
     - name: "Theme Dark Card Background"
@@ -186,30 +389,56 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
         {% set v = states('input_number.theme_card_opacity_<entity_2>') | float(-1) %}
-        {% set d = {'Clean': 95, 'Glass': 18, 'Dark': 100, 'Glow': 75, 'Neon': 70} %}
+        {% set d = {
+          'Clean': 95,
+          'Glass': 18,
+          'Dark': 100,
+          'Glow': 75,
+          'Neon': 70
+        } %}
         {% set a = (d.get(style, 95) if v < 0 else v | int) / 100 %}
-        {% set rgb = {'Glass':'28,29,33', 'Glow':'15,16,24', 'Neon':'15,16,24', 'Dark':'22,22,34'} %}
+        {% set rgb = {
+          'Glass': '28,29,33',
+          'Glow': '15,16,24',
+          'Neon': '15,16,24',
+          'Dark': '22,22,34'
+        } %}
+
         rgba({{ rgb.get(style, '30,30,30') }},{{ a | round(2) }})
 
     - name: "Theme Dark Card Border"
       unique_id: theme_dark_card_border
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
-        {% if style == 'Glass' %}0.5px solid rgba(234,235,238,0.1)
-        {% elif style == 'Glow' %}1px solid color-mix(in srgb, var(--primary-color) 15%, transparent)
-        {% elif style == 'Neon' %}1px solid var(--primary-color)
-        {% elif style == 'Dark' %}1px solid rgba(255,255,255,0.06)
-        {% else %}none{% endif %}
+
+        {% if style == 'Glass' %}
+          0.5px solid rgba(234,235,238,0.1)
+        {% elif style == 'Glow' %}
+          1px solid color-mix(in srgb, var(--primary-color) 15%, transparent)
+        {% elif style == 'Neon' %}
+          1px solid var(--primary-color)
+        {% elif style == 'Dark' %}
+          1px solid rgba(255,255,255,0.06)
+        {% else %}
+          none
+        {% endif %}
 
     - name: "Theme Dark Card Shadow"
       unique_id: theme_dark_card_shadow
       state: >
         {% set style = states('input_select.theme_style_<entity_2>') %}
-        {% if style == 'Glass' %}0 12px 20px rgba(0,0,0,0.28)
-        {% elif style == 'Glow' %}0 4px 12px rgba(0,0,0,0.2)
-        {% elif style == 'Neon' %}0 0 8px color-mix(in srgb, var(--primary-color) 25%, transparent)
-        {% elif style == 'Dark' %}none
-        {% else %}none{% endif %}
+
+        {% if style == 'Glass' %}
+          0 12px 20px rgba(0,0,0,0.28)
+        {% elif style == 'Glow' %}
+          0 4px 12px rgba(0,0,0,0.2)
+        {% elif style == 'Neon' %}
+          0 0 8px color-mix(in srgb, var(--primary-color) 25%, transparent)
+        {% elif style == 'Dark' %}
+          none
+        {% else %}
+          none
+        {% endif %}
 
     - name: "Theme Dark Card Radius"
       unique_id: theme_dark_card_radius
@@ -220,8 +449,10 @@
       unique_id: theme_dark_card_font
       state: >
         {% if is_state('input_select.theme_style_<entity_2>', 'Neon') %}
-        'Share Tech Mono', monospace
-        {% else %}inherit{% endif %}
+          'Share Tech Mono', monospace
+        {% else %}
+          inherit
+        {% endif %}
 
     # -------------------------------------------------------------------------
     # Light user (prefers-color-scheme: light)
@@ -230,141 +461,222 @@
       unique_id: theme_light_primary
       state: >
         {% set palettes = {
-          'Indigo': {'primary':'#6a74d3'}, 'Ocean': {'primary':'#0077b6'}, 'Sunset': {'primary':'#e07040'},
-          'Forest': {'primary':'#2d6a4f'}, 'Rose': {'primary':'#c9607a'}, 'Mono': {'primary':'#7a7a8a'},
-          'Cyberdeck': {'primary':'#00e5ff'}, 'Mint': {'primary':'#7ec8a0'}
+          'Indigo': {'primary': '#6a74d3'},
+          'Ocean': {'primary': '#0077b6'},
+          'Sunset': {'primary': '#e07040'},
+          'Forest': {'primary': '#2d6a4f'},
+          'Rose': {'primary': '#c9607a'},
+          'Mono': {'primary': '#7a7a8a'},
+          'Cyberdeck': {'primary': '#00e5ff'},
+          'Mint': {'primary': '#7ec8a0'}
         } %}
+
         {{ palettes.get(states('input_select.theme_palette_<entity_1>'), palettes['Indigo']).primary }}
 
     - name: "Theme Light Accent"
       unique_id: theme_light_accent
       state: >
         {% set palettes = {
-          'Indigo': {'accent':'#6a74d3'}, 'Ocean': {'accent':'#00b4d8'}, 'Sunset': {'accent':'#d4a03c'},
-          'Forest': {'accent':'#74a67a'}, 'Rose': {'accent':'#a86090'}, 'Mono': {'accent':'#9a9aaa'},
-          'Cyberdeck': {'accent':'#e91e8c'}, 'Mint': {'accent':'#a8a0d6'}
+          'Indigo': {'accent': '#6a74d3'},
+          'Ocean': {'accent': '#00b4d8'},
+          'Sunset': {'accent': '#d4a03c'},
+          'Forest': {'accent': '#74a67a'},
+          'Rose': {'accent': '#a86090'},
+          'Mono': {'accent': '#9a9aaa'},
+          'Cyberdeck': {'accent': '#e91e8c'},
+          'Mint': {'accent': '#a8a0d6'}
         } %}
+
         {{ palettes.get(states('input_select.theme_palette_<entity_1>'), palettes['Indigo']).accent }}
 
     - name: "Theme Light State On"
       unique_id: theme_light_state_on
       state: >
         {% set v = {
-          'Indigo': 'rgb(118, 214, 152)', 'Ocean': '#48cae4', 'Sunset': '#f4a261', 'Forest': '#52b788',
-          'Rose': '#d4849a', 'Mono': '#e0e0e0', 'Cyberdeck': '#00ff88', 'Mint': '#90ddb0'
+          'Indigo': 'rgb(118, 214, 152)',
+          'Ocean': '#48cae4',
+          'Sunset': '#f4a261',
+          'Forest': '#52b788',
+          'Rose': '#d4849a',
+          'Mono': '#e0e0e0',
+          'Cyberdeck': '#00ff88',
+          'Mint': '#90ddb0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light State Off"
       unique_id: theme_light_state_off
       state: >
         {% set v = {
-          'Indigo': 'rgb(234, 114, 135)', 'Ocean': '#e07070', 'Sunset': '#8a8a9a', 'Forest': '#a08080',
-          'Rose': '#8a8a9a', 'Mono': '#5a5a6a', 'Cyberdeck': '#3a3a4a', 'Mint': '#b0a0a0'
+          'Indigo': 'rgb(234, 114, 135)',
+          'Ocean': '#e07070',
+          'Sunset': '#8a8a9a',
+          'Forest': '#a08080',
+          'Rose': '#8a8a9a',
+          'Mono': '#5a5a6a',
+          'Cyberdeck': '#3a3a4a',
+          'Mint': '#b0a0a0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Success"
       unique_id: theme_light_success
       state: >
         {% set v = {
-          'Indigo': 'rgb(118, 214, 152)', 'Ocean': '#52b788', 'Sunset': '#76c893', 'Forest': '#40916c',
-          'Rose': '#76c893', 'Mono': '#a0a0a0', 'Cyberdeck': '#00ff88', 'Mint': '#7ec8a0'
+          'Indigo': 'rgb(118, 214, 152)',
+          'Ocean': '#52b788',
+          'Sunset': '#76c893',
+          'Forest': '#40916c',
+          'Rose': '#76c893',
+          'Mono': '#a0a0a0',
+          'Cyberdeck': '#00ff88',
+          'Mint': '#7ec8a0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Warning"
       unique_id: theme_light_warning
       state: >
         {% set v = {
-          'Indigo': 'rgb(255, 219, 117)', 'Ocean': '#f4d35e', 'Sunset': '#f4d35e', 'Forest': '#d4a03c',
-          'Rose': '#f0c070', 'Mono': '#c0c0c0', 'Cyberdeck': '#ffd700', 'Mint': '#e0d090'
+          'Indigo': 'rgb(255, 219, 117)',
+          'Ocean': '#f4d35e',
+          'Sunset': '#f4d35e',
+          'Forest': '#d4a03c',
+          'Rose': '#f0c070',
+          'Mono': '#c0c0c0',
+          'Cyberdeck': '#ffd700',
+          'Mint': '#e0d090'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Error"
       unique_id: theme_light_error
       state: >
         {% set v = {
-          'Indigo': 'rgb(234, 114, 135)', 'Ocean': '#e07070', 'Sunset': '#e76f51', 'Forest': '#c0706a',
-          'Rose': '#d45070', 'Mono': '#909090', 'Cyberdeck': '#ff003c', 'Mint': '#d09090'
+          'Indigo': 'rgb(234, 114, 135)',
+          'Ocean': '#e07070',
+          'Sunset': '#e76f51',
+          'Forest': '#c0706a',
+          'Rose': '#d45070',
+          'Mono': '#909090',
+          'Cyberdeck': '#ff003c',
+          'Mint': '#d09090'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Info"
       unique_id: theme_light_info
       state: >
         {% set v = {
-          'Indigo': '#6a74d3', 'Ocean': '#0096c7', 'Sunset': '#e09050', 'Forest': '#2d6a4f',
-          'Rose': '#c080a0', 'Mono': '#8a8a9a', 'Cyberdeck': '#00e5ff', 'Mint': '#a0c0d0'
+          'Indigo': '#6a74d3',
+          'Ocean': '#0096c7',
+          'Sunset': '#e09050',
+          'Forest': '#2d6a4f',
+          'Rose': '#c080a0',
+          'Mono': '#8a8a9a',
+          'Cyberdeck': '#00e5ff',
+          'Mint': '#a0c0d0'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Glow 1"
       unique_id: theme_light_glow_1
       state: >
         {% set v = {
-          'Indigo': 'rgba(106, 116, 211, 0.58)', 'Ocean': 'rgba(0, 180, 216, 0.55)',
-          'Sunset': 'rgba(224, 112, 64, 0.55)', 'Forest': 'rgba(45, 106, 79, 0.55)',
-          'Rose': 'rgba(201, 96, 122, 0.55)', 'Mono': 'rgba(160, 160, 180, 0.44)',
-          'Cyberdeck': 'rgba(255, 46, 200, 0.60)', 'Mint': 'rgba(126, 200, 160, 0.50)'
+          'Indigo': 'rgba(106, 116, 211, 0.58)',
+          'Ocean': 'rgba(0, 180, 216, 0.55)',
+          'Sunset': 'rgba(224, 112, 64, 0.55)',
+          'Forest': 'rgba(45, 106, 79, 0.55)',
+          'Rose': 'rgba(201, 96, 122, 0.55)',
+          'Mono': 'rgba(160, 160, 180, 0.44)',
+          'Cyberdeck': 'rgba(255, 46, 200, 0.60)',
+          'Mint': 'rgba(126, 200, 160, 0.50)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Glow 2"
       unique_id: theme_light_glow_2
       state: >
         {% set v = {
-          'Indigo': 'rgba(130, 100, 220, 0.50)', 'Ocean': 'rgba(0, 119, 182, 0.46)',
-          'Sunset': 'rgba(212, 160, 60, 0.46)', 'Forest': 'rgba(116, 166, 122, 0.46)',
-          'Rose': 'rgba(168, 96, 144, 0.46)', 'Mono': 'rgba(140, 140, 160, 0.36)',
-          'Cyberdeck': 'rgba(0, 224, 255, 0.50)', 'Mint': 'rgba(168, 160, 214, 0.44)'
+          'Indigo': 'rgba(130, 100, 220, 0.50)',
+          'Ocean': 'rgba(0, 119, 182, 0.46)',
+          'Sunset': 'rgba(212, 160, 60, 0.46)',
+          'Forest': 'rgba(116, 166, 122, 0.46)',
+          'Rose': 'rgba(168, 96, 144, 0.46)',
+          'Mono': 'rgba(140, 140, 160, 0.36)',
+          'Cyberdeck': 'rgba(0, 224, 255, 0.50)',
+          'Mint': 'rgba(168, 160, 214, 0.44)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Glow 3"
       unique_id: theme_light_glow_3
       state: >
         {% set v = {
-          'Indigo': 'rgba(160, 140, 230, 0.36)', 'Ocean': 'rgba(144, 224, 239, 0.36)',
-          'Sunset': 'rgba(244, 162, 97, 0.36)', 'Forest': 'rgba(82, 183, 136, 0.36)',
-          'Rose': 'rgba(212, 132, 154, 0.36)', 'Mono': 'rgba(180, 180, 200, 0.30)',
-          'Cyberdeck': 'rgba(182, 255, 60, 0.40)', 'Mint': 'rgba(160, 210, 190, 0.36)'
+          'Indigo': 'rgba(160, 140, 230, 0.36)',
+          'Ocean': 'rgba(144, 224, 239, 0.36)',
+          'Sunset': 'rgba(244, 162, 97, 0.36)',
+          'Forest': 'rgba(82, 183, 136, 0.36)',
+          'Rose': 'rgba(212, 132, 154, 0.36)',
+          'Mono': 'rgba(180, 180, 200, 0.30)',
+          'Cyberdeck': 'rgba(182, 255, 60, 0.40)',
+          'Mint': 'rgba(160, 210, 190, 0.36)'
         } %}
+
         {{ v.get(states('input_select.theme_palette_<entity_1>'), v['Indigo']) }}
 
     - name: "Theme Light Lovelace Background"
       unique_id: theme_light_lovelace_bg
       state: >
         {% set surfaces = {
-          'Indigo': '#f4f4f8', 'Ocean': '#f0f6fa', 'Sunset': '#faf6f2',
-          'Forest': '#f2f6f3', 'Rose': '#faf4f6', 'Mono': '#f2f2f4',
-          'Cyberdeck': '#f0f4f8', 'Mint': '#f4faf6'
+          'Indigo': '#f4f4f8',
+          'Ocean': '#f0f6fa',
+          'Sunset': '#faf6f2',
+          'Forest': '#f2f6f3',
+          'Rose': '#faf4f6',
+          'Mono': '#f2f2f4',
+          'Cyberdeck': '#f0f4f8',
+          'Mint': '#f4faf6'
         } %}
         {% set glass_bgs = {
-          'Indigo': '#dcdcf4', 'Ocean': '#c4e4f4', 'Sunset': '#f4dcc8',
-          'Forest': '#c8e8d4', 'Rose': '#f4d0dc', 'Mono': '#dcdce0',
-          'Cyberdeck': '#c8e8f4', 'Mint': '#c8f0dc'
+          'Indigo': '#dcdcf4',
+          'Ocean': '#c4e4f4',
+          'Sunset': '#f4dcc8',
+          'Forest': '#c8e8d4',
+          'Rose': '#f4d0dc',
+          'Mono': '#dcdce0',
+          'Cyberdeck': '#c8e8f4',
+          'Mint': '#c8f0dc'
         } %}
+
         {% set style = states('input_select.theme_style_<entity_1>') %}
         {% set bg = states('input_text.theme_background_<entity_1>') %}
         {% set pal = states('input_select.theme_palette_<entity_1>') %}
+
         {% if bg == 'none' %}
-        transparent
+          transparent
         {% elif bg.startswith('#') %}
-        {{ bg }}
+          {{ bg }}
         {% elif bg not in ['unknown', 'unavailable', 'auto', ''] %}
-        center / cover no-repeat fixed url('/local/themes/backgrounds/{{ bg }}')
+          center / cover no-repeat fixed url('/local/themes/backgrounds/{{ bg }}')
         {% elif style == 'Glass' %}
-        {{ glass_bgs.get(pal, '#dcdcf4') }}
+          {{ glass_bgs.get(pal, '#dcdcf4') }}
         {% elif style == 'Neon' %}
-        #07070d
+          #07070d
         {% elif style == 'Glow' %}
-        #f5f5f0
+          #f5f5f0
         {% elif style == 'Dark' %}
-        #f0f0f2
+          #f0f0f2
         {% else %}
-        {{ surfaces.get(pal, '#f4f4f8') }}
+          {{ surfaces.get(pal, '#f4f4f8') }}
         {% endif %}
 
     - name: "Theme Light Glow Active"
@@ -372,6 +684,7 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
         {% set bg = states('input_text.theme_background_<entity_1>') %}
+
         {{ 'on' if style == 'Glow' and bg in ['unknown', 'unavailable', 'auto', ''] else 'off' }}
 
     - name: "Theme Light Card Opacity"
@@ -380,7 +693,14 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
         {% set v = states('input_number.theme_card_opacity_<entity_1>') | float(-1) %}
-        {% set d = {'Clean': 95, 'Glass': 18, 'Dark': 100, 'Glow': 80, 'Neon': 70} %}
+        {% set d = {
+          'Clean': 95,
+          'Glass': 18,
+          'Dark': 100,
+          'Glow': 80,
+          'Neon': 70
+        } %}
+
         {{ d.get(style, 95) if v < 0 else v | int }}
 
     - name: "Theme Light Card Blur"
@@ -389,7 +709,14 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
         {% set v = states('input_number.theme_card_blur_<entity_1>') | float(-1) %}
-        {% set d = {'Clean': 0, 'Glass': 12, 'Dark': 0, 'Glow': 2, 'Neon': 0} %}
+        {% set d = {
+          'Clean': 0,
+          'Glass': 12,
+          'Dark': 0,
+          'Glow': 2,
+          'Neon': 0
+        } %}
+
         {{ d.get(style, 0) if v < 0 else v | int }}
 
     - name: "Theme Light Card Background"
@@ -397,30 +724,54 @@
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
         {% set v = states('input_number.theme_card_opacity_<entity_1>') | float(-1) %}
-        {% set d = {'Clean': 95, 'Glass': 18, 'Dark': 100, 'Glow': 80, 'Neon': 70} %}
+        {% set d = {
+          'Clean': 95,
+          'Glass': 18,
+          'Dark': 100,
+          'Glow': 80,
+          'Neon': 70
+        } %}
         {% set a = (d.get(style, 95) if v < 0 else v | int) / 100 %}
-        {% set rgb = {'Neon':'15,16,24', 'Dark':'255,255,255'} %}
+        {% set rgb = {
+          'Neon': '15,16,24',
+          'Dark': '255,255,255'
+        } %}
+
         rgba({{ rgb.get(style, '255,255,255') }},{{ a | round(2) }})
 
     - name: "Theme Light Card Border"
       unique_id: theme_light_card_border
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
-        {% if style == 'Glass' %}0.5px solid rgba(0,0,0,0.08)
-        {% elif style == 'Glow' %}1px solid color-mix(in srgb, var(--primary-color) 10%, transparent)
-        {% elif style == 'Neon' %}1px solid var(--primary-color)
-        {% elif style == 'Dark' %}1px solid rgba(0,0,0,0.06)
-        {% else %}none{% endif %}
+
+        {% if style == 'Glass' %}
+          0.5px solid rgba(0,0,0,0.08)
+        {% elif style == 'Glow' %}
+          1px solid color-mix(in srgb, var(--primary-color) 10%, transparent)
+        {% elif style == 'Neon' %}
+          1px solid var(--primary-color)
+        {% elif style == 'Dark' %}
+          1px solid rgba(0,0,0,0.06)
+        {% else %}
+          none
+        {% endif %}
 
     - name: "Theme Light Card Shadow"
       unique_id: theme_light_card_shadow
       state: >
         {% set style = states('input_select.theme_style_<entity_1>') %}
-        {% if style == 'Glass' %}0 8px 16px rgba(0,0,0,0.08)
-        {% elif style == 'Glow' %}0 4px 12px rgba(0,0,0,0.06)
-        {% elif style == 'Neon' %}0 0 8px color-mix(in srgb, var(--primary-color) 25%, transparent)
-        {% elif style == 'Dark' %}0 1px 3px rgba(0,0,0,0.08)
-        {% else %}none{% endif %}
+
+        {% if style == 'Glass' %}
+          0 8px 16px rgba(0,0,0,0.08)
+        {% elif style == 'Glow' %}
+          0 4px 12px rgba(0,0,0,0.06)
+        {% elif style == 'Neon' %}
+          0 0 8px color-mix(in srgb, var(--primary-color) 25%, transparent)
+        {% elif style == 'Dark' %}
+          0 1px 3px rgba(0,0,0,0.08)
+        {% else %}
+          none
+        {% endif %}
 
     - name: "Theme Light Card Radius"
       unique_id: theme_light_card_radius
@@ -431,5 +782,7 @@
       unique_id: theme_light_card_font
       state: >
         {% if is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-        'Share Tech Mono', monospace
-        {% else %}inherit{% endif %}
+          'Share Tech Mono', monospace
+        {% else %}
+          inherit
+        {% endif %}

@@ -43,6 +43,7 @@
             'priority': 15 if state_attr('sensor.<entity_10>_uv_index', 'state') | float(0) >= 6 else 40
           }
         ] %}
+
         {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
         {{ active[:max_visible] | length }}
       attributes:
@@ -60,6 +61,7 @@
               'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
             }
           ] %}
+
           {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
           {{ active[:max_visible] | map(attribute='id') | list }}
         all_cards: >
@@ -77,6 +79,7 @@
               'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
             }
           ] %}
+
           {{ cards | sort(attribute='priority') }}
         active_count: >
           {{ expand('input_boolean.cond_bedtime_doors', 'input_boolean.cond_uv_index')
@@ -98,65 +101,113 @@
       unique_id: room_lights_basement
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('basement') | select('match', '^light\\.') | list | length > 0 }}
+        {{ area_entities('basement')
+           | select('match', '^light\\.')
+           | list | length > 0 }}
       state: >
-        {{ area_entities('basement') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+        {{ area_entities('basement')
+           | select('match', '^light\\.')
+           | select('is_state', 'on')
+           | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
-            entity_id: "{{ area_entities('basement') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('basement')
+                 | select('match', '^light\\.')
+                 | list }}
       turn_off:
         - action: light.turn_off
           target:
-            entity_id: "{{ area_entities('basement') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('basement')
+                 | select('match', '^light\\.')
+                 | list }}
 
     - name: "Main Suite Lights"
       unique_id: room_lights_main_suite
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list | length > 0 }}
+        {{ area_entities('main_suite')
+           | select('match', '^light\\.')
+           | reject('search', '_led')
+           | list | length > 0 }}
       state: >
-        {{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | select('is_state', 'on') | list | length > 0 }}
+        {{ area_entities('main_suite')
+           | select('match', '^light\\.')
+           | reject('search', '_led')
+           | select('is_state', 'on')
+           | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
-            entity_id: "{{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list }}"
+            entity_id: >
+              {{ area_entities('main_suite')
+                 | select('match', '^light\\.')
+                 | reject('search', '_led')
+                 | list }}
       turn_off:
         - action: light.turn_off
           target:
-            entity_id: "{{ area_entities('main_suite') | select('match', '^light\\.') | reject('search', '_led') | list }}"
+            entity_id: >
+              {{ area_entities('main_suite')
+                 | select('match', '^light\\.')
+                 | reject('search', '_led')
+                 | list }}
 
     - name: "Kitchen Lights"
       unique_id: room_lights_kitchen
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('kitchen') | select('match', '^light\\.') | list | length > 0 }}
+        {{ area_entities('kitchen')
+           | select('match', '^light\\.')
+           | list | length > 0 }}
       state: >
-        {{ area_entities('kitchen') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+        {{ area_entities('kitchen')
+           | select('match', '^light\\.')
+           | select('is_state', 'on')
+           | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
-            entity_id: "{{ area_entities('kitchen') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('kitchen')
+                 | select('match', '^light\\.')
+                 | list }}
       turn_off:
         - action: light.turn_off
           target:
-            entity_id: "{{ area_entities('kitchen') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('kitchen')
+                 | select('match', '^light\\.')
+                 | list }}
 
     - name: "<entity_4>s Room Lights"
       unique_id: room_lights_<entity_4>_s_room
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list | length > 0 }}
+        {{ area_entities('<entity_4>_s_room')
+           | select('match', '^light\\.')
+           | list | length > 0 }}
       state: >
-        {{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | select('is_state', 'on') | list | length > 0 }}
+        {{ area_entities('<entity_4>_s_room')
+           | select('match', '^light\\.')
+           | select('is_state', 'on')
+           | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
-            entity_id: "{{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('<entity_4>_s_room')
+                 | select('match', '^light\\.')
+                 | list }}
       turn_off:
         - action: light.turn_off
           target:
-            entity_id: "{{ area_entities('<entity_4>_s_room') | select('match', '^light\\.') | list }}"
+            entity_id: >
+              {{ area_entities('<entity_4>_s_room')
+                 | select('match', '^light\\.')
+                 | list }}
 
 # =============================================================================
 # Notification System — Dashboard Header Bar
@@ -175,159 +226,520 @@
       icon: mdi:bell
       state: >
         {% set ns = namespace(count=0) %}
-        {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('binary_sensor.<entity_4>s_door_door', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('binary_sensor.balrog_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% set lc = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
-        {% if lc > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+        {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+        {% if is_state('binary_sensor.<entity_4>s_door_door', 'on') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
+        {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+        {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
+        {% set lc = states.light
+           | selectattr('state', 'eq', 'on')
+           | rejectattr('entity_id', 'search', '_led')
+           | rejectattr('entity_id', 'search', 'chamber_light')
+           | list | length %}
+        {% if lc > 0 %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
+        {% if is_state('sensor.<entity_23>_current_status', 'printing') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+        {% if is_state('sensor.<entity_22>_current_status', 'printing') %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
         {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
-        {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
+        {% if hvac_action in ['heating', 'cooling'] %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
         {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
-        {% if power > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% set ns.count = ns.count + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
-        {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-        {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
+        {% if power > 0 %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
+        {% set ns.count = ns.count
+           + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
+
+        {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
+        {% if now().month >= 3 and now().month <= 9 %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+
         {{ ns.count }}
       attributes:
         items: >
           {% set ns = namespace(items=[]) %}
+
           {% set door_<entity_3> = is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
-          {% set ns.items = ns.items + [{'id':'door_<entity_3>','active':door_<entity_3>,'label':"<entity_3>'s Door" ~ (' Open' if door_<entity_3> else ''),'icon':'mdi:door-open' if door_<entity_3> else 'mdi:door-closed','severity':'red' if door_<entity_3> else 'green','promoted':door_<entity_3>,'sort_key':'0_door_<entity_3>'}] %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'door_<entity_3>',
+              'active': door_<entity_3>,
+              'label': "<entity_3>'s Door" ~ (' Open' if door_<entity_3> else ''),
+              'icon': 'mdi:door-open' if door_<entity_3> else 'mdi:door-closed',
+              'severity': 'red' if door_<entity_3> else 'green',
+              'promoted': door_<entity_3>,
+              'sort_key': '0_door_<entity_3>'
+            }
+          ] %}
+
           {% set door_<entity_4> = is_state('binary_sensor.<entity_4>s_door_door', 'on') %}
-          {% set ns.items = ns.items + [{'id':'door_<entity_4>','active':door_<entity_4>,'label':"<entity_4>'s Door" ~ (' Open' if door_<entity_4> else ''),'icon':'mdi:door-open' if door_<entity_4> else 'mdi:door-closed','severity':'red' if door_<entity_4> else 'green','promoted':door_<entity_4>,'sort_key':'0_door_<entity_4>'}] %}
-          {% set nws_alerts = state_attr('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'door_<entity_4>',
+              'active': door_<entity_4>,
+              'label': "<entity_4>'s Door" ~ (' Open' if door_<entity_4> else ''),
+              'icon': 'mdi:door-open' if door_<entity_4> else 'mdi:door-closed',
+              'severity': 'red' if door_<entity_4> else 'green',
+              'promoted': door_<entity_4>,
+              'sort_key': '0_door_<entity_4>'
+            }
+          ] %}
+
+          {% set nws_alerts = state_attr(
+             'sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
           {% if nws_alerts is not none %}
-            {% set nws_icons = {'EHW':'mdi:thermometer-alert','HTA':'mdi:thermometer-alert','XHW':'mdi:thermometer-alert','TOR':'mdi:weather-tornado','TOA':'mdi:weather-tornado','FFW':'mdi:home-flood','FFA':'mdi:home-flood','FLW':'mdi:home-flood','FLA':'mdi:home-flood','SVR':'mdi:weather-lightning','SVA':'mdi:weather-lightning','WSW':'mdi:snowflake-alert','WSA':'mdi:snowflake-alert','BZW':'mdi:snowflake-alert','WCW':'mdi:snowflake-alert','WCA':'mdi:snowflake-alert'} %}
-            {% set nws_sevs = {'Extreme':'red','Severe':'amber','Moderate':'blue','Minor':'blue'} %}
+            {% set nws_icons = {
+              'EHW': 'mdi:thermometer-alert',
+              'HTA': 'mdi:thermometer-alert',
+              'XHW': 'mdi:thermometer-alert',
+              'TOR': 'mdi:weather-tornado',
+              'TOA': 'mdi:weather-tornado',
+              'FFW': 'mdi:home-flood',
+              'FFA': 'mdi:home-flood',
+              'FLW': 'mdi:home-flood',
+              'FLA': 'mdi:home-flood',
+              'SVR': 'mdi:weather-lightning',
+              'SVA': 'mdi:weather-lightning',
+              'WSW': 'mdi:snowflake-alert',
+              'WSA': 'mdi:snowflake-alert',
+              'BZW': 'mdi:snowflake-alert',
+              'WCW': 'mdi:snowflake-alert',
+              'WCA': 'mdi:snowflake-alert'
+            } %}
+            {% set nws_sevs = {
+              'Extreme': 'red',
+              'Severe': 'amber',
+              'Moderate': 'blue',
+              'Minor': 'blue'
+            } %}
+
             {% for alert in nws_alerts %}
               {% set code = alert.NWSCode | default('UNK') %}
               {% set end_str = (alert.Ends | default('')) or (alert.Expires | default('')) %}
               {% set end_dt = (end_str | as_datetime) if end_str else none %}
               {% set delta = (((end_dt - now()).total_seconds()) | int) if end_dt else -1 %}
+
               {% set d = (delta / 86400) | int %}
               {% set h = ((delta % 86400) / 3600) | int %}
               {% set m = ((delta % 3600) / 60) | int %}
-              {% set tr = (d ~ 'd ' ~ h ~ 'h left') if d > 0 else ((h ~ 'h ' ~ m ~ 'm left') if h > 0 else (m ~ 'm left')) %}
+              {% set tr = (d ~ 'd ' ~ h ~ 'h left') if d > 0
+                     else ((h ~ 'h ' ~ m ~ 'm left') if h > 0
+                     else (m ~ 'm left')) %}
               {% set tr = tr if delta > 0 else '' %}
-              {% set icon = nws_icons[code] if code in nws_icons else 'mdi:weather-lightning-rainy' %}
-              {% set sev = nws_sevs[alert.Severity] if alert.Severity is defined and alert.Severity in nws_sevs else 'blue' %}
-              {% set ns.items = ns.items + [{'id':'nws_'~code~'_'~loop.index,'active':true,'label':alert.Event|default('Weather Alert'),'icon':icon,'severity':sev,'promoted':false,'sort_key':'0_weather_'~code,'time_remaining':tr}] %}
+
+              {% set icon = nws_icons[code]
+                 if code in nws_icons
+                 else 'mdi:weather-lightning-rainy' %}
+              {% set sev = nws_sevs[alert.Severity]
+                 if alert.Severity is defined and alert.Severity in nws_sevs
+                 else 'blue' %}
+
+              {% set ns.items = ns.items + [
+                {
+                  'id': 'nws_' ~ code ~ '_' ~ loop.index,
+                  'active': true,
+                  'label': alert.Event | default('Weather Alert'),
+                  'icon': icon,
+                  'severity': sev,
+                  'promoted': false,
+                  'sort_key': '0_weather_' ~ code,
+                  'time_remaining': tr
+                }
+              ] %}
             {% endfor %}
           {% endif %}
+
           {% set lightning_count = states('sensor.<entity_10>_lightning_count') | int(0) %}
-          {% set lightning_dist = states('sensor.<entity_10>_lightning_average_distance') | float(0) | round(1) %}
-          {% set lightning_label = lightning_count | string ~ ' Lightning Strike' ~ ('s' if lightning_count != 1 else '') ~ ' (~' ~ lightning_dist | string ~ ' mi)' %}
-          {% set ns.items = ns.items + [{'id':'lightning','active':lightning_count > 0,'label':lightning_label,'icon':'mdi:weather-lightning','severity':'amber' if lightning_count > 0 else 'green','promoted':false,'sort_key':'1_lightning'}] %}
+          {% set lightning_dist = states('sensor.<entity_10>_lightning_average_distance')
+             | float(0) | round(1) %}
+          {% set lightning_label = lightning_count | string
+             ~ ' Lightning Strike'
+             ~ ('s' if lightning_count != 1 else '')
+             ~ ' (~' ~ lightning_dist | string ~ ' mi)' %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'lightning',
+              'active': lightning_count > 0,
+              'label': lightning_label,
+              'icon': 'mdi:weather-lightning',
+              'severity': 'amber' if lightning_count > 0 else 'green',
+              'promoted': false,
+              'sort_key': '1_lightning'
+            }
+          ] %}
+
           {% set in_lawn_rain_season = now().month >= 3 and now().month <= 9 %}
-          {% set lawn_rain_this_week = states('sensor.lawn_rain_weekly') | float(0) | round(2) %}
-          {% set lawn_rain_last_week = state_attr('sensor.lawn_rain_weekly', 'last_period') | float(0) | round(2) %}
-          {% set lawn_rain_label = 'Lawn Rain: ' ~ lawn_rain_this_week ~ 'in | Last Week: ' ~ lawn_rain_last_week ~ 'in' %}
-          {% set ns.items = ns.items + [{'id':'lawn_rain','active':in_lawn_rain_season,'label':lawn_rain_label,'icon':'mdi:water','severity':'blue' if in_lawn_rain_season else 'green','promoted':false,'sort_key':'2_lawn_rain'}] %}
+          {% set lawn_rain_this_week = states('sensor.lawn_rain_weekly')
+             | float(0) | round(2) %}
+          {% set lawn_rain_last_week = state_attr('sensor.lawn_rain_weekly', 'last_period')
+             | float(0) | round(2) %}
+          {% set lawn_rain_label = 'Lawn Rain: '
+             ~ lawn_rain_this_week ~ 'in | Last Week: '
+             ~ lawn_rain_last_week ~ 'in' %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'lawn_rain',
+              'active': in_lawn_rain_season,
+              'label': lawn_rain_label,
+              'icon': 'mdi:water',
+              'severity': 'blue' if in_lawn_rain_season else 'green',
+              'promoted': false,
+              'sort_key': '2_lawn_rain'
+            }
+          ] %}
+
           {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
-            {% set prog = states('sensor.balrog_cleaning_progress') | float(0) | round(0) | int %}
-            {% set ns.items = ns.items + [{'id':'vacuum_balrog','active':true,'label':'Balrog','icon':'mdi:robot-vacuum','severity':'amber','promoted':false,'sort_key':'1_vacuum_balrog','progress':prog}] %}
+            {% set prog = states('sensor.balrog_cleaning_progress')
+               | float(0) | round(0) | int %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'vacuum_balrog',
+                'active': true,
+                'label': 'Balrog',
+                'icon': 'mdi:robot-vacuum',
+                'severity': 'amber',
+                'promoted': false,
+                'sort_key': '1_vacuum_balrog',
+                'progress': prog
+              }
+            ] %}
           {% else %}
-            {% set ns.items = ns.items + [{'id':'vacuum_balrog','active':false,'label':'Balrog','icon':'mdi:robot-vacuum','severity':'green','promoted':false,'sort_key':'1_vacuum_balrog'}] %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'vacuum_balrog',
+                'active': false,
+                'label': 'Balrog',
+                'icon': 'mdi:robot-vacuum',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '1_vacuum_balrog'
+              }
+            ] %}
           {% endif %}
+
           {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
-            {% set prog = states('sensor.shadowfax_cleaning_progress') | float(0) | round(0) | int %}
-            {% set ns.items = ns.items + [{'id':'vacuum_shadowfax','active':true,'label':'Shadowfax','icon':'mdi:robot-vacuum','severity':'amber','promoted':false,'sort_key':'1_vacuum_shadowfax','progress':prog}] %}
+            {% set prog = states('sensor.shadowfax_cleaning_progress')
+               | float(0) | round(0) | int %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'vacuum_shadowfax',
+                'active': true,
+                'label': 'Shadowfax',
+                'icon': 'mdi:robot-vacuum',
+                'severity': 'amber',
+                'promoted': false,
+                'sort_key': '1_vacuum_shadowfax',
+                'progress': prog
+              }
+            ] %}
           {% else %}
-            {% set ns.items = ns.items + [{'id':'vacuum_shadowfax','active':false,'label':'Shadowfax','icon':'mdi:robot-vacuum','severity':'green','promoted':false,'sort_key':'1_vacuum_shadowfax'}] %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'vacuum_shadowfax',
+                'active': false,
+                'label': 'Shadowfax',
+                'icon': 'mdi:robot-vacuum',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '1_vacuum_shadowfax'
+              }
+            ] %}
           {% endif %}
-          {% set light_count = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
-          {% set ns.items = ns.items + [{'id':'lights','active':light_count > 0,'label':light_count ~ ' Light' ~ ('s' if light_count != 1 else '') ~ ' On','icon':'mdi:lightbulb-group','severity':'blue' if light_count > 0 else 'green','promoted':false,'sort_key':'2_lights'}] %}
+
+          {% set light_count = states.light
+             | selectattr('state', 'eq', 'on')
+             | rejectattr('entity_id', 'search', '_led')
+             | rejectattr('entity_id', 'search', 'chamber_light')
+             | list | length %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'lights',
+              'active': light_count > 0,
+              'label': light_count ~ ' Light' ~ ('s' if light_count != 1 else '') ~ ' On',
+              'icon': 'mdi:lightbulb-group',
+              'severity': 'blue' if light_count > 0 else 'green',
+              'promoted': false,
+              'sort_key': '2_lights'
+            }
+          ] %}
+
           {% set printer_1_status = states('sensor.<entity_23>_current_status') %}
           {% if printer_1_status == 'printing' %}
-            {% set prog = states('sensor.<entity_23>_percent_complete') | float(0) | round(0) | int %}
-            {% set raw_min = states('sensor.<entity_23>_remaining_print_time') | float(0) %}
+            {% set prog = states('sensor.<entity_23>_percent_complete')
+               | float(0) | round(0) | int %}
+            {% set raw_min = states('sensor.<entity_23>_remaining_print_time')
+               | float(0) %}
             {% set hrs = (raw_min / 60) | int %}
             {% set mins = (raw_min % 60) | int %}
-            {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left') if hrs > 0 else (mins ~ 'm left') %}
-            {% set ns.items = ns.items + [{'id':'printer_<entity_20>','active':true,'label':'<entity_20> 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_20>','progress':prog,'time_remaining':tr}] %}
+            {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left')
+               if hrs > 0 else (mins ~ 'm left') %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'printer_<entity_20>',
+                'active': true,
+                'label': '<entity_20> 3D Printer',
+                'icon': 'mdi:printer-3d',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '3_printer_<entity_20>',
+                'progress': prog,
+                'time_remaining': tr
+              }
+            ] %}
           {% else %}
-            {% set ns.items = ns.items + [{'id':'printer_<entity_20>','active':false,'label':'<entity_20> 3D Printer — ' ~ (printer_1_status | default('idle') | title),'icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_20>'}] %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'printer_<entity_20>',
+                'active': false,
+                'label': '<entity_20> 3D Printer — '
+                   ~ (printer_1_status | default('idle') | title),
+                'icon': 'mdi:printer-3d',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '3_printer_<entity_20>'
+              }
+            ] %}
           {% endif %}
+
           {% set printer_2_status = states('sensor.<entity_22>_current_status') %}
           {% if printer_2_status == 'printing' %}
-            {% set prog = states('sensor.<entity_22>_percent_complete') | float(0) | round(0) | int %}
-            {% set raw_min = states('sensor.<entity_22>_remaining_print_time') | float(0) %}
+            {% set prog = states('sensor.<entity_22>_percent_complete')
+               | float(0) | round(0) | int %}
+            {% set raw_min = states('sensor.<entity_22>_remaining_print_time')
+               | float(0) %}
             {% set hrs = (raw_min / 60) | int %}
             {% set mins = (raw_min % 60) | int %}
-            {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left') if hrs > 0 else (mins ~ 'm left') %}
-            {% set ns.items = ns.items + [{'id':'printer_<entity_21>','active':true,'label':'<entity_21> 3D Printer','icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_21>','progress':prog,'time_remaining':tr}] %}
+            {% set tr = (hrs ~ 'h ' ~ mins ~ 'm left')
+               if hrs > 0 else (mins ~ 'm left') %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'printer_<entity_21>',
+                'active': true,
+                'label': '<entity_21> 3D Printer',
+                'icon': 'mdi:printer-3d',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '3_printer_<entity_21>',
+                'progress': prog,
+                'time_remaining': tr
+              }
+            ] %}
           {% else %}
-            {% set ns.items = ns.items + [{'id':'printer_<entity_21>','active':false,'label':'<entity_21> 3D Printer — ' ~ (printer_2_status | default('idle') | title),'icon':'mdi:printer-3d','severity':'green','promoted':false,'sort_key':'3_printer_<entity_21>'}] %}
+            {% set ns.items = ns.items + [
+              {
+                'id': 'printer_<entity_21>',
+                'active': false,
+                'label': '<entity_21> 3D Printer — '
+                   ~ (printer_2_status | default('idle') | title),
+                'icon': 'mdi:printer-3d',
+                'severity': 'green',
+                'promoted': false,
+                'sort_key': '3_printer_<entity_21>'
+              }
+            ] %}
           {% endif %}
+
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
-          {% set ns.items = ns.items + [{'id':'hvac','active':hvac_action in ['heating', 'cooling'],'label':(hvac_action | default('idle') | title),'icon':'mdi:thermostat','severity':'green','promoted':false,'sort_key':'3_hvac'}] %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'hvac',
+              'active': hvac_action in ['heating', 'cooling'],
+              'label': hvac_action | default('idle') | title,
+              'icon': 'mdi:thermostat',
+              'severity': 'green',
+              'promoted': false,
+              'sort_key': '3_hvac'
+            }
+          ] %}
+
           {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
-          {% set ns.items = ns.items + [{'id':'power','active':power > 0,'label':(power | round(0) | int | string) ~ 'W','icon':'mdi:flash','severity':'green','promoted':false,'sort_key':'3_power'}] %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'power',
+              'active': power > 0,
+              'label': (power | round(0) | int | string) ~ 'W',
+              'icon': 'mdi:flash',
+              'severity': 'green',
+              'promoted': false,
+              'sort_key': '3_power'
+            }
+          ] %}
+
           {{ ns.items | sort(attribute='sort_key') }}
+
         promoted_count: >
           {% set ns = namespace(count=0) %}
-          {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('binary_sensor.<entity_4>s_door_door', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+          {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+          {% if is_state('binary_sensor.<entity_4>s_door_door', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {{ ns.count }}
+
         dot_count: >
           {% set ns = namespace(count=0) %}
-          {% if is_state('binary_sensor.balrog_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% set lc = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
-          {% if lc > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+          {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+          {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% set lc = states.light
+             | selectattr('state', 'eq', 'on')
+             | rejectattr('entity_id', 'search', '_led')
+             | rejectattr('entity_id', 'search', 'chamber_light')
+             | list | length %}
+          {% if lc > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
-          {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if hvac_action in ['heating', 'cooling'] %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
-          {% if power > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% set ns.count = ns.count + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
-          {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if power > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% set ns.count = ns.count
+             + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
+
+          {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% if now().month >= 3 and now().month <= 9 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {{ ns.count }}
+
         red_count: >
           {% set ns = namespace(count=0) %}
-          {% set nws_alerts = state_attr('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
+
+          {% set nws_alerts = state_attr(
+             'sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
           {% if nws_alerts is not none %}
             {% for alert in nws_alerts %}
-              {% if alert.Severity is defined and alert.Severity == 'Extreme' %}{% set ns.count = ns.count + 1 %}{% endif %}
+              {% if alert.Severity is defined and alert.Severity == 'Extreme' %}
+                {% set ns.count = ns.count + 1 %}
+              {% endif %}
             {% endfor %}
           {% endif %}
+
           {{ ns.count }}
+
         amber_count: >
           {% set ns = namespace(count=0) %}
-          {% if is_state('binary_sensor.balrog_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% set nws_alerts = state_attr('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
+
+          {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+          {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% set nws_alerts = state_attr(
+             'sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
           {% if nws_alerts is not none %}
             {% for alert in nws_alerts %}
-              {% if alert.Severity is defined and alert.Severity == 'Severe' %}{% set ns.count = ns.count + 1 %}{% endif %}
+              {% if alert.Severity is defined and alert.Severity == 'Severe' %}
+                {% set ns.count = ns.count + 1 %}
+              {% endif %}
             {% endfor %}
           {% endif %}
-          {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+          {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {{ ns.count }}
+
         blue_count: >
           {% set ns = namespace(count=0) %}
-          {% set lc = states.light | selectattr('state','eq','on') | rejectattr('entity_id','search','_led') | rejectattr('entity_id','search','chamber_light') | list | length %}
-          {% if lc > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% set nws_alerts = state_attr('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
+
+          {% set lc = states.light
+             | selectattr('state', 'eq', 'on')
+             | rejectattr('entity_id', 'search', '_led')
+             | rejectattr('entity_id', 'search', 'chamber_light')
+             | list | length %}
+          {% if lc > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {% set nws_alerts = state_attr(
+             'sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
           {% if nws_alerts is not none %}
             {% for alert in nws_alerts %}
               {% set sev = alert.Severity | default('') %}
-              {% if sev not in ['Extreme', 'Severe'] %}{% set ns.count = ns.count + 1 %}{% endif %}
+              {% if sev not in ['Extreme', 'Severe'] %}
+                {% set ns.count = ns.count + 1 %}
+              {% endif %}
             {% endfor %}
           {% endif %}
-          {% if now().month >= 3 and now().month <= 9 %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+          {% if now().month >= 3 and now().month <= 9 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {{ ns.count }}
+
         green_count: >
           {% set ns = namespace(count=0) %}
-          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
-          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}{% set ns.count = ns.count + 1 %}{% endif %}
+
+          {% if is_state('sensor.<entity_23>_current_status', 'printing') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+          {% if is_state('sensor.<entity_22>_current_status', 'printing') %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
-          {% if hvac_action in ['heating', 'cooling'] %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if hvac_action in ['heating', 'cooling'] %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
-          {% if power > 0 %}{% set ns.count = ns.count + 1 %}{% endif %}
+          {% if power > 0 %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
           {{ ns.count }}

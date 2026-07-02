@@ -382,27 +382,39 @@ views:
               [[[
                 const items = (entity.attributes.items || []).filter(i => i.active && !i.promoted);
                 if (!items.length) return '';
-                const colors = {red:'#ef6461', amber:'#e8a840', blue:'#6b9fff', green:'#3ecf8e'};
-                const order = ['red','amber','blue','green'];
+
+                const colors = {
+                  red: '#ef6461',
+                  amber: '#e8a840',
+                  blue: '#6b9fff',
+                  green: '#3ecf8e'
+                };
+                const order = ['red', 'amber', 'blue', 'green'];
                 const expanded = states['input_boolean.notification_expanded']?.state === 'on';
                 const chevron = expanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
                 let out = '<div style="display:flex;flex-direction:column;gap:3px;">';
+
                 for (const sev of order) {
                   const count = items.filter(i => i.severity === sev).length;
                   if (!count) continue;
+
                   const glow = (sev === 'red' || sev === 'amber')
                     ? `box-shadow:0 0 4px ${colors[sev]}40;` : '';
                   out += '<div style="display:flex;flex-wrap:wrap;gap:3px;">';
                   const visible = Math.min(count, 30);
+
                   for (let i = 0; i < visible; i++) {
                     out += `<div style="width:6px;height:6px;border-radius:50%;background:${colors[sev]};${glow}"></div>`;
                   }
+
                   if (count > 30) out += `<span style="font-size:10px;color:var(--secondary-text-color);">+${count-30}</span>`;
                   out += '</div>';
                 }
+
                 out += `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:2px;">`;
                 out += `<ha-icon icon="${chevron}" style="--mdc-icon-size:16px;color:var(--secondary-text-color);"></ha-icon>`;
                 out += '</div></div>';
+
                 return out;
               ]]]
           styles:
@@ -430,11 +442,18 @@ views:
               list: |
                 [[[
                   const items = (entity.attributes.items || []).filter(i => i.active && !i.promoted);
-                  const colors = {red:'#ef6461', amber:'#e8a840', blue:'#6b9fff', green:'#3ecf8e'};
+                  const colors = {
+                    red: '#ef6461',
+                    amber: '#e8a840',
+                    blue: '#6b9fff',
+                    green: '#3ecf8e'
+                  };
                   let out = '<div style="display:flex;flex-direction:column;">';
+
                   for (const item of items.slice(0, 10)) {
                     const c = colors[item.severity];
                     const hasProgress = item.progress !== undefined && item.progress !== null;
+
                     out += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;
                       border-bottom:1px solid rgba(var(--rgb-primary-text-color),0.05);">`;
                     out += `<div style="width:3px;align-self:stretch;border-radius:2px;background:${c};"></div>`;
@@ -442,20 +461,25 @@ views:
                     out += '<div style="flex:1;min-width:0;">';
                     out += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
                     out += `<span style="font-size:13px;">${item.label}</span>`;
+
                     if (item.time_remaining) {
                       out += `<span style="font-size:11px;color:var(--secondary-text-color);flex-shrink:0;margin-left:8px;">${item.time_remaining}</span>`;
                     }
                     out += '</div>';
+
                     if (hasProgress) {
                       out += `<div style="height:3px;background:rgba(var(--rgb-primary-text-color),0.1);border-radius:2px;margin-top:4px;">`;
                       out += `<div style="height:100%;width:${Math.min(item.progress,100)}%;background:${c};border-radius:2px;transition:width 0.5s;"></div>`;
                       out += '</div>';
                     }
+
                     out += '</div></div>';
                   }
+
                   if (items.length > 10) {
                     out += `<a href="/general-home/conditionals" style="display:block;text-align:center;padding:8px;font-size:12px;color:var(--primary-color);text-decoration:none;">View all →</a>`;
                   }
+
                   out += '</div>';
                   return out;
                 ]]]
@@ -898,8 +922,16 @@ views:
                 if (val < 25 || val > 65) level = 3;
                 if (val < 20 || val > 70) level = 4;
                 if (val < 15 || val > 80) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -947,8 +979,16 @@ views:
                 if (val > 800) level = 3;
                 if (val > 1000) level = 4;
                 if (val > 1500) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -996,8 +1036,16 @@ views:
                 if (val > 250) level = 3;
                 if (val > 500) level = 4;
                 if (val > 1000) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -1044,8 +1092,16 @@ views:
                 if (val > 25) level = 3;
                 if (val > 35) level = 4;
                 if (val > 55) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -1093,8 +1149,16 @@ views:
                 if (val > 100) level = 3;
                 if (val > 150) level = 4;
                 if (val > 200) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -1142,8 +1206,16 @@ views:
                 if (val > 100) level = 3;
                 if (val > 150) level = 4;
                 if (val > 200) level = 5;
-                const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+
+                const colors = [
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722'
+                ];
                 const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
+
                 return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
               ]]]
             value: |
@@ -1650,11 +1722,18 @@ views:
         list: |
           [[[
             const items = entity.attributes.items || [];
-            const colors = {red:'#ef6461', amber:'#e8a840', blue:'#6b9fff', green:'#3ecf8e'};
+            const colors = {
+              red: '#ef6461',
+              amber: '#e8a840',
+              blue: '#6b9fff',
+              green: '#3ecf8e'
+            };
             let out = '<div style="display:flex;flex-direction:column;">';
+
             for (const item of items) {
               const c = colors[item.severity];
               const hasProgress = item.progress !== undefined && item.progress !== null;
+
               out += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;
                 border-bottom:1px solid rgba(var(--rgb-primary-text-color),0.05);">`;
               out += `<div style="width:3px;align-self:stretch;border-radius:2px;background:${c};"></div>`;
@@ -1662,20 +1741,25 @@ views:
               out += '<div style="flex:1;min-width:0;">';
               out += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
               out += `<span style="font-size:13px;">${item.label}</span>`;
+
               if (item.time_remaining) {
                 out += `<span style="font-size:11px;color:var(--secondary-text-color);flex-shrink:0;margin-left:8px;">${item.time_remaining}</span>`;
               }
               out += '</div>';
+
               if (hasProgress) {
                 out += `<div style="height:3px;background:rgba(var(--rgb-primary-text-color),0.1);border-radius:2px;margin-top:4px;">`;
                 out += `<div style="height:100%;width:${Math.min(item.progress,100)}%;background:${c};border-radius:2px;transition:width 0.5s;"></div>`;
                 out += '</div>';
               }
+
               out += '</div></div>';
             }
+
             if (!items.length) {
               out += '<div style="text-align:center;padding:12px;font-size:13px;color:var(--secondary-text-color);">No items</div>';
             }
+
             out += '</div>';
             return out;
           ]]]
@@ -2825,26 +2909,44 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set colors = ['#0d1117','#1a1a2e','#1b2838','#2d1b3d','#f5f5f5','#e8edf2','#fef7ed','#e8f5e9'] %} {% set bg = states('input_text.theme_background_<entity_1>') %} {% set pri = states('sensor.theme_light_primary') %} {% set ns = namespace(cards=[]) %} {% for hex in colors %}
+              {% set colors = [
+                '#0d1117',
+                '#1a1a2e',
+                '#1b2838',
+                '#2d1b3d',
+                '#f5f5f5',
+                '#e8edf2',
+                '#fef7ed',
+                '#e8f5e9'
+              ] %}
+              {% set bg = states('input_text.theme_background_<entity_1>') %}
+              {% set pri = states('sensor.theme_light_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for hex in colors %}
                 {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_1>',
-                      'value': hex
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'value': hex
+                      }
+                    },
+                    'card_mod': {
+                      'style': "ha-card { border-radius: 12px !important; " ~
+                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
+                        " }"
                     }
-                  },
-                  'card_mod': {
-                    'style': "ha-card { border-radius: 12px !important; " ~
-                      ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                      " }"
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Palette shades
@@ -2864,42 +2966,63 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set pal = states('input_select.theme_palette_<entity_1>') %} {% set shades = {
-                'Indigo': ['#f4f4f8','#dcdcf4','#e8e8f8','#ccccee'],
-                'Ocean': ['#f0f6fa','#c4e4f4','#d8eef8','#b0d8f0'],
-                'Sunset': ['#faf6f2','#f4dcc8','#f8eadc','#eeceb4'],
-                'Forest': ['#f2f6f3','#c8e8d4','#daf0e0','#b8e0c8'],
-                'Rose': ['#faf4f6','#f4d0dc','#f8e0ea','#eec0d0'],
-                'Mono': ['#f2f2f4','#dcdce0','#e8e8ec','#ccccce'],
-                'Cyberdeck': ['#f0f4f8','#c8e8f4','#d8eef8','#b4daf0'],
-                'Mint': ['#f4faf6','#c8f0dc','#daf8e8','#b8ecd0']
-              } %} {% set colors = shades.get(pal, shades['Indigo']) %} {% set bg = states('input_text.theme_background_<entity_1>') %} {% set pri = states('sensor.theme_light_primary') %} {% set ns = namespace(cards=[]) %} {% for hex in colors %}
+              {% set pal = states('input_select.theme_palette_<entity_1>') %}
+              {% set shades = {
+                'Indigo': ['#f4f4f8', '#dcdcf4', '#e8e8f8', '#ccccee'],
+                'Ocean': ['#f0f6fa', '#c4e4f4', '#d8eef8', '#b0d8f0'],
+                'Sunset': ['#faf6f2', '#f4dcc8', '#f8eadc', '#eeceb4'],
+                'Forest': ['#f2f6f3', '#c8e8d4', '#daf0e0', '#b8e0c8'],
+                'Rose': ['#faf4f6', '#f4d0dc', '#f8e0ea', '#eec0d0'],
+                'Mono': ['#f2f2f4', '#dcdce0', '#e8e8ec', '#ccccce'],
+                'Cyberdeck': ['#f0f4f8', '#c8e8f4', '#d8eef8', '#b4daf0'],
+                'Mint': ['#f4faf6', '#c8f0dc', '#daf8e8', '#b8ecd0']
+              } %}
+              {% set colors = shades.get(pal, shades['Indigo']) %}
+              {% set bg = states('input_text.theme_background_<entity_1>') %}
+              {% set pri = states('sensor.theme_light_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for hex in colors %}
                 {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_1>',
-                      'value': hex
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'value': hex
+                      }
+                    },
+                    'card_mod': {
+                      'style': "ha-card { border-radius: 12px !important; " ~
+                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
+                        " }"
                     }
-                  },
-                  'card_mod': {
-                    'style': "ha-card { border-radius: 12px !important; " ~
-                      ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                      " }"
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
         - type: custom:mushroom-template-card
           primary: Custom color
-          secondary: |
-            {% set bg = states('input_text.theme_background_<entity_1>') %} {% if bg.startswith('#') %}{{ bg }}{% else %}Tap to enter hex{% endif %}
+          secondary: >
+            {% set bg = states('input_text.theme_background_<entity_1>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            Tap to enter hex
+            {% endif %}
           icon: mdi:eyedropper
-          icon_color: |
-            {% set bg = states('input_text.theme_background_<entity_1>') %} {% if bg.startswith('#') %}{{ bg }}{% else %}grey{% endif %}
+          icon_color: >
+            {% set bg = states('input_text.theme_background_<entity_1>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_text.theme_background_<entity_1>
@@ -2932,25 +3055,33 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %} {% set pri = states('sensor.theme_light_primary') %} {% set ns = namespace(cards=[]) %} {% for f in files %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_1>',
-                      'value': f
+              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
+              {% set pri = states('sensor.theme_light_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for f in files %}
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'value': f
+                      }
+                    },
+                    'card_mod': {
+                      'style': 'ha-card { border-radius: 12px !important; ' ~
+                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_1>', f) else '') ~
+                        ' }'
                     }
-                  },
-                  'card_mod': {
-                    'style': 'ha-card { border-radius: 12px !important; ' ~
-                      ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_1>', f) else '') ~
-                      ' }'
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
     - type: conditional
       conditions:
       - entity: input_select.theme_appearance_user
@@ -3021,26 +3152,44 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set colors = ['#0d1117','#1a1a2e','#1b2838','#2d1b3d','#f5f5f5','#e8edf2','#fef7ed','#e8f5e9'] %} {% set bg = states('input_text.theme_background_<entity_2>') %} {% set pri = states('sensor.theme_dark_primary') %} {% set ns = namespace(cards=[]) %} {% for hex in colors %}
+              {% set colors = [
+                '#0d1117',
+                '#1a1a2e',
+                '#1b2838',
+                '#2d1b3d',
+                '#f5f5f5',
+                '#e8edf2',
+                '#fef7ed',
+                '#e8f5e9'
+              ] %}
+              {% set bg = states('input_text.theme_background_<entity_2>') %}
+              {% set pri = states('sensor.theme_dark_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for hex in colors %}
                 {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_2>',
-                      'value': hex
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'value': hex
+                      }
+                    },
+                    'card_mod': {
+                      'style': "ha-card { border-radius: 12px !important; " ~
+                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
+                        " }"
                     }
-                  },
-                  'card_mod': {
-                    'style': "ha-card { border-radius: 12px !important; " ~
-                      ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                      " }"
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
         - type: custom:mushroom-title-card
           title: ''
           subtitle: Palette shades
@@ -3060,42 +3209,63 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set pal = states('input_select.theme_palette_<entity_2>') %} {% set shades = {
-                'Indigo': ['#121218','#1a1a42','#141430','#0e0e28'],
-                'Ocean': ['#0a1218','#082842','#0a2038','#061830'],
-                'Sunset': ['#141018','#421a0c','#301210','#281a0a'],
-                'Forest': ['#0e1410','#0a3020','#0a2518','#081e12'],
-                'Rose': ['#140e12','#421230','#301020','#280c1a'],
-                'Mono': ['#101014','#1a1a1e','#141418','#0e0e12'],
-                'Cyberdeck': ['#070611','#0a0828','#0c0a20','#08061a'],
-                'Mint': ['#0e1210','#0a3022','#0a2518','#081e14']
-              } %} {% set colors = shades.get(pal, shades['Indigo']) %} {% set bg = states('input_text.theme_background_<entity_2>') %} {% set pri = states('sensor.theme_dark_primary') %} {% set ns = namespace(cards=[]) %} {% for hex in colors %}
+              {% set pal = states('input_select.theme_palette_<entity_2>') %}
+              {% set shades = {
+                'Indigo': ['#121218', '#1a1a42', '#141430', '#0e0e28'],
+                'Ocean': ['#0a1218', '#082842', '#0a2038', '#061830'],
+                'Sunset': ['#141018', '#421a0c', '#301210', '#281a0a'],
+                'Forest': ['#0e1410', '#0a3020', '#0a2518', '#081e12'],
+                'Rose': ['#140e12', '#421230', '#301020', '#280c1a'],
+                'Mono': ['#101014', '#1a1a1e', '#141418', '#0e0e12'],
+                'Cyberdeck': ['#070611', '#0a0828', '#0c0a20', '#08061a'],
+                'Mint': ['#0e1210', '#0a3022', '#0a2518', '#081e14']
+              } %}
+              {% set colors = shades.get(pal, shades['Indigo']) %}
+              {% set bg = states('input_text.theme_background_<entity_2>') %}
+              {% set pri = states('sensor.theme_dark_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for hex in colors %}
                 {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_2>',
-                      'value': hex
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'value': hex
+                      }
+                    },
+                    'card_mod': {
+                      'style': "ha-card { border-radius: 12px !important; " ~
+                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
+                        " }"
                     }
-                  },
-                  'card_mod': {
-                    'style': "ha-card { border-radius: 12px !important; " ~
-                      ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                      " }"
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
         - type: custom:mushroom-template-card
           primary: Custom color
-          secondary: |
-            {% set bg = states('input_text.theme_background_<entity_2>') %} {% if bg.startswith('#') %}{{ bg }}{% else %}Tap to enter hex{% endif %}
+          secondary: >
+            {% set bg = states('input_text.theme_background_<entity_2>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            Tap to enter hex
+            {% endif %}
           icon: mdi:eyedropper
-          icon_color: |
-            {% set bg = states('input_text.theme_background_<entity_2>') %} {% if bg.startswith('#') %}{{ bg }}{% else %}grey{% endif %}
+          icon_color: >
+            {% set bg = states('input_text.theme_background_<entity_2>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_text.theme_background_<entity_2>
@@ -3128,25 +3298,33 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %} {% set pri = states('sensor.theme_dark_primary') %} {% set ns = namespace(cards=[]) %} {% for f in files %}
-                {% set ns.cards = ns.cards + [{
-                  'type': 'picture',
-                  'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
-                  'tap_action': {
-                    'action': 'call-service',
-                    'service': 'input_text.set_value',
-                    'service_data': {
-                      'entity_id': 'input_text.theme_background_<entity_2>',
-                      'value': f
+              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
+              {% set pri = states('sensor.theme_dark_primary') %}
+              {% set ns = namespace(cards=[]) %}
+
+              {% for f in files %}
+                {% set ns.cards = ns.cards + [
+                  {
+                    'type': 'picture',
+                    'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
+                    'tap_action': {
+                      'action': 'call-service',
+                      'service': 'input_text.set_value',
+                      'service_data': {
+                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'value': f
+                      }
+                    },
+                    'card_mod': {
+                      'style': 'ha-card { border-radius: 12px !important; ' ~
+                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_2>', f) else '') ~
+                        ' }'
                     }
-                  },
-                  'card_mod': {
-                    'style': 'ha-card { border-radius: 12px !important; ' ~
-                      ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_2>', f) else '') ~
-                      ' }'
                   }
-                }] %}
-              {% endfor %} {{ ns.cards }}
+                ] %}
+              {% endfor %}
+
+              {{ ns.cards }}
     - type: custom:mushroom-title-card
       title: Card effects
       subtitle: Transparency and blur
@@ -3161,11 +3339,20 @@ views:
         cards:
         - type: custom:mushroom-template-card
           primary: Opacity
-          secondary: |
-            {% set v = states('input_number.theme_card_opacity_<entity_1>') | float(-1) %} {% if v < 0 %}Auto ({{ states('sensor.theme_light_card_opacity') }}%) {% else %}{{ v | int }}%{% endif %}
+          secondary: >
+            {% set v = states('input_number.theme_card_opacity_<entity_1>') | float(-1) %}
+            {% if v < 0 %}
+            Auto ({{ states('sensor.theme_light_card_opacity') }}%)
+            {% else %}
+            {{ v | int }}%
+            {% endif %}
           icon: mdi:opacity
-          icon_color: |
-            {% if states('input_number.theme_card_opacity_<entity_1>') | float(-1) < 0 %} var(--primary-color) {% else %}grey{% endif %}
+          icon_color: >
+            {% if states('input_number.theme_card_opacity_<entity_1>') | float(-1) < 0 %}
+            var(--primary-color)
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_number.theme_card_opacity_<entity_1>
@@ -3194,11 +3381,20 @@ views:
             style: *theme_exempt_style
         - type: custom:mushroom-template-card
           primary: Blur
-          secondary: |
-            {% set v = states('input_number.theme_card_blur_<entity_1>') | float(-1) %} {% if v < 0 %}Auto ({{ states('sensor.theme_light_card_blur') }}px) {% else %}{{ v | int }}px{% endif %}
+          secondary: >
+            {% set v = states('input_number.theme_card_blur_<entity_1>') | float(-1) %}
+            {% if v < 0 %}
+            Auto ({{ states('sensor.theme_light_card_blur') }}px)
+            {% else %}
+            {{ v | int }}px
+            {% endif %}
           icon: mdi:blur
-          icon_color: |
-            {% if states('input_number.theme_card_blur_<entity_1>') | float(-1) < 0 %} var(--primary-color) {% else %}grey{% endif %}
+          icon_color: >
+            {% if states('input_number.theme_card_blur_<entity_1>') | float(-1) < 0 %}
+            var(--primary-color)
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_number.theme_card_blur_<entity_1>
@@ -3234,11 +3430,20 @@ views:
         cards:
         - type: custom:mushroom-template-card
           primary: Opacity
-          secondary: |
-            {% set v = states('input_number.theme_card_opacity_<entity_2>') | float(-1) %} {% if v < 0 %}Auto ({{ states('sensor.theme_dark_card_opacity') }}%) {% else %}{{ v | int }}%{% endif %}
+          secondary: >
+            {% set v = states('input_number.theme_card_opacity_<entity_2>') | float(-1) %}
+            {% if v < 0 %}
+            Auto ({{ states('sensor.theme_dark_card_opacity') }}%)
+            {% else %}
+            {{ v | int }}%
+            {% endif %}
           icon: mdi:opacity
-          icon_color: |
-            {% if states('input_number.theme_card_opacity_<entity_2>') | float(-1) < 0 %} var(--primary-color) {% else %}grey{% endif %}
+          icon_color: >
+            {% if states('input_number.theme_card_opacity_<entity_2>') | float(-1) < 0 %}
+            var(--primary-color)
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_number.theme_card_opacity_<entity_2>
@@ -3267,11 +3472,20 @@ views:
             style: *theme_exempt_style
         - type: custom:mushroom-template-card
           primary: Blur
-          secondary: |
-            {% set v = states('input_number.theme_card_blur_<entity_2>') | float(-1) %} {% if v < 0 %}Auto ({{ states('sensor.theme_dark_card_blur') }}px) {% else %}{{ v | int }}px{% endif %}
+          secondary: >
+            {% set v = states('input_number.theme_card_blur_<entity_2>') | float(-1) %}
+            {% if v < 0 %}
+            Auto ({{ states('sensor.theme_dark_card_blur') }}px)
+            {% else %}
+            {{ v | int }}px
+            {% endif %}
           icon: mdi:blur
-          icon_color: |
-            {% if states('input_number.theme_card_blur_<entity_2>') | float(-1) < 0 %} var(--primary-color) {% else %}grey{% endif %}
+          icon_color: >
+            {% if states('input_number.theme_card_blur_<entity_2>') | float(-1) < 0 %}
+            var(--primary-color)
+            {% else %}
+            grey
+            {% endif %}
           tap_action:
             action: more-info
             entity: input_number.theme_card_blur_<entity_2>
