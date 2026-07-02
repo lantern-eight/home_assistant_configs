@@ -1,0 +1,162 @@
+# =============================================================================
+# 3D Printer Farm — HA Package
+# =============================================================================
+# Printer farm sensors and automations.
+#
+# Requires an HA restart after changes (packages can't hot-reload).
+#
+# =============================================================================
+
+
+# =============================================================================
+# Template Sensors — Printer Status + Spoolman Filament Tracking
+# =============================================================================
+
+template:
+  - sensor:
+      - name: "Printer Farm Online Count"
+        unique_id: printer_farm_online_count
+        state: >
+          {% set printers = [
+            'sensor.<entity_23>_current_status',
+            'sensor.<entity_22>_current_status'
+          ] %}
+
+          {{ printers | map('states')
+             | reject('in', ['unknown','unavailable'])
+             | list | count }}
+
+      - name: "<entity_21> A1 Spoolman Grams"
+        unique_id: <entity_21>_a1_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a1_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a1_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a1_color') }}"
+
+      - name: "<entity_21> A2 Spoolman Grams"
+        unique_id: <entity_21>_a2_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a2_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a2_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a2_color') }}"
+
+      - name: "<entity_21> A3 Spoolman Grams"
+        unique_id: <entity_21>_a3_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a3_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a3_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a3_color') }}"
+
+      - name: "<entity_21> A4 Spoolman Grams"
+        unique_id: <entity_21>_a4_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a4_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a4_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a4_color') }}"
+
+      - name: "<entity_20> Loaded Filament Name"
+        unique_id: <entity_20>_loaded_filament_name
+        state: >
+          {% set raw = states('input_text.<entity_23>_last_file') %}
+
+          {% if raw in ['unknown','unavailable',''] %}
+            Unknown
+          {% else %}
+            {% set base = raw | replace('.gcode','') %}
+            {% set parts = base.split('_') %}
+
+            {% if parts | length >= 2 %}
+              {{ parts[1] | replace('-', ' ') | title }}
+            {% else %}
+              {{ base }}
+            {% endif %}
+          {% endif %}
+
+      - name: "<entity_20> Spoolman Grams"
+        unique_id: <entity_20>_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set fil_name = states('sensor.<entity_20>_loaded_filament_name') %}
+
+          {% if fil_name in ['unknown','unavailable','Unknown',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', fil_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
