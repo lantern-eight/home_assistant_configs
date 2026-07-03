@@ -214,8 +214,8 @@ To enable custom background images on the Appearance page:
 ```
 
 **b) Deploy the Python scripts** from this repo:
-- `scripts/list_theme_backgrounds.py` → `/config/scripts/`
-- `scripts/generate_theme_thumbnails.py` → `/config/scripts/`
+- `scripts/ha_scripts/list_theme_backgrounds.py` → `/config/scripts/`
+- `scripts/ha_scripts/generate_theme_thumbnails.py` → `/config/scripts/`
 
 The thumbnail script requires Pillow (`pip install Pillow`). It generates
 ~300px wide JPEG thumbnails and cleans up orphaned thumbnails when source
@@ -813,13 +813,13 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 General-purpose sensors the dashboard consumes live in repo-root `packages/`, synced to
 HA's `packages/` directory by the same sync script.
 
-### Scripts (in repo `scripts/` directory)
+### Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `general_home_dashboard_sync.py` | SMB deploy + service reload |
-| `generate_theme_thumbnails.py` | Creates ~300px JPEG thumbnails for the background picker |
-| `list_theme_backgrounds.py` | Lists background images as JSON for the command_line sensor |
+| `scripts/general_home_dashboard_sync.py` | SMB deploy + service reload (runs locally) |
+| `scripts/ha_scripts/generate_theme_thumbnails.py` | Creates ~300px JPEG thumbnails for the background picker (deployed to HA) |
+| `scripts/ha_scripts/list_theme_backgrounds.py` | Lists background images as JSON for the command_line sensor (deployed to HA) |
 
 ### Server Files (`/config/`)
 

@@ -15,9 +15,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 
 
 @pytest.fixture(autouse=True)
-def _isolate_dashboards_dir_from_sanitize(monkeypatch):
-  '''Prevent tests from redacting the real dashboards/ tree.'''
+def _isolate_sanitize_dirs(monkeypatch):
+  '''Prevent tests from redacting the real dashboards/ and packages/ trees.'''
   monkeypatch.setattr(
     'home_assistant_backup.DASHBOARDS_DIR',
     str(Path(__file__).resolve().parent / '__no_dashboards__'),
+  )
+  monkeypatch.setattr(
+    'home_assistant_backup.PACKAGES_DIR',
+    str(Path(__file__).resolve().parent / '__no_packages__'),
   )

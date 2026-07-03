@@ -50,8 +50,8 @@ FILE_MAP = {
 }
 
 SCRIPT_MAP = {
-  'generate_theme_thumbnails.py': 'scripts/generate_theme_thumbnails.py',
-  'list_theme_backgrounds.py': 'scripts/list_theme_backgrounds.py',
+  'ha_scripts/generate_theme_thumbnails.py': 'scripts/generate_theme_thumbnails.py',
+  'ha_scripts/list_theme_backgrounds.py': 'scripts/list_theme_backgrounds.py',
 }
 
 

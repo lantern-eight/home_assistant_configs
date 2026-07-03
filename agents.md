@@ -41,13 +41,14 @@ dashboard's package file.
 - Package changes require an HA restart (`sync.py -r`); they can't
   hot-reload.
 
-## Home Assistant config backup and automations
+## Home Assistant config backup
 
-Relevant when working under `home_assistant_backup/**`, `home_assistant_backup_comments/**`, or `dashboards/**`.
+Relevant when working under `home_assistant_backup/**` or `dashboards/**`.
 
 ### Where to edit
 
-**Only make changes in `home_assistant_backup_comments/`.** HA strips YAML comments on save, so this directory is the comment-preserved source of truth. Do not edit `home_assistant_backup/` directly — it is overwritten on every SMB pull.
+Do not edit `home_assistant_backup/` directly — it is overwritten on every SMB
+pull. Config managed in code lives in `packages/` and `dashboards/`.
 
 ### Syncing from Home Assistant
 

@@ -1,8 +1,6 @@
-import fnmatch
 import logging
 import os
 import re
-import shutil
 import sys
 from getopt import GetoptError, getopt
 from pathlib import Path
@@ -26,16 +24,18 @@ def _status(msg: str) -> None:
 
 USAGE = (
   'Usage: uv run python scripts/home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
-  '  -b, --backup     Run the SMB pull only (no sanitize)\n'
+  '  -b, --backup     Pull BACKUP_FILES from SMB (no sanitize)\n'
   '  -s, --sanitize   Run the redaction pass only (no SMB pull); processes\n'
-  '                   home_assistant_backup/, home_assistant_backup_comments/,\n'
-  '                   and dashboards/\n'
+  '                   home_assistant_backup/, dashboards/, and packages/\n'
   '  -r, --restore    Restore redacted files using entity_map.yaml\n'
   '  -d, --debug      Set log level to DEBUG\n'
   '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
   '  -h, --help       Show this help\n'
   '\n'
-  'With no -b/-s/-r flag, runs backup followed by sanitize (the default).'
+  'With no -b/-s/-r flag, runs backup followed by sanitize (the default).\n'
+  '\n'
+  'The SMB pull fetches only the files listed in BACKUP_FILES,\n'
+  'not the entire HA config directory.'
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -84,43 +84,19 @@ SMB_PASSWORD = _cfg['smb_password']
 REDACT_ENTITIES = _normalize_redact_entities(_cfg.get('redact_entities', []))
 
 DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
-COMMENTS_DIR = os.path.join(os.getcwd(), 'home_assistant_backup_comments')
 DASHBOARDS_DIR = os.path.join(os.getcwd(), 'dashboards')
+PACKAGES_DIR = os.path.join(os.getcwd(), 'packages')
 
 
 def _iter_sanitize_dirs():
   '''Yield local directories that participate in sanitize/restore passes.'''
-  for path in (DEST, COMMENTS_DIR, DASHBOARDS_DIR):
+  for path in (DEST, DASHBOARDS_DIR, PACKAGES_DIR):
     if os.path.isdir(path):
       yield path
 
-IGNORE_PATTERNS = [
-  '*.db',
-  '*.db-*',
-  '*.log',
-  '*.log.*',
-  '__pycache__',
-  '.storage',
-  '.cloud',
-  'deps',
-  'tts',
-  'backups',
-  '.ha_run.lock',
-  '.HA_VERSION',
-  'secrets.yaml',
-  '*.august.conf',
-  'custom_components',
-  'dashboards',
-  'packages',
-  'template_sensors',
-  'themes',
-  'www',
+BACKUP_FILES = [
+  'configuration.yaml',
 ]
-
-
-def should_ignore(name: str) -> bool:
-  '''Return True if the file/dir name matches any ignore pattern.'''
-  return any(fnmatch.fnmatch(name, p) for p in IGNORE_PATTERNS)
 
 
 PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
@@ -333,7 +309,7 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
 
 
 def _run_backup() -> None:
-  '''Pull HA config from the SMB share into DEST. Does NOT sanitize.'''
+  '''Pull specific HA config files from the SMB share into DEST.'''
   _status('Starting SMB backup from Home Assistant')
   if not SMB_SERVER or not SMB_SHARE:
     LOGGER.error(
@@ -357,62 +333,42 @@ def _run_backup() -> None:
     password=SMB_PASSWORD or None,
   )
   LOGGER.info(
-    'SMB session registered; backing up to local path',
+    'SMB session registered; pulling files to local path',
     extra={'smb_root': smb_root, 'dest': os.path.abspath(DEST)},
   )
 
-  if os.path.exists(DEST):
-    _status(f'Removing existing backup directory: {DEST}')
-    LOGGER.info('Removing existing backup directory', extra={'path': DEST})
-    shutil.rmtree(DEST)
-
-  root_len = len(smb_root.rstrip('\\')) + 1  # +1 for trailing backslash
+  os.makedirs(DEST, exist_ok=True)
 
   files_copied = 0
-  _status('Walking SMB share and copying files...')
-  LOGGER.info('Starting walk of SMB share', extra={'smb_root': smb_root})
-  for directory_path, directory_names, file_names in smbclient.walk(smb_root):
-    # Prune ignored directories (modify in-place)
-    directory_names[:] = [d for d in directory_names if not should_ignore(d)]
+  _status(f'Pulling {len(BACKUP_FILES)} file(s) from SMB share...')
+  LOGGER.info('Pulling specific files', extra={'files': BACKUP_FILES})
+  for relative_path in BACKUP_FILES:
+    smb_file = rf'{smb_root}\{relative_path.replace("/", chr(92))}'
+    local_file = os.path.join(DEST, relative_path)
 
-    relative_directory = \
-      directory_path[root_len:].replace('\\', os.sep) \
-      if len(directory_path) > root_len \
-      else ''
+    os.makedirs(os.path.dirname(local_file), exist_ok=True)
 
-    local_directory = \
-      os.path.join(DEST, relative_directory) if relative_directory else DEST
-
-    for file_name in file_names:
-      if should_ignore(file_name):
-        continue
-
-      smb_file = f'{directory_path}\\{file_name}'
-      local_file = os.path.join(local_directory, file_name)
-
-      os.makedirs(local_directory, exist_ok=True)
-
-      try:
-        with smbclient.open_file(smb_file, mode='rb') as src:
-          with open(local_file, 'wb') as dst:
-            dst.write(src.read())
-        files_copied += 1
-      except OSError as e:
-        LOGGER.warning(
-          'Failed to copy file',
-          extra={'smb_file': smb_file, 'local_file': local_file, 'error': str(e)},
-        )
+    try:
+      with smbclient.open_file(smb_file, mode='rb') as src:
+        with open(local_file, 'wb') as dst:
+          dst.write(src.read())
+      files_copied += 1
+    except OSError as e:
+      LOGGER.warning(
+        'Failed to copy file',
+        extra={'smb_file': smb_file, 'local_file': local_file, 'error': str(e)},
+      )
 
   smbclient.reset_connection_cache()
-  _status(f'Backup complete — {files_copied} files copied to {os.path.abspath(DEST)}')
+  _status(f'Backup complete — {files_copied}/{len(BACKUP_FILES)} files copied to {os.path.abspath(DEST)}')
   LOGGER.info(
     'Backup finished; connection cache reset',
-    extra={'files_copied': files_copied, 'dest': os.path.abspath(DEST)},
+    extra={'files_copied': files_copied, 'total': len(BACKUP_FILES), 'dest': os.path.abspath(DEST)},
   )
 
 
 def _run_sanitize() -> None:
-  '''Run the redaction pass over DEST, COMMENTS_DIR, and DASHBOARDS_DIR.
+  '''Run the redaction pass over DEST, DASHBOARDS_DIR, and PACKAGES_DIR.
 
   Loads the existing entity_map.yaml first if it exists so that placeholder
   numbering for already-known strings stays stable. This makes partial /
@@ -435,7 +391,7 @@ def _run_sanitize() -> None:
 
   for dir_path in _iter_sanitize_dirs():
     _status(f'Redacting files in {dir_path}')
-    normalize = dir_path != DASHBOARDS_DIR
+    normalize = dir_path not in (DASHBOARDS_DIR, PACKAGES_DIR)
     _process_backup_files(
       dir_path, REDACT_ENTITIES, entity_map,
       normalize_yaml=normalize,
@@ -449,39 +405,16 @@ def _run_sanitize() -> None:
 
 def main(argv: list[str] | None = None) -> None:
   '''
-  Backup Home Assistant config from SMB share to /home_assistant_backup directory.
+  Pull specific HA config files from the SMB share into home_assistant_backup/.
+
+  Only the files listed in BACKUP_FILES are pulled, not the entire
+  HA config directory. To back up additional files, add them to BACKUP_FILES.
 
   Modes (mutually exclusive):
     (default) backup + sanitize
     -b/--backup    backup only
-    -s/--sanitize  sanitize only (processes DEST, COMMENTS_DIR, dashboards/)
+    -s/--sanitize  sanitize only (processes DEST, dashboards/, packages/)
     -r/--restore   restore redactions using entity_map.yaml
-
-  Example usage:
-
-    > uv run python home_assistant_backup.py
-    > uv run python home_assistant_backup.py -b
-    > uv run python home_assistant_backup.py -s
-    > uv run python home_assistant_backup.py -r
-    > uv run python home_assistant_backup.py -d
-    > uv run python home_assistant_backup.py -l DEBUG
-
-  Make sure you have filled out config.yaml (copied from config.example.yaml)
-  or exported the corresponding environment variables:
-
-    export SMB_SERVER=192.168.1.100
-    export SMB_SHARE=config
-    export SMB_USER=your_user
-    export SMB_PASSWORD=your_password
-
-  The backup will be saved in 'home_assistant_backup' in the current directory.
-
-  Requires: smbprotocol, smbclient
-
-  Args:
-    argv: Command line arguments (defaults to sys.argv[1:])
-  Returns:
-    None
   '''
   argv = argv if argv is not None else sys.argv[1:]
 
