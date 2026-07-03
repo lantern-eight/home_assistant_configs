@@ -1,0 +1,783 @@
+# =============================================================================
+# 3D Printer Farm — HA Package
+# =============================================================================
+# Printer farm sensors and automations.
+#
+# Requires an HA restart after changes (packages can't hot-reload).
+#
+# =============================================================================
+
+
+# =============================================================================
+# Template Sensors — Printer Status + Spoolman Filament Tracking
+# =============================================================================
+
+template:
+  - sensor:
+      - name: "Printer Farm Online Count"
+        unique_id: printer_farm_online_count
+        state: >
+          {% set printers = [
+            'sensor.<entity_23>_current_status',
+            'sensor.<entity_22>_current_status'
+          ] %}
+
+          {{ printers | map('states')
+             | reject('in', ['unknown','unavailable'])
+             | list | count }}
+
+      - name: "<entity_21> A1 Spoolman Grams"
+        unique_id: <entity_21>_a1_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a1_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a1_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a1_color') }}"
+
+      - name: "<entity_21> A2 Spoolman Grams"
+        unique_id: <entity_21>_a2_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a2_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a2_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a2_color') }}"
+
+      - name: "<entity_21> A3 Spoolman Grams"
+        unique_id: <entity_21>_a3_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a3_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a3_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a3_color') }}"
+
+      - name: "<entity_21> A4 Spoolman Grams"
+        unique_id: <entity_21>_a4_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_22>_a4_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_22>_a4_name') }}"
+          slot_color: "{{ states('sensor.<entity_22>_a4_color') }}"
+
+      - name: "<entity_20> Loaded Filament Name"
+        unique_id: <entity_20>_loaded_filament_name
+        state: >
+          {% set raw = states('input_text.<entity_23>_last_file') %}
+
+          {% if raw in ['unknown','unavailable',''] %}
+            Unknown
+          {% else %}
+            {% set base = raw | replace('.gcode','') %}
+            {% set parts = base.split('_') %}
+
+            {% if parts | length >= 2 %}
+              {{ parts[1] | replace('-', ' ') | title }}
+            {% else %}
+              {{ base }}
+            {% endif %}
+          {% endif %}
+
+      - name: "<entity_20> Spoolman Grams"
+        unique_id: <entity_20>_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set fil_name = states('sensor.<entity_20>_loaded_filament_name') %}
+
+          {% if fil_name in ['unknown','unavailable','Unknown',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', fil_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+# Stores a JSON blob of <entity_21> per-slot filament names and grams, cached
+# before print completes (the slot sensors clear to "unknown" on completion).
+#
+# The _last_file helpers cache the gcode filename from the printer's
+# file_name sensor. The Cache 3D Print Filename automation writes to
+# these on file change; other automations read them at print complete
+# (by which time the printer's own sensor may have cleared).
+input_text:
+  <entity_22>_cached_slot_data:
+    name: "<entity_21> Cached Slot Data"
+    max: 255
+    icon: mdi:code-json
+  <entity_23>_last_file:
+    name: "<entity_20> Last File"
+    max: 255
+    icon: mdi:file
+  <entity_22>_last_file:
+    name: "<entity_21> Last File"
+    max: 255
+    icon: mdi:file
+
+# Per-print latches — flipped on after first use, reset only at job end
+# (Complete + Failure handlers). Deliberately NOT reset on `to: printing`
+# because the <entity_21>'s print_status bounces Printing<>Idle during
+# multi-color filament swaps, and a mid-print reset would cause duplicate
+# halfway notifications and re-trigger the chamber light.
+input_boolean:
+  <entity_23>_half_notified:
+    name: "<entity_20> Half Notified"
+    icon: mdi:bell-check
+  <entity_22>_half_notified:
+    name: "<entity_21> Half Notified"
+    icon: mdi:bell-check
+  <entity_23>_light_on_for_print:
+    name: "<entity_20> Light On For Print"
+    icon: mdi:lightbulb-on
+  <entity_22>_light_on_for_print:
+    name: "<entity_21> Light On For Print"
+    icon: mdi:lightbulb-on
+
+# =============================================================================
+# REST Commands — Spoolman API
+# =============================================================================
+
+rest_command:
+  spoolman_find_spools_by_name:
+    url: !secret spoolman_find_spools_by_name_url
+    method: GET
+    content_type: "application/json"
+
+# =============================================================================
+# Script — Spoolman Filament Usage Cascade
+# =============================================================================
+# Reusable script called by both <entity_21> and <entity_20> automations. Takes a
+# filament name and weight, queries the Spoolman REST API for matching
+# non-archived spools, then cascades the deduction across them: lowest
+# remaining_weight first (random tie-break for equal weights), draining
+# each spool to 0 before moving to the next, until use_weight is exhausted.
+#
+# If no spool matches, fires a "no matching spool" persistent notification.
+# If the total available across all matching spools is less than use_weight,
+# every matching spool is drained to 0 and an "insufficient spool weight"
+# notification is fired with the unaccounted gram count.
+#
+# Why REST instead of HA entities: The Spoolman HA integration (v1.3.0)
+# creates filament-level entities (sensor.spoolman_filament_N), and may
+# not create spool-level. The filament entity `id` attribute is a filament
+# ID which doesn't correspond to a spool ID — passing it to
+# use_spool_filament would deduct from the wrong spool. Querying the API
+# returns actual spool objects with correct spool IDs.
+
+script:
+  update_spoolman_from_filament_name:
+    alias: Update Spoolman From Filament Name
+    mode: queued
+    max: 10
+    fields:
+      filament_name:
+        required: true
+        name: Filament Name
+        description: Must match the Spoolman filament name exactly.
+        selector:
+          text:
+      use_weight:
+        required: true
+        name: Use Weight (grams)
+        selector:
+          number:
+            min: 0
+            max: 100000
+            step: 0.01
+            unit_of_measurement: g
+    sequence:
+      # Query Spoolman REST API for non-archived spools whose filament name
+      # matches. Returns spool-level objects with correct spool IDs.
+      - action: rest_command.spoolman_find_spools_by_name
+        data:
+          filament_name: "{{ filament_name }}"
+        response_variable: spool_response
+
+      # Build the cascade list: keep spools with positive remaining_weight,
+      # attach a random _jitter, sort by jitter then by remaining_weight.
+      # Jinja's sort is stable, so the second sort preserves random order
+      # within each weight tier (e.g. five 1000g spools end up in random
+      # order).
+      - variables:
+          sorted_spools: >
+            {% set raw = spool_response.content if spool_response.status == 200
+                else '[]' %}
+            {% set spools = raw if (raw is iterable and raw is not string)
+                else (raw | from_json(default=[])) %}
+            {% set ns = namespace(items=[]) %}
+            {% for s in spools %}
+              {% set w = s.remaining_weight | float(0) %}
+              {% if w > 0 %}
+                {% set ns.items = ns.items
+                    + [dict(s, _jitter=range(0, 99999) | random)] %}
+              {% endif %}
+            {% endfor %}
+            {{ (ns.items | sort(attribute='_jitter'))
+                  | sort(attribute='remaining_weight') }}
+          total_available: >
+            {% set raw = spool_response.content if spool_response.status == 200
+                else '[]' %}
+            {% set spools = raw if (raw is iterable and raw is not string)
+                else (raw | from_json(default=[])) %}
+            {{ spools | map(attribute='remaining_weight')
+                     | map('float', 0) | sum | round(4) }}
+          remaining_use: "{{ use_weight | float(0) | round(4) }}"
+
+      - choose:
+          # No candidate spools: warn and bail.
+          - conditions:
+              - condition: template
+                value_template: "{{ sorted_spools | length == 0 }}"
+            sequence:
+              - action: persistent_notification.create
+                data:
+                  title: "Spoolman: No matching spool"
+                  message: >
+                    Could not find a non-archived Spoolman spool with filament
+                    name "{{ filament_name }}". The print used {{ use_weight }}g
+                    that was not tracked.
+
+          # Cascade: walk sorted spools, draining each to 0 before moving on
+          # until remaining_use is exhausted.
+          - conditions:
+              - condition: template
+                value_template: "{{ sorted_spools | length > 0 }}"
+            sequence:
+              - repeat:
+                  for_each: "{{ sorted_spools }}"
+                  sequence:
+                    # Single-line "{{ ... }}" form preserves numeric type so
+                    # the `<= 0` check below and arithmetic in subsequent
+                    # iterations don't accidentally compare strings.
+                    - variables:
+                        spool_remaining: "{{ repeat.item.remaining_weight | float(0) | round(4) }}"
+                        to_deduct: >-
+                          {{ 0 if (remaining_use | float(0)) <= 0
+                                else ([remaining_use | float(0),
+                                       spool_remaining | float(0)] | min) }}
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ to_deduct | float(0) > 0 }}"
+                          sequence:
+                            - action: spoolman.use_spool_filament
+                              data:
+                                id: "{{ repeat.item.id | int }}"
+                                use_weight: "{{ to_deduct | float(0) | round(2) }}"
+                            - variables:
+                                remaining_use: "{{ ((remaining_use | float(0)) - (to_deduct | float(0))) | round(4) }}"
+
+              # Insufficient total: every matching spool was drained to 0 but
+              # there's still unaccounted usage. Surface it for manual cleanup.
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ (remaining_use | float(0)) > 0.01 }}"
+                    sequence:
+                      - action: persistent_notification.create
+                        data:
+                          title: "Spoolman: Insufficient spool weight"
+                          message: >
+                            Print used {{ use_weight }}g of "{{ filament_name }}"
+                            but only {{ total_available }}g was available across
+                            {{ sorted_spools | length }} spool(s). All matching
+                            spools drained to 0;
+                            {{ (remaining_use | float(0)) | round(2) }}g
+                            unaccounted. Verify physical spools and adjust
+                            Spoolman manually.
+
+# =============================================================================
+# Automations — Spoolman Usage Tracking
+# =============================================================================
+# Both automations resolve Spoolman spools by filament name and cascade
+# usage across them, lowest remaining_weight first (random tie-break on
+# equal weights). Each spool is drained to 0 before the next is touched.
+# If total available is less than use_weight, all matching spools are
+# drained and a warning notification fires.
+#
+# <entity_21>: Per-slot grams from the gcode capture proxy, cached before print
+#       completes (slot sensors clear to "unknown" on completion).
+# <entity_20>: Filament name + weight parsed from a custom filename template.
+#       Slicer template: [input_filename_base]_{filament_preset[0]}_{total_weight}g
+#
+# Required integrations:
+#   - <entity_28> Printer (with <entity_21> gcode proxy URL configured)
+#   - Spoolman Home Assistant (https://github.com/Disane87/spoolman-homeassistant)
+
+automation:
+  # --------------------------------------------------------------------------
+  # Cache <entity_21> Slot Data
+  # --------------------------------------------------------------------------
+  # The <entity_21> per-slot sensors (A1-A4 grams and names) are populated when
+  # proxy data is fetched at print start but clear to "unknown" on print
+  # complete. This caches the slot data into an input_text helper as a JSON
+  # blob so the Spoolman push automation can read it after completion.
+
+  - id: cache_<entity_21>_slot_data
+    alias: "Cache <entity_21> Slot Data"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_22>_a1_grams
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable'] }}
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_22>_cached_slot_data
+        data:
+          value: >
+            {% set n1 = states('sensor.<entity_22>_a1_name') %}
+            {% set n2 = states('sensor.<entity_22>_a2_name') %}
+            {% set n3 = states('sensor.<entity_22>_a3_name') %}
+            {% set n4 = states('sensor.<entity_22>_a4_name') %}
+            {{ {
+              'a1': {'name': '' if n1 in ['unknown','unavailable'] else n1,
+                     'grams': states('sensor.<entity_22>_a1_grams') | float(0) | round(2)},
+              'a2': {'name': '' if n2 in ['unknown','unavailable'] else n2,
+                     'grams': states('sensor.<entity_22>_a2_grams') | float(0) | round(2)},
+              'a3': {'name': '' if n3 in ['unknown','unavailable'] else n3,
+                     'grams': states('sensor.<entity_22>_a3_grams') | float(0) | round(2)},
+              'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
+                     'grams': states('sensor.<entity_22>_a4_grams') | float(0) | round(2)}
+            } | to_json }}
+
+  # --------------------------------------------------------------------------
+  # <entity_21> Spoolman Update
+  # --------------------------------------------------------------------------
+  # On <entity_21> print complete, reads the cached per-slot data and pushes
+  # usage to Spoolman for each slot that consumed filament.
+
+  - id: <entity_21>_spoolman_update
+    alias: "<entity_21> Spoolman Update"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_22>_print_status
+        to: complete
+        trigger: state
+    conditions: []
+    actions:
+      - variables:
+          raw_data: "{{ states('input_text.<entity_22>_cached_slot_data') }}"
+
+      # Guard: make sure we have cached data
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ raw_data not in ['unknown', 'unavailable', '', 'None'] }}
+            sequence:
+              - variables:
+                  slot_data: "{{ raw_data if raw_data is mapping else raw_data | from_json }}"
+              - repeat:
+                  for_each:
+                    - a1
+                    - a2
+                    - a3
+                    - a4
+                  sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: >
+                                {% set slot = slot_data[repeat.item] %}
+                                {{ slot.grams | float(0) > 0
+                                   and slot.name not in ['', none, 'None'] }}
+                          sequence:
+                            - action: script.update_spoolman_from_filament_name
+                              data:
+                                filament_name: "{{ slot_data[repeat.item].name }}"
+                                use_weight: "{{ slot_data[repeat.item].grams | float | round(2) }}"
+        default:
+          - action: persistent_notification.create
+            data:
+              title: "Spoolman: <entity_21> no cached slot data"
+              message: >
+                <entity_21> print completed but no cached slot data was found.
+                Filament usage was not tracked. Make sure the gcode capture
+                proxy is configured and the "Cache <entity_21> Slot Data" automation
+                is enabled.
+
+  # --------------------------------------------------------------------------
+  # <entity_20> Spoolman Update
+  # --------------------------------------------------------------------------
+  # On <entity_20> print complete, parses the filament name and weight from the
+  # cached filename (set by the existing "Cache 3D Print Filename"
+  # automation).
+  #
+  # Expected filename format:
+  #   <entity_20>_benchy_<entity_28>PLA-Basic-White_2.50g.gcode
+  # Slicer template:
+  #   [input_filename_base]_{filament_preset[0]}_{total_weight}g
+  #
+  # Parsing: split on "_", weight is last token (Ng), filament name is
+  # second-to-last token (always hyphenated, never contains underscores).
+
+  - id: <entity_20>_spoolman_update
+    alias: "<entity_20> Spoolman Update"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_print_status
+        to: complete
+        trigger: state
+    conditions: []
+    actions:
+      - variables:
+          filename: >
+            {{ states('input_text.<entity_23>_last_file') | replace('.gcode', '') }}
+          parts: "{{ filename.split('_') }}"
+          weight_grams: "{{ parts[-1] | replace('g', '') | float(0) }}"
+          filament_name: "{{ parts[-2] | default('') }}"
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ weight_grams > 0
+                     and filament_name != ''
+                     and '-' in filament_name }}
+            sequence:
+              - action: script.update_spoolman_from_filament_name
+                data:
+                  filament_name: "{{ filament_name }}"
+                  use_weight: "{{ weight_grams | float | round(2) }}"
+        default:
+          - action: persistent_notification.create
+            data:
+              title: "Spoolman: <entity_20> filename parse failed"
+              message: >
+                Could not parse filament name and weight from filename
+                "{{ states('input_text.<entity_23>_last_file') }}".
+                Expected format: [model]_[FilamentName-With-Hyphens]_[weight]g.gcode
+
+  # --------------------------------------------------------------------------
+  # 3D Print Failure Alert
+  # --------------------------------------------------------------------------
+
+  - id: 3d_print_failure_alert
+    alias: "3D Print Failure Alert"
+    mode: parallel
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_print_error
+          - sensor.<entity_22>_print_error
+          - sensor.<entity_23>_error_status_reason
+          - sensor.<entity_22>_error_status_reason
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['none', 'ok', 'unknown', 'unavailable'] }}
+    actions:
+      # Variables to clean up the entity ID and build the notification pieces.
+      # The replace chain handles both suffix types to find the printer name.
+      - variables:
+          base_name: >
+            {{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_error', '')
+              | replace('_error_status_reason', '') }}
+
+          notif_title: "{{ base_name | replace('_', ' ') | title }} — Print Error ❌"
+
+          notif_message: >
+            File: {{ states('input_text.' ~ base_name ~ '_last_file')
+                | replace('_',' ')
+                | replace('.gcode','')
+                | default('Unknown file', true) }}
+            🚨 Error: {{ trigger.to_state.state | replace('_',' ') | title }}
+
+          notif_image: >
+            /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+      - data:
+          title: "{{ notif_title }}"
+          message: "{{ notif_message }}"
+          data:
+            image: "{{ notif_image }}"
+        action: notify.boss_phones
+
+      # Reset per-print latches so the next job works correctly
+      - target:
+          entity_id:
+            - "input_boolean.{{ base_name }}_half_notified"
+            - "input_boolean.{{ base_name }}_light_on_for_print"
+        action: input_boolean.turn_off
+
+  # --------------------------------------------------------------------------
+  # 3D Print Complete Notification
+  # --------------------------------------------------------------------------
+  # Also re-arms the halfway and print-light latches for the next print.
+  # We deliberately do NOT reset these latches on `to: printing` — the
+  # <entity_21>'s print_status bounces Printing<>Idle during multi-color
+  # filament swaps, and a mid-print reset combined with any sensor jitter
+  # on percent_complete leads to duplicate halfway notifications (and would
+  # re-turn on the chamber light after a filament swap if you had turned
+  # it off mid-print). Resetting at job-end (here + in the Failure handler)
+  # means each latch stays armed from the moment it fires until the print
+  # actually ends.
+
+  - id: 3d_print_complete_notification
+    alias: "3D Print Complete Notification"
+    mode: parallel
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_print_status
+          - sensor.<entity_22>_print_status
+        to: complete
+        trigger: state
+    actions:
+      - variables:
+          base_name: >
+            {{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_status', '')
+            }}
+          notif_title: "{{ base_name | replace('_',' ') | title }} Print Done 👍"
+          notif_message: >
+            Printed: {{ states('input_text.' ~ base_name ~ '_last_file')
+                | replace('_',' ')
+                | replace('.gcode','')
+                | default('Unknown file', true) }}
+          notif_image: >
+            /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+      - data:
+          title: "{{ notif_title }}"
+          message: "{{ notif_message }}"
+          data:
+            image: "{{ notif_image }}"
+        action: notify.boss_phones
+
+      # Reset per-print latches so the next job works correctly
+      - target:
+          entity_id:
+            - "input_boolean.{{ base_name }}_half_notified"
+            - "input_boolean.{{ base_name }}_light_on_for_print"
+        action: input_boolean.turn_off
+
+  # --------------------------------------------------------------------------
+  # 3D Printer Light On, On Start
+  # --------------------------------------------------------------------------
+  # Turn the chamber light on once per print job, not on every print_status
+  # bounce to `printing`. <entity_21> in particular bounces Printing<>Idle
+  # during multi-color filament swaps, which re-fired the old automation
+  # and turned the light back on even if you had turned it off mid-print.
+  #
+  # Same latch pattern as the halfway notification: one input_boolean per
+  # printer, flipped on after the first light.turn_on, reset only at job
+  # end (Complete + Failure handlers above). Deliberately NOT reset on
+  # `to: printing`.
+  #
+  # mode: single (NOT parallel) — same race-prevention rationale as
+  # halfway.
+
+  - id: 3d_printer_light_on_start
+    alias: "3D Printer Light On, On Start"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_print_status
+          - sensor.<entity_22>_print_status
+        to: printing
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: |
+          {% set base_name = trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_status', '') %}
+          {{ states('input_boolean.' ~ base_name ~ '_light_on_for_print') == 'off' }}
+    actions:
+      - target:
+          entity_id: >
+            light.{{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_status', '_chamber_light') }}
+        action: light.turn_on
+      - target:
+          entity_id: >
+            input_boolean.{{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_status', '_light_on_for_print') }}
+        action: input_boolean.turn_on
+
+  # --------------------------------------------------------------------------
+  # 3D Print Halfway Notification
+  # --------------------------------------------------------------------------
+  # mode: single (NOT parallel) — kills the race where two near-simultaneous
+  # percent updates both pass the latch check before either action gets to
+  # flip the latch on, resulting in duplicate notifications. The latch
+  # itself is reset only at job end (see the Complete and Failure handlers),
+  # not on `to: printing`, so multi-color filament-swap bounces in
+  # print_status can't re-arm it mid-print.
+
+  - id: 3d_print_halfway_notification
+    alias: "3D Print Halfway Notification"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_percent_complete
+          - sensor.<entity_22>_percent_complete
+        # Any percent update runs the automation; conditions below implement
+        # the real trigger.
+        trigger: state
+    conditions:
+      # Fire once per job: upward edge across 50% (not the whole 49-57 band)
+      # and latch still off.
+      - condition: template
+        value_template: |
+          {# Percent before/after this update; missing from_state treated as 0 (cold start). #}
+          {% set previous = (trigger.from_state.state if trigger.from_state else 0) | float(0) %}
+          {% set current = trigger.to_state.state | float(0) %}
+          {# e.g. input_boolean.<entity_22>_half_notified — must be off or we already notified. #}
+          {% set half_notified_entity_id = 'input_boolean.' ~ (trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_percent_complete', '_half_notified')) %}
+          {{ previous < 50 and current >= 50 and states(half_notified_entity_id) == 'off' }}
+    actions:
+      - variables:
+          base_name: >
+            {{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_percent_complete', '')
+            }}
+
+          notif_title: "{{ base_name | replace('_',' ') | title }} — Half done printing! 🕓"
+
+          # Lists actual end time in local time, and amount of time remaining.
+          notif_message: >
+            {% set remaining = states('sensor.' ~ base_name ~ '_remaining_print_time') | int(0) %}
+            {% set end_time = now() + timedelta(minutes=remaining) %}
+            File: {{ states('input_text.' ~ base_name ~ '_last_file')
+                | replace('_',' ')
+                | replace('.gcode','')
+                | default('Unknown file', true) }}
+            ⏳ End Time: {{ end_time.strftime('%-I:%M %p') }}, in {{
+              (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int // 60
+            }} hours {{
+              (states('sensor.' ~ base_name ~ '_remaining_print_time')) | int % 60
+            }} minutes
+
+          notif_image: >
+            /api/image_proxy/image.{{ base_name }}_cover_image?ts={{ now().timestamp() }}
+
+      # Turn on the boolean (prevents duplicate notifications)
+      - target:
+          entity_id: "input_boolean.{{ base_name }}_half_notified"
+        action: input_boolean.turn_on
+
+      - data:
+          title: "{{ notif_title }}"
+          message: "{{ notif_message }}"
+          data:
+            image: "{{ notif_image }}"
+        action: notify.boss_phones
+
+  # --------------------------------------------------------------------------
+  # Cache 3D Print Filename
+  # --------------------------------------------------------------------------
+  # When a printer's file_name sensor updates (new job loaded), cache the
+  # filename into an input_text helper. The printer's own sensor clears on
+  # print complete, but the Complete/Failure/Halfway/Spoolman automations
+  # need the filename after the job ends.
+
+  - id: cache_3d_print_filename
+    alias: "Cache 3D Print Filename"
+    mode: parallel
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_file_name
+          - sensor.<entity_22>_file_name
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state
+                not in ['unknown', 'Unknown', 'unavailable', 'Unavailable', ''] }}
+    actions:
+      - target:
+          entity_id: >
+            input_text.{{ trigger.entity_id
+              | replace('sensor.','')
+              | replace('_file_name','_last_file') }}
+        data:
+          value: "{{ trigger.to_state.state }}"
+        action: input_text.set_value

@@ -1,0 +1,609 @@
+# =============================================================================
+# General — House-Wide HA Package
+# =============================================================================
+# General-purpose HA config that is not specific to one dashboard: utility
+# meters, house-wide sensors, helpers. A large coherent domain can graduate to
+# its own file in packages/, the configuration.yaml is set so it loads every
+# yaml file there automatically.
+#
+# Deployed to HA as: packages/general.yaml
+# Loaded by configuration.yaml via `packages: !include_dir_named packages`,
+# keyed by filename — this file is the `general` package.
+# Requires an HA restart after changes (packages can't hot-reload).
+#
+# =============================================================================
+
+# =============================================================================
+# Phone Notification Group
+# =============================================================================
+# Groups both household phones into a single notify target so automations
+# can alert everyone with one action call.
+
+notify:
+  - name: boss_phones
+    platform: group
+    services:
+      - service: mobile_app_<entity_9>
+      - service: mobile_app_<entity_7>
+
+# =============================================================================
+# Thermal Comfort — Dew Point, Heat Index, Humidex, etc.
+# =============================================================================
+# Custom integration (HACS): https://github.com/dolezsa/thermal_comfort
+# Each entry pairs a temperature + humidity sensor from the same location
+# to compute derived comfort metrics (dew point, heat index, humidex, etc.).
+# Requires the Thermal Comfort integration installed via HACS.
+
+thermal_comfort:
+  - custom_icons: true
+    sensor:
+      - name: Basement
+        temperature_sensor: sensor.basement_temperature
+        humidity_sensor: sensor.basement_humidity
+        unique_id: F45...D28
+      - name: Living Room
+        temperature_sensor: sensor.living_room_thermostat_current_temperature
+        humidity_sensor: sensor.living_room_thermostat_current_humidity
+        unique_id: F47...8E7
+      - name: Main Suite
+        temperature_sensor: sensor.<entity_30>_temperature
+        humidity_sensor: sensor.<entity_30>_humidity
+        unique_id: BCA...984
+      - name: Backyard
+        temperature_sensor: sensor.<entity_10>_temperature
+        humidity_sensor: sensor.<entity_10>_humidity
+        unique_id: F50...433
+
+# =============================================================================
+# Lawn Rain Tracking — Weekly Utility Meter
+# =============================================================================
+# Tracks cumulative rainfall from the yard's weather station on a weekly
+# cycle, resetting every Monday at midnight.
+#
+# Source sensor: sensor.<entity_10>_precipitation
+#   - Has state_class: "total" (a cumulative sensor with periodic resets)
+#   - Reports in inches
+#   - The weather station's precipitation sensor accumulates rain during each rain
+#     event and issues a "last_reset" timestamp when the accumulation
+#     period ends. This is normal behavior for "total" class sensors —
+#     the sensor value drops back to 0 after each reset and begins
+#     climbing again with new precipitation.
+#
+# How HA utility meters work with "total" sensors that reset:
+#   HA's utility meter system is designed to handle exactly this pattern.
+#   When the source sensor resets (its value drops and last_reset updates),
+#   HA does NOT zero out the utility meter. Instead, it:
+#     1. Detects the reset via the last_reset timestamp change
+#     2. Adds the final pre-reset value to the running meter total
+#     3. Starts tracking from the new post-reset baseline (usually 0)
+#   This means each rain event's full accumulation is captured even though
+#   the source sensor resets between events. The utility meter's weekly
+#   total is the sum of ALL rain events within the Monday–Sunday cycle.
+#
+# Why this matters:
+#   If the weather station reports 0.3 in of rain, resets, then reports 0.2 in more,
+#   the utility meter correctly shows 0.5in — not 0.2in. Without this
+#   understanding you might expect the meter to lose data on resets. It
+#   does not. HA's long-term statistics system tracks every increment.
+#
+# Weekly cycle behavior:
+#   - cycle: weekly resets on Monday at midnight (ISO 8601 week start)
+#   - No offset is needed — Monday is the default for weekly cycle
+#   - When the weekly reset occurs, the completed week's total moves to
+#     the "last_period" attribute and the meter state resets to 0
+#   - last_period persists all week until overwritten by the next Monday
+#     reset, giving a stable "last week" reference value
+#
+# Created entity: sensor.lawn_rain_weekly
+#   - state: cumulative rain in inches since Monday 00:00
+#   - last_period attribute: previous full week's total rain in inches
+
+utility_meter:
+  lawn_rain_weekly:
+    source: sensor.<entity_10>_precipitation
+    name: "Lawn Rain Weekly"
+    cycle: weekly
+
+# =============================================================================
+# UV Index — REST Sensor + Daily Refresh
+# =============================================================================
+# Fetches the day's hourly UV forecast from Open-Meteo once per day
+# (scan_interval: 86 400 s). The sensor's state is the peak UV index for
+# the day; the full hourly breakdown is in the time / uv_index attributes.
+#
+# The refresh automation triggers at 06:55 so the forecast is current
+# before any morning automations that reference UV.
+#
+# Created entity: sensor.openmeteo_hourly_uv_forecast
+
+rest:
+  - resource: !secret openmeteo_uv_url
+    scan_interval: 86400
+    sensor:
+      - name: "OpenMeteo Hourly UV Forecast"
+        unique_id: openmeteo_hourly_uv_forecast
+        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
+        unit_of_measurement: "UV index"
+        icon: mdi:sun-wireless
+        json_attributes_path: "$.hourly"
+        json_attributes:
+          - time
+          - uv_index
+
+automation:
+  - id: refresh_uv_forecast
+    alias: "Refresh UV Forecast"
+    trigger:
+      - platform: time
+        at: "06:55:00"
+    action:
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.openmeteo_hourly_uv_forecast
+    mode: single
+
+  # --------------------------------------------------------------------------
+  # Door Opens After Bedtime (multi-door)
+  # --------------------------------------------------------------------------
+  # Fires when ANY tracked bedroom door opens during the bedtime window
+  # Turns off TV and media player, turns the bedroom lights to a per-door
+  # color so you can tell at a glance who, and notifies the phones with the name.
+  #
+  # State preservation: On the FIRST door open (all other tracked doors
+  # still closed), snapshots the current light state into
+  # scene.house_state_pre_door_disruption. The close automation restores
+  # from this scene when all doors are closed again, so the room returns
+  # to whatever state it was in before the interruption.
+  #
+  # Off-light firmware color fix: scene.turn_on restores ON lights
+  # perfectly, but for OFF lights it just calls light.turn_off — light
+  # firmware retains the last color set on the bulb (red/purple from the
+  # disruption). So after scene.turn_on, the close automation pushes a
+  # neutral 4000K white into any tracked light that ended up off. No
+  # per-light helpers needed. Adding a new light just means adding it
+  # to the snapshot_entities list here AND the tracked_lights list in
+  # the close automation.
+  #
+  # To wire up a new door later:
+  #   1. Add its binary_sensor entity_id to triggers[0].entity_id AND to
+  #      the all_doors variable in the actions below (keep these in sync).
+  #   2. Add a matching key (the base_name — i.e. with the possessive
+  #      trailing 's' stripped) to door_colors with rgb + brightness_pct.
+
+  - id: door_opens_after_bedtime
+    alias: "Door Opens After Bedtime"
+    mode: parallel
+    triggers:
+      - entity_id:
+          - binary_sensor.<entity_3>s_door_door
+          - binary_sensor.<entity_4>s_door_door
+        from: "off"
+        to: "on"
+        trigger: state
+    conditions:
+      - condition: time
+        after: "19:45:00"
+        before: "23:59:00"
+        # Every day of the week — bedtime is bedtime.
+        weekday: [mon, tue, wed, thu, fri, sat, sun]
+    actions:
+      # Derive per-door identity + light color from the trigger entity.
+      - variables:
+          # Full list of tracked door sensors. Must stay in sync with
+          # triggers[0].entity_id above. Used by the "first door?" template
+          # below and referenced by the close automation's "all closed?" check.
+          all_doors:
+            - binary_sensor.<entity_3>s_door_door
+            - binary_sensor.<entity_4>s_door_door
+
+          # binary_sensor.<entity_3>s_door_door -> <entity_3>
+          # binary_sensor.<entity_4>s_door_door -> <entity_4>
+          # Strip prefix, strip '_door_door' suffix, the result matches the
+          # door_colors keys below.
+          base_name: >
+            {{ trigger.entity_id
+              | replace('binary_sensor.', '')
+              | replace('s_door_door', '') }}
+
+          # Drops into the phone notification so you know which door opened
+          # without looking at the light color.
+          display_name: "{{ base_name | replace('_',' ') | title }}"
+
+          # Per-door light color: the room color tells you WHICH door opened
+          # without having to unlock your phone. Add a new key whenever a
+          # new door is added to the triggers list above.
+          # IMPORTANT: keys must be lowercase — HA entity IDs are always
+          # lowercase, so base_name will be lowercase.
+          door_colors:
+            <entity_3>:
+              rgb: [255, 0, 0]        # red
+              brightness_pct: 15
+            <entity_4>:
+              rgb: [128, 0, 128]      # purple
+              brightness_pct: 15
+
+          <entity_29>_rgb: "{{ door_colors[base_name].rgb }}"
+          <entity_29>_brightness_pct: "{{ door_colors[base_name].brightness_pct }}"
+
+          notif_message: "{{ now().strftime('%-I:%M %p') }} {{ display_name }} 🏃🚪👀"
+
+      # If this is the FIRST tracked door to open (all other tracked doors
+      # are still closed), snapshot the light lights into a scene so the
+      # close automation can restore them. If another door is already open,
+      # the snapshot was taken on that earlier open — do NOT overwrite it,
+      # or we'd capture the disruption color and "restore" to red later.
+      #
+      # Scene-age guard: also skip the snapshot if the scene was created or
+      # restored less than 3 seconds ago. A rapid close->reopen can race
+      # the light state update — the bulbs are still red in HA's state
+      # machine when scene.create runs, poisoning every future restore.
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% set others = all_doors | reject('equalto', trigger.entity_id) | list %}
+                  {% set others_open = others | map('states') | select('equalto', 'on') | list | length %}
+                  {% set scene_ent = states.scene.house_state_pre_door_disruption %}
+                  {% set scene_age = (as_timestamp(now()) - as_timestamp(scene_ent.last_changed))
+                     if scene_ent is not none else 999 %}
+                  {{ others_open == 0 and scene_age > 3 }}
+            sequence:
+              - action: scene.create
+                data:
+                  scene_id: house_state_pre_door_disruption
+                  snapshot_entities:
+                    - light.kitchen_table_light
+                    - light.<entity_1>s_lamp
+                    - light.<entity_2>s_lamp
+                    - light.<entity_11>_ceiling_light
+
+      # Run the bedtime-disruption actions concurrently.
+      - parallel:
+          # Turn off TV.
+          - type: turn_off
+            device_id: 165...267
+            entity_id: 741...55f
+            domain: remote
+
+          # Turn off media player.
+          - action: media_player.turn_off
+            target:
+              device_id: 06f...bfc
+
+          # Lights -> door-specific color.
+          - action: <entity_29>.set_state
+            data:
+              power: true
+              rgb_color: "{{ <entity_29>_rgb }}"
+              brightness_pct: "{{ <entity_29>_brightness_pct }}"
+            target:
+              device_id:
+                - dfd...50b
+                - 921...86f
+                - 83e...943
+                - d9e...17d
+
+          # Notify phones with the per-door message.
+          - data:
+              message: "{{ notif_message }}"
+            action: notify.boss_phones
+
+  # --------------------------------------------------------------------------
+  # Door Closes After Bedtime (multi-door)
+  # --------------------------------------------------------------------------
+  # Sibling of the opens automation. Three behaviors:
+  #   - Notify phones with the closing door's name on EVERY close
+  #     (even if other tracked doors are still open).
+  #   - If other doors are still open, switch the light lights to a
+  #     remaining open door's color (so the lights never show a closed
+  #     door's color).
+  #   - Revert the light lights to the pre-disruption state ONLY when ALL
+  #     tracked doors are now closed. Uses scene.turn_on to restore from
+  #     the snapshot, then pushes a neutral 4000K white into any tracked
+  #     light that ended up off (so light firmware forgets the disruption
+  #     color).
+
+  - id: door_closes_after_bedtime
+    alias: "Door Closes After Bedtime"
+    mode: parallel
+    triggers:
+      - entity_id:
+          - binary_sensor.<entity_3>s_door_door
+          - binary_sensor.<entity_4>s_door_door
+        from: "on"
+        to: "off"
+        trigger: state
+    conditions:
+      - condition: time
+        after: "19:45:00"
+        before: "23:59:00"
+        weekday: [mon, tue, wed, thu, fri, sat, sun]
+    actions:
+      # Same base_name + display_name derivation as the opens automation.
+      - variables:
+          # Keep in sync with the opens automation's all_doors and triggers.
+          all_doors:
+            - binary_sensor.<entity_3>s_door_door
+            - binary_sensor.<entity_4>s_door_door
+
+          base_name: >
+            {{ trigger.entity_id
+              | replace('binary_sensor.', '')
+              | replace('_door_door', '')
+              | regex_replace(find='s$', replace='') }}
+
+          display_name: "{{ base_name | replace('_',' ') | title }}"
+
+          # Per-door light color — same map as the opens automation. Needed
+          # so the "some doors still open" branch can switch to the
+          # remaining door's color.
+          door_colors:
+            <entity_3>:
+              rgb: [255, 0, 0]        # red
+              brightness_pct: 15
+            <entity_4>:
+              rgb: [128, 0, 128]      # purple
+              brightness_pct: 15
+
+          notif_message: "{{ now().strftime('%-I:%M %p') }} {{ display_name }} 🚪🔒"
+
+      # Always notify phones — one message per door close, regardless
+      # of whether any other door is still open.
+      - data:
+          message: "{{ notif_message }}"
+        action: notify.boss_phones
+
+      # Only revert the light lights when ALL tracked doors are now closed.
+      # states() already reflects the trigger's new 'off' value by the time
+      # actions run, so open_count == 0 means every tracked door is closed.
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %}
+                  {{ open == 0 }}
+            sequence:
+              # tracked_lights MUST stay in sync with snapshot_entities in
+              # the opens automation's scene.create call.
+              - variables:
+                  tracked_lights:
+                    - light.kitchen_table_light
+                    - light.<entity_1>s_lamp
+                    - light.<entity_2>s_lamp
+                    - light.<entity_11>_ceiling_light
+
+              # A) Restore from the scene snapshot. ON lights get their full
+              #    color + brightness back; OFF lights get turned off (but
+              #    light firmware still holds the disruption color).
+              - action: scene.turn_on
+                target:
+                  entity_id: scene.house_state_pre_door_disruption
+                data:
+                  transition: 0
+
+              # B) Push a neutral 4000K white into every tracked light that
+              #    is now off. set_state with power: false updates the
+              #    bulb's firmware-stored color without turning it on, so
+              #    the next manual on shows neutral white instead of
+              #    red/purple. The is_state filter keeps on-lights untouched.
+              - action: <entity_29>.set_state
+                target:
+                  entity_id: >
+                    {{ tracked_lights | select('is_state', 'off') | list }}
+                data:
+                  power: false
+                  color_temp_kelvin: 4000
+                  brightness: 128
+                  transition: 0
+
+        # Some doors are still open — switch the lights to a remaining open
+        # door's color so they no longer show the just-closed door's color.
+        default:
+          - variables:
+              remaining_base: >
+                {% set open_doors = all_doors | select('is_state', 'on') | list %}
+                {{ open_doors | first
+                   | replace('binary_sensor.', '')
+                   | replace('s_door_door', '') }}
+              remaining_rgb: "{{ door_colors[remaining_base].rgb }}"
+              remaining_brightness: "{{ door_colors[remaining_base].brightness_pct }}"
+          - action: <entity_29>.set_state
+            data:
+              power: true
+              rgb_color: "{{ remaining_rgb }}"
+              brightness_pct: "{{ remaining_brightness }}"
+            target:
+              device_id:
+                - dfd...50b
+                - 921...86f
+                - 83e...943
+                - d9e...17d
+
+  # --------------------------------------------------------------------------
+  # Go to bed
+  # --------------------------------------------------------------------------
+  # Turns off TV and media player at 9 PM.
+
+  - id: go_to_bed
+    alias: "Go to bed"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "21:00:00"
+    conditions: []
+    actions:
+      - parallel:
+          - type: turn_off
+            device_id: 165...267
+            entity_id: 741...55f
+            domain: remote
+          - action: media_player.turn_off
+            target:
+              device_id: 06f...bfc
+
+  # --------------------------------------------------------------------------
+  # Main Suite Weekday Wake
+  # --------------------------------------------------------------------------
+  # Turns on bedroom and ceiling lights weekday mornings.
+
+  - id: main_suite_weekday_wake
+    alias: "Main Suite Weekday Wake"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "05:40:00"
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+    conditions: []
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id:
+            - light.<entity_1>s_lamp
+            - light.<entity_2>s_lamp
+            - light.ceiling_light
+        data:
+          color_temp_kelvin: 4190
+          brightness_pct: 100
+
+  # --------------------------------------------------------------------------
+  # Kitchen Light Morning
+  # --------------------------------------------------------------------------
+  # Turns on the kitchen table light every morning.
+
+  - id: kitchen_light_morning
+    alias: "Kitchen Light Morning"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "05:45:00"
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    conditions: []
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.kitchen_table_light
+        data:
+          color_temp_kelvin: 4668
+          brightness_pct: 100
+
+  # --------------------------------------------------------------------------
+  # <entity_4> Daytime
+  # --------------------------------------------------------------------------
+  # Turns on <entity_4>'s room light in the morning.
+
+  - id: <entity_4>_daytime
+    alias: "<entity_4> Daytime"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "07:00:00"
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    conditions: []
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.<entity_4>s_room
+        data:
+          color_temp_kelvin: 5205
+          brightness_pct: 100
+
+  # --------------------------------------------------------------------------
+  # <entity_4> light dim at 7
+  # --------------------------------------------------------------------------
+  # Sets <entity_4>'s room to a warm dim for bedtime wind-down.
+
+  - id: <entity_4>_light_dim_at_7
+    alias: "<entity_4> light dim at 7"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "19:00:00"
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    conditions: []
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.<entity_4>s_room
+        data:
+          color_temp_kelvin: 2500
+          brightness_pct: 60
+
+  # --------------------------------------------------------------------------
+  # <entity_4> light off 715
+  # --------------------------------------------------------------------------
+  # Turns off <entity_4>'s light with a 60s transition for sleep.
+
+  - id: <entity_4>_light_off_715
+    alias: "<entity_4> light off 715"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "19:15:00"
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    conditions: []
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.<entity_4>s_room
+        data:
+          transition: 60
+
+  # --------------------------------------------------------------------------
+  # <entity_4> light second off 805
+  # --------------------------------------------------------------------------
+  # Turns off <entity_4>'s light a second time to be sure.
+
+  - id: <entity_4>_light_second_off_805
+    alias: "<entity_4> light second off 805"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "20:05:00"
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    conditions: []
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.<entity_4>s_room
+        data:
+          transition: 60

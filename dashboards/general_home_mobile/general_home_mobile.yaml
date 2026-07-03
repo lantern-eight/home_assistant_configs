@@ -4,12 +4,11 @@
 # Synced to HA as: packages/general_home_mobile.yaml
 # Requires HA restart after changes (packages can't hot-reload).
 #
-# Include in configuration.yaml:
-#   homeassistant:
-#     packages:
-#       general_home_mobile: !include packages/general_home_mobile.yaml
+# Loaded automatically — configuration.yaml loads the whole packages directory.
+# This file is the `general_home_mobile` package. Dashboard-specific config
+# only. General house-wide config goes in repo-root packages/general.yaml.
 #
-# No `initial:` on any helper — values persist across restarts.
+# `initial:` not included on values that persist across restarts.
 #
 # Categories and labels are defined in registry_metadata.yaml and
 # applied by the sync script via WebSocket (-c flag).
@@ -124,22 +123,6 @@ input_number:
     unit_of_measurement: "px"
     mode: slider
 
-# --- REST sensors ---
-
-rest:
-  - resource: !secret openmeteo_uv_url
-    scan_interval: 86400
-    sensor:
-      - name: "OpenMeteo Hourly UV Forecast"
-        unique_id: openmeteo_hourly_uv_forecast
-        value_template: "{{ value_json.hourly.uv_index | max | round(1) }}"
-        unit_of_measurement: "UV index"
-        icon: mdi:sun-wireless
-        json_attributes_path: "$.hourly"
-        json_attributes:
-          - time
-          - uv_index
-
 # --- Command-line sensors ---
 
 command_line:
@@ -179,17 +162,6 @@ automation:
       - service: input_boolean.turn_off
         target:
           entity_id: input_boolean.cond_bedtime_doors
-
-  - id: refresh_uv_forecast
-    alias: "Refresh UV Forecast"
-    trigger:
-      - platform: time
-        at: "06:55:00"
-    action:
-      - action: homeassistant.update_entity
-        target:
-          entity_id: sensor.openmeteo_hourly_uv_forecast
-    mode: single
 
   - id: cond_uv_index_on
     alias: "Cond: UV Index ON"

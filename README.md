@@ -7,6 +7,7 @@ Home Assistant configuration backup, dashboard management, and tooling. Runs on 
 
 - [Setup](#setup)
 - [Backup](#backup)
+- [General HA Packages](#general-ha-packages)
 - [Dashboards](#dashboards)
   - [General Home Mobile](#general-home-mobile)
   - [Cyberdeck (3D Printer Farm)](#cyberdeck-3d-printer-farm)
@@ -42,8 +43,10 @@ long-lived access token for the HA REST API. Both `config.yaml` and
 
 ## Backup
 
-Pull the full HA configuration over SMB, then redact names and shorten hex IDs
-for safe version control. An entity map is saved so redaction can be reversed.
+Pull specific HA config files over SMB (process list in `BACKUP_FILES`), then
+redact names and shorten hex IDs for safe version control. An entity map is
+saved so redaction can be reversed. Most config now lives in repo-managed
+packages, so only files that HA owns (like `configuration.yaml`) need pulling.
 
 ```bash
 # Backup + sanitize (default, with no flags)
@@ -54,7 +57,7 @@ uv run python scripts/home_assistant_backup.py
 uv run python scripts/home_assistant_backup.py -b
 
 # Redaction pass only, no SMB pull
-# (processes home_assistant_backup/, home_assistant_backup_comments/, and dashboards/)
+# (processes home_assistant_backup/, dashboards/, and packages/)
 # - sanitize
 uv run python scripts/home_assistant_backup.py -s
 
@@ -84,9 +87,31 @@ uv run python scripts/home_assistant_backup.py -h
 The `-b`, `-s`, and `-r` flags are mutually exclusive. With none of them set,
 the script runs backup followed by sanitize.
 
-The backup lands in `home_assistant_backup/`. A parallel
-`home_assistant_backup_comments/` directory preserves comment-annotated versions
-of automations (HA strips comments on save).
+The backup lands in `home_assistant_backup/`. To back up additional files, add
+their paths (relative to the HA config root) to the `BACKUP_FILES` list in
+`scripts/home_assistant_backup.py`.
+
+## General HA Packages
+
+`packages/` at the repo root holds general-purpose HA config — house-wide
+sensors, utility meters, helpers — that is not specific to one dashboard.
+Dashboards consume these entities. General config goes in `packages/general.yaml`,
+one commented section per concern. A large coherent domain can graduate to its
+own file. Every yaml file in `packages/` is uploaded to HA's `packages/` directory
+by `scripts/general_home_dashboard_sync.py`, and HA loads the whole directory via
+`packages: !include_dir_named packages` — new files need no `configuration.yaml` edit,
+they'll be auto-picked up. Package changes require an HA restart.
+
+### Source of Truth vs. HA Backup Folder
+
+The backup script only pulls files listed in `BACKUP_FILES` (currently just
+`configuration.yaml`). Packages, dashboards, and other repo-managed config are
+authored here and pushed to HA — they are the source of truth and don't need
+pulling back.
+
+Package files live at the repo root (`packages/`). HA only reads them, never
+rewrites them, so comments persist. The flow is the opposite direction from
+backups: packages are authored in the repo and pushed to HA.
 
 ## Dashboards
 
@@ -145,7 +170,7 @@ uv run pytest tests/ -v
 - `test_redaction.py` -- name redaction, pronoun neutralization, ID shortening
 - `test_process_backup_files.py` -- end-to-end backup file processing
 - `test_restore.py` -- entity map round-trip restore
-- `test_ignore_patterns.py` -- file/directory ignore rules
+- `test_ignore_patterns.py` -- backup file process list validation
 - `test_config.py` -- config loading from YAML and environment
 
 ## Project Structure
@@ -156,28 +181,26 @@ uv run pytest tests/ -v
 ├── pyproject.toml                   # Python project config (uv/pip)
 ├── conftest.py                      # Adds scripts/ to Python path for tests
 │
-├── scripts/                         # All Python scripts
+├── scripts/                         # Local Python tooling (runs on your machine)
 │   ├── utils.py                     # Shared logging (JSON + colored TTY output)
 │   ├── home_assistant_backup.py     # Pull HA config over SMB, redact, shorten IDs
 │   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
 │   ├── dashboard_upload.py          # Push dashboard.yaml to HA over SMB
 │   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
-│   └── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
+│   ├── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
+│   └── ha_scripts/                  # Scripts deployed to and run on HA
+│       ├── generate_theme_thumbnails.py
+│       └── list_theme_backgrounds.py
 │
 ├── dashboards/                      # Dashboards live here
 │   ├── cyberdeck/                   # 3D printer farm dashboard
 │   └── general_home_mobile/         # Mobile-first general home dashboard
 │
-├── home_assistant_backup/           # Backup of HA config (redacted)
-│   ├── configuration.yaml
-│   ├── automations.yaml
-│   ├── custom__sensors.yaml
-│   ├── blueprints/
-│   ├── dashboards/
-│   ├── themes/
-│   └── www/community/               # HACS frontend components (gitignored)
+├── packages/                        # General HA packages (house-wide sensors,
+│   └── general.yaml                 #   utility meters) — not dashboard-specific
 │
-├── home_assistant_backup_comments/  # Comment-preserved automation copies
+├── home_assistant_backup/           # Backup of HA config (redacted, process list only)
+│   └── configuration.yaml
 │
 └── tests/
     ├── test_redaction.py

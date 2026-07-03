@@ -374,16 +374,11 @@ def _patch_sanitize_dirs(
   dest,
   entity_map_path,
   redact_entities,
-  comments=None,
   dashboards=None,
 ) -> None:
-  '''Point sanitize/restore at temp dirs; omit comments/dashboards to skip them.'''
+  '''Point sanitize/restore at temp dirs; omit dashboards to skip it.'''
   base = Path(dest).parent
   monkeypatch.setattr('home_assistant_backup.DEST', str(dest))
-  monkeypatch.setattr(
-    'home_assistant_backup.COMMENTS_DIR',
-    str(comments if comments is not None else base / 'missing_comments'),
-  )
   monkeypatch.setattr(
     'home_assistant_backup.DASHBOARDS_DIR',
     str(dashboards if dashboards is not None else base / 'missing_dashboards'),
@@ -396,22 +391,18 @@ class TestRunSanitize:
     def test_loads_existing_map_and_reuses_placeholders(self, monkeypatch, tmp_path):
         """Sanitize loads the on-disk entity_map and keeps known placeholders."""
         dest = tmp_path / "backup"
-        comments = tmp_path / "comments"
         map_path = tmp_path / "entity_map.yaml"
         dest.mkdir()
-        comments.mkdir()
 
         # Pre-existing map with Zavala pinned to <entity_3>.
         save_entity_map({"ids": {}, "entities": {"<entity_3>": "Zavala"}}, map_path)
         (dest / "auto.yaml").write_text(
             "alias: Zavala's door\nmessage: <entity_3> opened it\n"
         )
-        (comments / "ref.yaml").write_text("note: Zavala's room\n")
 
         _patch_sanitize_dirs(
             monkeypatch,
             dest=dest,
-            comments=comments,
             entity_map_path=map_path,
             redact_entities=["Zavala"],
         )
@@ -421,7 +412,6 @@ class TestRunSanitize:
         assert (dest / "auto.yaml").read_text() == (
             "alias: <entity_3>'s door\nmessage: <entity_3> opened it\n"
         )
-        assert (comments / "ref.yaml").read_text() == "note: <entity_3>'s room\n"
         # Map preserved; no <entity_1> created.
         final = load_entity_map(map_path)
         assert final["entities"] == {"<entity_3>": "Zavala"}
@@ -446,8 +436,8 @@ class TestRunSanitize:
         assert map_path.exists()
         assert load_entity_map(map_path)["entities"] == {"<entity_1>": "Alice"}
 
-    def test_skips_missing_comments_dir(self, monkeypatch, tmp_path):
-        """Sanitize should not error if COMMENTS_DIR doesn't exist."""
+    def test_skips_missing_dashboards_dir(self, monkeypatch, tmp_path):
+        """Sanitize should not error if DASHBOARDS_DIR doesn't exist."""
         dest = tmp_path / "backup"
         map_path = tmp_path / "entity_map.yaml"
         dest.mkdir()
@@ -456,7 +446,7 @@ class TestRunSanitize:
         _patch_sanitize_dirs(
             monkeypatch,
             dest=dest,
-            comments=tmp_path / "does_not_exist",
+            dashboards=tmp_path / "does_not_exist",
             entity_map_path=map_path,
             redact_entities=["Alice"],
         )
@@ -466,36 +456,30 @@ class TestRunSanitize:
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
 
     def test_processes_all_sanitize_dirs(self, monkeypatch, tmp_path):
-        """Sanitize accumulates findings across DEST, COMMENTS_DIR, and dashboards/."""
+        """Sanitize accumulates findings across DEST and dashboards/."""
         dest = tmp_path / "backup"
-        comments = tmp_path / "comments"
         dashboards = tmp_path / "dashboards"
         map_path = tmp_path / "entity_map.yaml"
         dest.mkdir()
-        comments.mkdir()
         dashboards.mkdir()
 
         (dest / "auto.yaml").write_text("alias: Alice morning\n")
-        (comments / "ref.yaml").write_text("note: Bob evening\n")
-        (dashboards / "view.yaml").write_text("title: Carol dashboard\n")
+        (dashboards / "view.yaml").write_text("title: Bob dashboard\n")
 
         _patch_sanitize_dirs(
             monkeypatch,
             dest=dest,
-            comments=comments,
             dashboards=dashboards,
             entity_map_path=map_path,
-            redact_entities=["Alice", "Bob", "Carol"],
+            redact_entities=["Alice", "Bob"],
         )
 
         _run_sanitize()
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1> morning\n"
-        assert (comments / "ref.yaml").read_text() == "note: <entity_2> evening\n"
-        assert (dashboards / "view.yaml").read_text() == "title: <entity_3> dashboard\n"
+        assert (dashboards / "view.yaml").read_text() == "title: <entity_2> dashboard\n"
         final = load_entity_map(map_path)
         assert final["entities"] == {
             "<entity_1>": "Alice",
             "<entity_2>": "Bob",
-            "<entity_3>": "Carol",
         }

@@ -37,51 +37,8 @@ lovelace:
       show_in_sidebar: true
       filename: dashboards/general_home_mobile/dashboard.yaml
 
-# ---------------------------
-# Custom added by me below this line
-# ---------------------------
-
 template: !include_dir_merge_list template_sensors
 
-# Notification group for phones
-notify:
-  - name: boss_phones
-    platform: group
-    services:
-      - service: mobile_app_<entity_9>
-      - service: mobile_app_<entity_7>
-
-# Thermal Comfort - dew point, heat index, humidex, etc.
-# https://github.com/dolezsa/thermal_comfort
-# Each entry needs a temp + humidity sensor pair from the same location.
-thermal_comfort:
-  - custom_icons: true
-    sensor:
-      - name: Basement
-        temperature_sensor: sensor.basement_temperature
-        humidity_sensor: sensor.basement_humidity
-        unique_id: F45...D28
-      - name: Living Room
-        temperature_sensor: sensor.living_room_thermostat_current_temperature
-        humidity_sensor: sensor.living_room_thermostat_current_humidity
-        unique_id: F47...8E7
-      - name: Main Suite
-        temperature_sensor: sensor.everything_presence_one_601670_temperature
-        humidity_sensor: sensor.everything_presence_one_601670_humidity
-        unique_id: BCA...984
-      - name: Backyard
-        temperature_sensor: sensor.<entity_10>_temperature
-        humidity_sensor: sensor.<entity_10>_humidity
-        unique_id: F50...433
-
-# Spoolman
-rest_command:
-  spoolman_find_spools_by_name:
-    url: "http://<entity_12>/api/v1/spool?filament.name={{ filament_name | urlencode }}&allow_archived=false"
-    method: GET
-    content_type: "application/json"
-
-# General Home Mobile — all helpers, sensors, automations in one package
+# HA packages — every yaml file in packages/ loads as its own package
 homeassistant:
-  packages:
-    general_home_mobile: !include packages/general_home_mobile.yaml
+  packages: !include_dir_named packages
