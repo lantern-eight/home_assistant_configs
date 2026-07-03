@@ -551,6 +551,7 @@ views:
         - decimals: 0
           apex_config:
             tickAmount: 4
+            forceNiceScale: true
         apex_config:
           chart:
             height: 130
@@ -811,6 +812,15 @@ views:
           stroke_width: 2
           extend_to: now
           unit: ' '
+          color_threshold:
+            - value: 0
+              color: '#4CAF50'
+            - value: 3
+              color: '#FFC107'
+            - value: 6
+              color: '#FF9800'
+            - value: 8
+              color: '#F44336'
           show:
             in_header: false
             legend_value: false
@@ -1928,6 +1938,15 @@ views:
         stroke_width: 2
         extend_to: now
         unit: ' '
+        color_threshold:
+          - value: 0
+            color: '#4CAF50'
+          - value: 3
+            color: '#FFC107'
+          - value: 6
+            color: '#FF9800'
+          - value: 8
+            color: '#F44336'
         show:
           in_header: false
           legend_value: false
