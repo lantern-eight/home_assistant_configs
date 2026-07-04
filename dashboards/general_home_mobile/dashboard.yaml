@@ -690,6 +690,8 @@ views:
         state: 'on'
       card:
         type: custom:apexcharts-card
+        experimental:
+          color_threshold: true
         header:
           title: UV Index Today
           show: true
@@ -809,7 +811,7 @@ views:
           name: Actual
           type: area
           color: '#FF9800'
-          stroke_width: 2
+          stroke_width: 0
           extend_to: now
           unit: ' '
           color_threshold:
@@ -1816,6 +1818,8 @@ views:
         card_mod:
           style: *theme_card_style
     - type: custom:apexcharts-card
+      experimental:
+        color_threshold: true
       header:
         title: UV Index Today
         show: true
@@ -1935,7 +1939,7 @@ views:
         name: Actual
         type: area
         color: '#FF9800'
-        stroke_width: 2
+        stroke_width: 0
         extend_to: now
         unit: ' '
         color_threshold:
