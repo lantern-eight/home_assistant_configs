@@ -1,0 +1,46 @@
+# =============================================================================
+# General Registry Metadata — Labels & Categories
+# =============================================================================
+# Copy to registry_metadata.yaml and customize.
+# Applied by: uv run python scripts/apply_registry_metadata.py
+#
+# This file defines general-purpose labels and categories that span the whole
+# HA instance. Dashboard-specific metadata lives in each dashboard's own
+# registry_metadata.yaml (applied by that dashboard's sync script -c flag).
+#
+# Entity IDs use the same <entity_N> placeholders as other project files;
+# the apply script un-redacts them via entity_map.yaml before calling the API.
+#
+# Structure:
+#   labels:      Cross-cutting tags. Entities can have multiple.
+#   categories:  Single-assignment per domain, for Settings UI grouping.
+#                Scope should match the entity domain (automation, script, helpers).
+#   entities:    Maps entity_id -> labels + optional category.
+# =============================================================================
+
+# Labels — define with a color and icon
+labels:
+  Lighting:
+    color: yellow
+    icon: mdi:lightbulb
+  Security:
+    color: red
+    icon: mdi:shield-lock
+  # Add more labels here...
+
+# Categories — single-assignment, grouped by scope (domain)
+categories:
+  Morning Routine:
+    scope: automation
+    icon: mdi:weather-sunset-up
+  # Add more categories here...
+
+# Entity assignments
+entities:
+  automation.my_automation:
+    category: Morning Routine
+    labels:
+      - Lighting
+  sensor.my_sensor:
+    labels:
+      - Security

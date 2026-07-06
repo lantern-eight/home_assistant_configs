@@ -1,0 +1,30 @@
+# =============================================================================
+# Registry Metadata — Categories & Labels for General Home Mobile
+# =============================================================================
+# Copy to registry_metadata.yaml and customize.
+# Applied by the dashboard sync script with -c flag:
+#   uv run python scripts/general_home_dashboard_sync.py -c
+#
+# Dashboard-specific labels and categories for entities that are owned by
+# this dashboard (helpers, theme inputs, conditional card toggles, etc.).
+# General-purpose labels go in the repo-root registry_metadata.yaml instead.
+#
+# Entity IDs use the same <entity_N> placeholders as other project files;
+# the sync script un-redacts them before calling the HA API.
+# =============================================================================
+
+categories:
+  My Dashboard Category:
+    scope: helpers
+    icon: mdi:bell
+
+labels:
+  my-dashboard-label:
+    color: blue
+    icon: mdi:cellphone
+
+entities:
+  input_boolean.my_dashboard_toggle:
+    category: My Dashboard Category
+    labels:
+      - my-dashboard-label
