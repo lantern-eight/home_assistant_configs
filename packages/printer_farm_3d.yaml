@@ -590,6 +590,7 @@ automation:
       - variables:
           raw_data: "{{ states('input_text.<entity_23>_cached_slot_data') }}"
 
+      # Guard: make sure we have cached data
       - choose:
           - conditions:
               - condition: template
