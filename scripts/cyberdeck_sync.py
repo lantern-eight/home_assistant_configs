@@ -28,7 +28,6 @@ HA_BASE_URL = 'http://homeassistant.local:8123'
 FILE_MAP = {
   'dashboard.yaml': 'dashboards/cyberdeck/dashboard.yaml',
   'theme.yaml':     'themes/cyberdeck/cyberdeck.yaml',
-  'sensors.yaml':   'template_sensors/printer_farm_sensors.yaml',
 }
 
 
