@@ -446,16 +446,24 @@ automation:
 
   - id: cache_<entity_21>_slot_data
     alias: "Cache <entity_21> Slot Data"
-    mode: single
+    # restart + settle delay: the integration writes the four slot sensors
+    # one after another, so caching immediately on the first change would
+    # snapshot the other slots at their previous print's values. Any slot
+    # updating restarts the delay; the final write sees all four settled.
+    mode: restart
     triggers:
       - entity_id:
           - sensor.<entity_22>_a1_grams
+          - sensor.<entity_22>_a2_grams
+          - sensor.<entity_22>_a3_grams
+          - sensor.<entity_22>_a4_grams
         trigger: state
     conditions:
       - condition: template
         value_template: >
           {{ trigger.to_state.state not in ['unknown', 'unavailable'] }}
     actions:
+      - delay: "00:00:02"
       - action: input_text.set_value
         target:
           entity_id: input_text.<entity_22>_cached_slot_data
@@ -475,6 +483,40 @@ automation:
               'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
                      'grams': states('sensor.<entity_22>_a4_grams') | float(0) | round(2)}
             } | to_json }}
+
+  # --------------------------------------------------------------------------
+  # Reset <entity_21> Slot Cache on New Job
+  # --------------------------------------------------------------------------
+  # A new task id means a new print. Clearing the cache to zero-gram slots
+  # ensures a print whose upload never reached the capture proxy (e.g. the
+  # slicer bypassed it) pushes nothing to Spoolman at completion, instead of
+  # silently pushing the PREVIOUS print's slot data. Task id is used rather
+  # than filename because re-printing the same file (multi-plate projects)
+  # keeps the filename but always issues a fresh task id.
+
+  - id: reset_<entity_21>_slot_cache
+    alias: "Reset <entity_21> Slot Cache on New Job"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_22>_task_id
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable', '']
+             and trigger.from_state is not none
+             and trigger.to_state.state != trigger.from_state.state }}
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_22>_cached_slot_data
+        data:
+          value: >
+            {{ {'a1': {'name': '', 'grams': 0},
+                'a2': {'name': '', 'grams': 0},
+                'a3': {'name': '', 'grams': 0},
+                'a4': {'name': '', 'grams': 0}} | to_json }}
 
   # --------------------------------------------------------------------------
   # <entity_21> Spoolman Update
@@ -541,16 +583,24 @@ automation:
 
   - id: cache_<entity_20>_slot_data
     alias: "Cache <entity_20> Slot Data"
-    mode: single
+    # restart + settle delay: the integration writes the four slot sensors
+    # one after another, so caching immediately on the first change would
+    # snapshot the other slots at their previous print's values. Any slot
+    # updating restarts the delay; the final write sees all four settled.
+    mode: restart
     triggers:
       - entity_id:
           - sensor.<entity_23>_a1_grams
+          - sensor.<entity_23>_a2_grams
+          - sensor.<entity_23>_a3_grams
+          - sensor.<entity_23>_a4_grams
         trigger: state
     conditions:
       - condition: template
         value_template: >
           {{ trigger.to_state.state not in ['unknown', 'unavailable'] }}
     actions:
+      - delay: "00:00:02"
       - action: input_text.set_value
         target:
           entity_id: input_text.<entity_23>_cached_slot_data
@@ -570,6 +620,35 @@ automation:
               'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
                      'grams': states('sensor.<entity_23>_a4_grams') | float(0) | round(2)}
             } | to_json }}
+
+  # --------------------------------------------------------------------------
+  # Reset <entity_20> Slot Cache on New Job
+  # --------------------------------------------------------------------------
+  # Mirrors reset_<entity_21>_slot_cache — see that block for the rationale.
+
+  - id: reset_<entity_20>_slot_cache
+    alias: "Reset <entity_20> Slot Cache on New Job"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_task_id
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable', '']
+             and trigger.from_state is not none
+             and trigger.to_state.state != trigger.from_state.state }}
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_23>_cached_slot_data
+        data:
+          value: >
+            {{ {'a1': {'name': '', 'grams': 0},
+                'a2': {'name': '', 'grams': 0},
+                'a3': {'name': '', 'grams': 0},
+                'a4': {'name': '', 'grams': 0}} | to_json }}
 
   # --------------------------------------------------------------------------
   # <entity_20> Spoolman Update
