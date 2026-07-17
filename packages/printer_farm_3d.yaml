@@ -122,37 +122,19 @@ template:
           slot_name: "{{ states('sensor.<entity_22>_a4_name') }}"
           slot_color: "{{ states('sensor.<entity_22>_a4_color') }}"
 
-      - name: "<entity_20> Loaded Filament Name"
-        unique_id: <entity_20>_loaded_filament_name
-        state: >
-          {% set raw = states('input_text.<entity_23>_last_file') %}
-
-          {% if raw in ['unknown','unavailable',''] %}
-            Unknown
-          {% else %}
-            {% set base = raw | replace('.gcode','') %}
-            {% set parts = base.split('_') %}
-
-            {% if parts | length >= 2 %}
-              {{ parts[1] | replace('-', ' ') | title }}
-            {% else %}
-              {{ base }}
-            {% endif %}
-          {% endif %}
-
-      - name: "<entity_20> Spoolman Grams"
-        unique_id: <entity_20>_spoolman_grams
+      - name: "<entity_20> A1 Spoolman Grams"
+        unique_id: <entity_20>_a1_spoolman_grams
         unit_of_measurement: "g"
         state: >
-          {% set fil_name = states('sensor.<entity_20>_loaded_filament_name') %}
+          {% set slot_name = states('sensor.<entity_23>_a1_name') %}
 
-          {% if fil_name in ['unknown','unavailable','Unknown',''] %}
+          {% if slot_name in ['unknown','unavailable',''] %}
             unknown
           {% else %}
             {% set match = states.sensor
               | selectattr('entity_id', 'search', 'spoolman')
               | selectattr('attributes.filament_name', 'defined')
-              | selectattr('attributes.filament_name', 'eq', fil_name)
+              | selectattr('attributes.filament_name', 'eq', slot_name)
               | rejectattr('attributes.archived', 'eq', true)
               | sort(attribute='attributes.remaining_weight', reverse=true)
               | list %}
@@ -160,19 +142,98 @@ template:
             {{ match[0].attributes.remaining_weight | float(0) | round(1)
                if match | length > 0 else 'unknown' }}
           {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_23>_a1_name') }}"
+          slot_color: "{{ states('sensor.<entity_23>_a1_color') }}"
+
+      - name: "<entity_20> A2 Spoolman Grams"
+        unique_id: <entity_20>_a2_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_23>_a2_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_23>_a2_name') }}"
+          slot_color: "{{ states('sensor.<entity_23>_a2_color') }}"
+
+      - name: "<entity_20> A3 Spoolman Grams"
+        unique_id: <entity_20>_a3_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_23>_a3_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_23>_a3_name') }}"
+          slot_color: "{{ states('sensor.<entity_23>_a3_color') }}"
+
+      - name: "<entity_20> A4 Spoolman Grams"
+        unique_id: <entity_20>_a4_spoolman_grams
+        unit_of_measurement: "g"
+        state: >
+          {% set slot_name = states('sensor.<entity_23>_a4_name') %}
+
+          {% if slot_name in ['unknown','unavailable',''] %}
+            unknown
+          {% else %}
+            {% set match = states.sensor
+              | selectattr('entity_id', 'search', 'spoolman')
+              | selectattr('attributes.filament_name', 'defined')
+              | selectattr('attributes.filament_name', 'eq', slot_name)
+              | rejectattr('attributes.archived', 'eq', true)
+              | sort(attribute='attributes.remaining_weight', reverse=true)
+              | list %}
+
+            {{ match[0].attributes.remaining_weight | float(0) | round(1)
+               if match | length > 0 else 'unknown' }}
+          {% endif %}
+        attributes:
+          slot_name: "{{ states('sensor.<entity_23>_a4_name') }}"
+          slot_color: "{{ states('sensor.<entity_23>_a4_color') }}"
 
 # =============================================================================
 # Helpers
 # =============================================================================
 
-# Stores a JSON blob of <entity_21> per-slot filament names and grams, cached
-# before print completes (the slot sensors clear to "unknown" on completion).
+# Per-slot filament names and grams cached as JSON before print completes
+# (slot sensors clear to "unknown" on completion).
 #
 # The _last_file helpers cache the gcode filename from the printer's
 # file_name sensor. The Cache 3D Print Filename automation writes to
 # these on file change; other automations read them at print complete
 # (by which time the printer's own sensor may have cleared).
 input_text:
+  <entity_23>_cached_slot_data:
+    name: "<entity_20> Cached Slot Data"
+    max: 255
+    icon: mdi:code-json
   <entity_22>_cached_slot_data:
     name: "<entity_21> Cached Slot Data"
     max: 255
@@ -218,7 +279,7 @@ rest_command:
 # =============================================================================
 # Script — Spoolman Filament Usage Cascade
 # =============================================================================
-# Reusable script called by both <entity_21> and <entity_20> automations. Takes a
+# Reusable script called by both printer Spoolman automations. Takes a
 # filament name and weight, queries the Spoolman REST API for matching
 # non-archived spools, then cascades the deduction across them: lowest
 # remaining_weight first (random tie-break for equal weights), draining
@@ -361,19 +422,17 @@ script:
 # =============================================================================
 # Automations — Spoolman Usage Tracking
 # =============================================================================
-# Both automations resolve Spoolman spools by filament name and cascade
+# Spoolman update automations resolve spools by filament name and cascade
 # usage across them, lowest remaining_weight first (random tie-break on
 # equal weights). Each spool is drained to 0 before the next is touched.
 # If total available is less than use_weight, all matching spools are
 # drained and a warning notification fires.
 #
-# <entity_21>: Per-slot grams from the gcode capture proxy, cached before print
-#       completes (slot sensors clear to "unknown" on completion).
-# <entity_20>: Filament name + weight parsed from a custom filename template.
-#       Slicer template: [input_filename_base]_{filament_preset[0]}_{total_weight}g
+# Both printers use per-slot grams from the gcode capture proxy, cached
+# before print completes (slot sensors clear to "unknown" on completion).
 #
 # Required integrations:
-#   - <entity_28> Printer (with <entity_21> gcode proxy URL configured)
+#   - <entity_28> Printer (with gcode proxy URL configured for each printer)
 #   - Spoolman Home Assistant (https://github.com/Disane87/spoolman-homeassistant)
 
 automation:
@@ -387,16 +446,24 @@ automation:
 
   - id: cache_<entity_21>_slot_data
     alias: "Cache <entity_21> Slot Data"
-    mode: single
+    # restart + settle delay: the integration writes the four slot sensors
+    # one after another, so caching immediately on the first change would
+    # snapshot the other slots at their previous print's values. Any slot
+    # updating restarts the delay; the final write sees all four settled.
+    mode: restart
     triggers:
       - entity_id:
           - sensor.<entity_22>_a1_grams
+          - sensor.<entity_22>_a2_grams
+          - sensor.<entity_22>_a3_grams
+          - sensor.<entity_22>_a4_grams
         trigger: state
     conditions:
       - condition: template
         value_template: >
           {{ trigger.to_state.state not in ['unknown', 'unavailable'] }}
     actions:
+      - delay: "00:00:02"
       - action: input_text.set_value
         target:
           entity_id: input_text.<entity_22>_cached_slot_data
@@ -416,6 +483,40 @@ automation:
               'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
                      'grams': states('sensor.<entity_22>_a4_grams') | float(0) | round(2)}
             } | to_json }}
+
+  # --------------------------------------------------------------------------
+  # Reset <entity_21> Slot Cache on New Job
+  # --------------------------------------------------------------------------
+  # A new task id means a new print. Clearing the cache to zero-gram slots
+  # ensures a print whose upload never reached the capture proxy (e.g. the
+  # slicer bypassed it) pushes nothing to Spoolman at completion, instead of
+  # silently pushing the PREVIOUS print's slot data. Task id is used rather
+  # than filename because re-printing the same file (multi-plate projects)
+  # keeps the filename but always issues a fresh task id.
+
+  - id: reset_<entity_21>_slot_cache
+    alias: "Reset <entity_21> Slot Cache on New Job"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_22>_task_id
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable', '']
+             and trigger.from_state is not none
+             and trigger.to_state.state != trigger.from_state.state }}
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_22>_cached_slot_data
+        data:
+          value: >
+            {{ {'a1': {'name': '', 'grams': 0},
+                'a2': {'name': '', 'grams': 0},
+                'a3': {'name': '', 'grams': 0},
+                'a4': {'name': '', 'grams': 0}} | to_json }}
 
   # --------------------------------------------------------------------------
   # <entity_21> Spoolman Update
@@ -475,19 +576,85 @@ automation:
                 is enabled.
 
   # --------------------------------------------------------------------------
+  # Cache <entity_20> Slot Data
+  # --------------------------------------------------------------------------
+  # Mirrors cache_<entity_21>_slot_data. Caches per-slot filament names and
+  # grams into an input_text helper as JSON before print completes.
+
+  - id: cache_<entity_20>_slot_data
+    alias: "Cache <entity_20> Slot Data"
+    # restart + settle delay: the integration writes the four slot sensors
+    # one after another, so caching immediately on the first change would
+    # snapshot the other slots at their previous print's values. Any slot
+    # updating restarts the delay; the final write sees all four settled.
+    mode: restart
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_a1_grams
+          - sensor.<entity_23>_a2_grams
+          - sensor.<entity_23>_a3_grams
+          - sensor.<entity_23>_a4_grams
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable'] }}
+    actions:
+      - delay: "00:00:02"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_23>_cached_slot_data
+        data:
+          value: >
+            {% set n1 = states('sensor.<entity_23>_a1_name') %}
+            {% set n2 = states('sensor.<entity_23>_a2_name') %}
+            {% set n3 = states('sensor.<entity_23>_a3_name') %}
+            {% set n4 = states('sensor.<entity_23>_a4_name') %}
+            {{ {
+              'a1': {'name': '' if n1 in ['unknown','unavailable'] else n1,
+                     'grams': states('sensor.<entity_23>_a1_grams') | float(0) | round(2)},
+              'a2': {'name': '' if n2 in ['unknown','unavailable'] else n2,
+                     'grams': states('sensor.<entity_23>_a2_grams') | float(0) | round(2)},
+              'a3': {'name': '' if n3 in ['unknown','unavailable'] else n3,
+                     'grams': states('sensor.<entity_23>_a3_grams') | float(0) | round(2)},
+              'a4': {'name': '' if n4 in ['unknown','unavailable'] else n4,
+                     'grams': states('sensor.<entity_23>_a4_grams') | float(0) | round(2)}
+            } | to_json }}
+
+  # --------------------------------------------------------------------------
+  # Reset <entity_20> Slot Cache on New Job
+  # --------------------------------------------------------------------------
+  # Mirrors reset_<entity_21>_slot_cache — see that block for the rationale.
+
+  - id: reset_<entity_20>_slot_cache
+    alias: "Reset <entity_20> Slot Cache on New Job"
+    mode: single
+    triggers:
+      - entity_id:
+          - sensor.<entity_23>_task_id
+        trigger: state
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable', '']
+             and trigger.from_state is not none
+             and trigger.to_state.state != trigger.from_state.state }}
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.<entity_23>_cached_slot_data
+        data:
+          value: >
+            {{ {'a1': {'name': '', 'grams': 0},
+                'a2': {'name': '', 'grams': 0},
+                'a3': {'name': '', 'grams': 0},
+                'a4': {'name': '', 'grams': 0}} | to_json }}
+
+  # --------------------------------------------------------------------------
   # <entity_20> Spoolman Update
   # --------------------------------------------------------------------------
-  # On <entity_20> print complete, parses the filament name and weight from the
-  # cached filename (set by the existing "Cache 3D Print Filename"
-  # automation).
-  #
-  # Expected filename format:
-  #   <entity_20>_benchy_<entity_28>PLA-Basic-White_2.50g.gcode
-  # Slicer template:
-  #   [input_filename_base]_{filament_preset[0]}_{total_weight}g
-  #
-  # Parsing: split on "_", weight is last token (Ng), filament name is
-  # second-to-last token (always hyphenated, never contains underscores).
+  # On <entity_20> print complete, reads the cached per-slot data and pushes
+  # usage to Spoolman for each slot that consumed filament.
 
   - id: <entity_20>_spoolman_update
     alias: "<entity_20> Spoolman Update"
@@ -500,32 +667,45 @@ automation:
     conditions: []
     actions:
       - variables:
-          filename: >
-            {{ states('input_text.<entity_23>_last_file') | replace('.gcode', '') }}
-          parts: "{{ filename.split('_') }}"
-          weight_grams: "{{ parts[-1] | replace('g', '') | float(0) }}"
-          filament_name: "{{ parts[-2] | default('') }}"
+          raw_data: "{{ states('input_text.<entity_23>_cached_slot_data') }}"
 
+      # Guard: make sure we have cached data
       - choose:
           - conditions:
               - condition: template
                 value_template: >
-                  {{ weight_grams > 0
-                     and filament_name != ''
-                     and '-' in filament_name }}
+                  {{ raw_data not in ['unknown', 'unavailable', '', 'None'] }}
             sequence:
-              - action: script.update_spoolman_from_filament_name
-                data:
-                  filament_name: "{{ filament_name }}"
-                  use_weight: "{{ weight_grams | float | round(2) }}"
+              - variables:
+                  slot_data: "{{ raw_data if raw_data is mapping else raw_data | from_json }}"
+              - repeat:
+                  for_each:
+                    - a1
+                    - a2
+                    - a3
+                    - a4
+                  sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: >
+                                {% set slot = slot_data[repeat.item] %}
+                                {{ slot.grams | float(0) > 0
+                                   and slot.name not in ['', none, 'None'] }}
+                          sequence:
+                            - action: script.update_spoolman_from_filament_name
+                              data:
+                                filament_name: "{{ slot_data[repeat.item].name }}"
+                                use_weight: "{{ slot_data[repeat.item].grams | float | round(2) }}"
         default:
           - action: persistent_notification.create
             data:
-              title: "Spoolman: <entity_20> filename parse failed"
+              title: "Spoolman: <entity_20> no cached slot data"
               message: >
-                Could not parse filament name and weight from filename
-                "{{ states('input_text.<entity_23>_last_file') }}".
-                Expected format: [model]_[FilamentName-With-Hyphens]_[weight]g.gcode
+                <entity_20> print completed but no cached slot data was found.
+                Filament usage was not tracked. Make sure the gcode capture
+                proxy is configured and the "Cache <entity_20> Slot Data" automation
+                is enabled.
 
   # --------------------------------------------------------------------------
   # 3D Print Failure Alert
