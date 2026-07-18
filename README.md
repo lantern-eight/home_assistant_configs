@@ -185,7 +185,6 @@ uv run pytest tests/ -v
 │   ├── utils.py                     # Shared logging (JSON + colored TTY output)
 │   ├── home_assistant_backup.py     # Pull HA config over SMB, redact, shorten IDs
 │   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
-│   ├── dashboard_upload.py          # Push dashboard.yaml to HA over SMB
 │   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
 │   ├── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
 │   └── ha_scripts/                  # Scripts deployed to and run on HA
