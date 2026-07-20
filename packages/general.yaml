@@ -184,8 +184,6 @@ automation:
       - condition: time
         after: "19:45:00"
         before: "23:59:00"
-        # Every day of the week — bedtime is bedtime.
-        weekday: [mon, tue, wed, thu, fri, sat, sun]
     actions:
       # Derive per-door identity + light color from the trigger entity.
       - variables:
@@ -317,7 +315,6 @@ automation:
       - condition: time
         after: "19:45:00"
         before: "23:59:00"
-        weekday: [mon, tue, wed, thu, fri, sat, sun]
     actions:
       # Same base_name + display_name derivation as the opens automation.
       - variables:
@@ -430,7 +427,6 @@ automation:
     triggers:
       - trigger: time
         at: "21:00:00"
-    conditions: []
     actions:
       - parallel:
           - type: turn_off
@@ -458,7 +454,6 @@ automation:
           - wed
           - thu
           - fri
-    conditions: []
     actions:
       - action: light.turn_on
         target:
@@ -481,15 +476,6 @@ automation:
     triggers:
       - trigger: time
         at: "05:45:00"
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-    conditions: []
     actions:
       - action: light.turn_on
         target:
@@ -509,15 +495,6 @@ automation:
     triggers:
       - trigger: time
         at: "07:00:00"
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-    conditions: []
     actions:
       - action: light.turn_on
         target:
@@ -537,15 +514,6 @@ automation:
     triggers:
       - trigger: time
         at: "19:00:00"
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-    conditions: []
     actions:
       - action: light.turn_on
         target:
@@ -565,15 +533,6 @@ automation:
     triggers:
       - trigger: time
         at: "19:15:00"
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-    conditions: []
     actions:
       - action: light.turn_off
         target:
@@ -592,15 +551,6 @@ automation:
     triggers:
       - trigger: time
         at: "20:05:00"
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-    conditions: []
     actions:
       - action: light.turn_off
         target:
