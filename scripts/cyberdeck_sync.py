@@ -1,4 +1,4 @@
-"""Sync Cyberdeck dashboard, theme, and sensors to Home Assistant via SMB."""
+"""Sync Cyberdeck dashboard and theme to Home Assistant via SMB."""
 
 import logging
 import sys
@@ -160,9 +160,8 @@ def main(argv: list[str] | None = None) -> None:
   """
   Sync Cyberdeck printer farm dashboard to Home Assistant.
 
-  Uploads dashboard.yaml, theme, and template sensors via SMB,
-  then reloads themes. Use --restart on first deploy or after
-  editing configuration.yaml / template sensors.
+  Uploads dashboard.yaml and theme via SMB, then reloads themes.
+  Use --restart on first deploy or after editing configuration.yaml.
 
   Example:
     > uv run python cyberdeck_sync.py           # sync files + reload themes

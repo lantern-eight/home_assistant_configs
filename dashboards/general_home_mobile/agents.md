@@ -55,8 +55,8 @@ name-derived entity ID. Don't assume the unique_id matches.
 
 | File | What it does |
 |------|-------------|
-| `dashboard.yaml` | All views, YAML anchor definitions, card definitions (~2850 lines) |
-| `theme_sensors.yaml` | Per-property template sensors for dark/light users (~435 lines) |
+| `dashboard.yaml` | All views, YAML anchor definitions, card definitions |
+| `theme_sensors.yaml` | Per-property template sensors for dark/light users |
 | `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions for helpers (applied via sync script `-c`) |
@@ -111,8 +111,7 @@ One item list, two views — no duplication.
 
 1. Add the entity check to `sensor.dashboard_notifications` in
    `sensors.yaml` (both `state` and `items` attribute — they evaluate
-   independently). Also update `dot_count` and the matching
-   `{severity}_count` attribute.
+   independently).
 2. Assign severity: red (urgent/promoted), amber (warning), blue (info),
    green (normal)
 3. If promoted: also add a `type: conditional` chip card in
@@ -206,8 +205,8 @@ Then reload the page.
 
 3. **Don't template `entity_id` in `tap_action`.** HA doesn't support
    Jinja2 in tap_action entity_id fields. This is why the Appearance page
-   has duplicate picker sections per user (~350 lines of near-duplicate
-   YAML). If you add a style or palette, add the tile in both user blocks.
+   has duplicate picker sections per user. If you add a style or palette,
+   add the tile in both user blocks.
 
 4. **Don't remove or reorder the background overlay card.** It must be the
    first card in each view's first section. It uses `position: fixed` with

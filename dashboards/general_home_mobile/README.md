@@ -468,7 +468,6 @@ as a combined view of all items whether active or not.
 
 1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
    (both `state` and `items` attribute — they evaluate independently).
-   Also update `dot_count` and the matching `{severity}_count` attribute.
 2. Assign a severity: red (urgent), amber (warning), blue (info), green
    (normal)
 3. If promoted (red): also add a `type: conditional` chip card in
@@ -647,8 +646,8 @@ This duplication exists because:
    tiles show dark surface previews; light-mode user tiles show light surface
    previews)
 
-The result is ~350 lines of near-duplicate YAML. If you add a new style or
-palette option, you must add the corresponding tile in **both** user blocks.
+If you add a new style or palette option, you must add the corresponding
+tile in **both** user blocks.
 
 ---
 
@@ -801,8 +800,8 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 
 | File | Purpose |
 |------|---------|
-| `dashboard.yaml` | All views, theme YAML anchors, and card definitions (~2850 lines) |
-| `theme_sensors.yaml` | Per-property template sensors for dark and light users (~435 lines) |
+| `dashboard.yaml` | All views, theme YAML anchors, and card definitions |
+| `theme_sensors.yaml` | Per-property template sensors for dark and light users |
 | `sensors.yaml` | Non-theme template sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions applied via sync script `-c` flag |

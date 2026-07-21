@@ -84,25 +84,27 @@ Do not push to HA unless the user explicitly asks.
 
 Relevant when working under `dashboards/cyberdeck/**` (sync and development workflow for the Cyberdeck printer farm dashboard).
 
-The Cyberdeck dashboard lives in `dashboards/cyberdeck/` with three files:
+The Cyberdeck dashboard lives in `dashboards/cyberdeck/` with two files:
 
 | Local file | HA destination |
 |---|---|
 | `dashboard.yaml` | `dashboards/cyberdeck/dashboard.yaml` |
 | `theme.yaml` | `themes/cyberdeck/cyberdeck.yaml` |
-| `sensors.yaml` | `template_sensors/printer_farm_sensors.yaml` |
+
+The Cyberdeck's template sensors live in `packages/printer_farm_3d.yaml`,
+deployed by `general_home_dashboard_sync.py` (not `cyberdeck_sync.py`).
 
 ### Syncing to Home Assistant
 
-After editing any Cyberdeck file, run:
+After editing a Cyberdeck dashboard or theme file, run:
 
 ```bash
 uv run python scripts/cyberdeck_sync.py
 ```
 
-This uploads all three files to HA via SMB and reloads themes. The dashboard YAML is re-read by HA on the next page visit — no restart needed for dashboard-only changes.
+This uploads both files to HA via SMB and reloads themes. The dashboard YAML is re-read by HA on the next page visit — no restart needed for dashboard-only changes.
 
-If you changed `sensors.yaml` (template sensors) or `configuration.yaml`, a restart is required:
+If you changed `configuration.yaml`, a restart is required:
 
 ```bash
 uv run python scripts/cyberdeck_sync.py -r
