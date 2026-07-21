@@ -26,139 +26,14 @@ x-theme-bg-card: &id001
         pointer-events: none !important;
       }
       ha-card ha-markdown { display: none !important; }
-      @media (prefers-color-scheme: dark) {
-        ha-card {
-          background: {{ states('sensor.theme_dark_lovelace_background') }} !important;
-        }
-        {% if is_state('sensor.theme_dark_glow_active', 'on') %}
-        ha-card::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(140% 120% at 108% -8%, {{ states('sensor.theme_dark_glow_1') }} 0%, transparent 62%),
-            radial-gradient(130% 116% at -8% 108%, {{ states('sensor.theme_dark_glow_2') }} 0%, transparent 62%),
-            radial-gradient(125% 112% at 50% 132%, {{ states('sensor.theme_dark_glow_3') }} 0%, transparent 66%);
-          mix-blend-mode: screen;
-          opacity: 1;
-        }
-        {% endif %}
-      }
-      @media (prefers-color-scheme: light) {
-        ha-card {
-          background: {{ states('sensor.theme_light_lovelace_background') }} !important;
-        }
-        {% if is_state('sensor.theme_light_glow_active', 'on') %}
-        ha-card::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(140% 120% at 108% -8%, {{ states('sensor.theme_light_glow_1') }} 0%, transparent 62%),
-            radial-gradient(130% 116% at -8% 108%, {{ states('sensor.theme_light_glow_2') }} 0%, transparent 62%),
-            radial-gradient(125% 112% at 50% 132%, {{ states('sensor.theme_light_glow_3') }} 0%, transparent 66%);
-          mix-blend-mode: multiply;
-          opacity: 0.85;
-        }
-        {% endif %}
-      }
+      {% from 'general_home_theme.jinja' import view_background_css %}
+      {{ view_background_css(user) }}
 x-theme-card-style: &theme_card_style |
-  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  {% endif %}
-  @media (prefers-color-scheme: dark) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_dark_primary') }};
-      --accent-color: {{ states('sensor.theme_dark_accent') }};
-      --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-      --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-      --success-color: {{ states('sensor.theme_dark_success') }};
-      --warning-color: {{ states('sensor.theme_dark_warning') }};
-      --error-color: {{ states('sensor.theme_dark_error') }};
-      --info-color: {{ states('sensor.theme_dark_info') }};
-      border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-      position: relative;
-      overflow: hidden;
-      background: {{ states('sensor.theme_dark_card_background') }} !important;
-      border: {{ states('sensor.theme_dark_card_border') }} !important;
-      box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
-  @media (prefers-color-scheme: light) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_light_primary') }};
-      --accent-color: {{ states('sensor.theme_light_accent') }};
-      --state-on-color: {{ states('sensor.theme_light_state_on') }};
-      --state-off-color: {{ states('sensor.theme_light_state_off') }};
-      --success-color: {{ states('sensor.theme_light_success') }};
-      --warning-color: {{ states('sensor.theme_light_warning') }};
-      --error-color: {{ states('sensor.theme_light_error') }};
-      --info-color: {{ states('sensor.theme_light_info') }};
-      border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_light_card_font') }} !important;
-      position: relative;
-      overflow: hidden;
-      background: {{ states('sensor.theme_light_card_background') }} !important;
-      border: {{ states('sensor.theme_light_card_border') }} !important;
-      box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'card') }}
 x-theme-exempt-style: &theme_exempt_style |
-  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  {% endif %}
-  @media (prefers-color-scheme: dark) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_dark_primary') }};
-      --accent-color: {{ states('sensor.theme_dark_accent') }};
-      --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-      --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-      --success-color: {{ states('sensor.theme_dark_success') }};
-      --warning-color: {{ states('sensor.theme_dark_warning') }};
-      --error-color: {{ states('sensor.theme_dark_error') }};
-      --info-color: {{ states('sensor.theme_dark_info') }};
-      font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-      background: none !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-      box-shadow: none !important;
-      border: none !important;
-    }
-  }
-  @media (prefers-color-scheme: light) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_light_primary') }};
-      --accent-color: {{ states('sensor.theme_light_accent') }};
-      --state-on-color: {{ states('sensor.theme_light_state_on') }};
-      --state-off-color: {{ states('sensor.theme_light_state_off') }};
-      --success-color: {{ states('sensor.theme_light_success') }};
-      --warning-color: {{ states('sensor.theme_light_warning') }};
-      --error-color: {{ states('sensor.theme_light_error') }};
-      --info-color: {{ states('sensor.theme_light_info') }};
-      font-family: {{ states('sensor.theme_light_card_font') }} !important;
-      background: none !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-      box-shadow: none !important;
-      border: none !important;
-    }
-  }
-  ha-card::before {
-    content: none !important;
-  }
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
 x-theme-card-transparent: &theme_card_transparent |
   ha-card {
     background: transparent !important;
@@ -166,77 +41,11 @@ x-theme-card-transparent: &theme_card_transparent |
     box-shadow: none !important;
   }
 x-theme-chip-style: &theme_chip_style |
-  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  {% endif %}
-  @media (prefers-color-scheme: dark) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_dark_primary') }};
-      --accent-color: {{ states('sensor.theme_dark_accent') }};
-      border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-      box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
-  @media (prefers-color-scheme: light) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_light_primary') }};
-      --accent-color: {{ states('sensor.theme_light_accent') }};
-      border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_light_card_font') }} !important;
-      box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ blur }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'chip') }}
 x-theme-chrome-style: &theme_chrome_style |
-  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  {% endif %}
-  @media (prefers-color-scheme: dark) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_dark_primary') }};
-      --accent-color: {{ states('sensor.theme_dark_accent') }};
-      border-radius: {{ states('sensor.theme_dark_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-      position: relative;
-      overflow: hidden;
-      background: color-mix(in srgb, {{ states('sensor.theme_dark_primary') }} 14%, {{ states('sensor.theme_dark_card_background') }}) !important;
-      border: {{ states('sensor.theme_dark_card_border') }} !important;
-      box-shadow: {{ states('sensor.theme_dark_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_dark_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
-  @media (prefers-color-scheme: light) {
-    ha-card {
-      --primary-color: {{ states('sensor.theme_light_primary') }};
-      --accent-color: {{ states('sensor.theme_light_accent') }};
-      border-radius: {{ states('sensor.theme_light_card_radius') }} !important;
-      font-family: {{ states('sensor.theme_light_card_font') }} !important;
-      position: relative;
-      overflow: hidden;
-      background: color-mix(in srgb, {{ states('sensor.theme_light_primary') }} 14%, {{ states('sensor.theme_light_card_background') }}) !important;
-      border: {{ states('sensor.theme_light_card_border') }} !important;
-      box-shadow: {{ states('sensor.theme_light_card_shadow') }} !important;
-      {% set blur = states('sensor.theme_light_card_blur') | int(0) %}
-      {% if blur > 0 %}
-      backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-      -webkit-backdrop-filter: blur({{ (blur * 0.4) | round(0) | int }}px) saturate(1.2);
-      {% endif %}
-    }
-  }
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'chrome') }}
 x-palette-tile-styles: &palette_tile_styles
   name:
     - font-size: 11px
@@ -598,42 +407,7 @@ views:
             duration: 1h
         card_mod:
           style:
-            .: |
-              {% if is_state('input_select.theme_style_<entity_2>', 'Neon') or is_state('input_select.theme_style_<entity_1>', 'Neon') %}
-              @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-              {% endif %}
-              @media (prefers-color-scheme: dark) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_dark_primary') }};
-                  --accent-color: {{ states('sensor.theme_dark_accent') }};
-                  --state-on-color: {{ states('sensor.theme_dark_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_dark_state_off') }};
-                  --success-color: {{ states('sensor.theme_dark_success') }};
-                  --warning-color: {{ states('sensor.theme_dark_warning') }};
-                  --error-color: {{ states('sensor.theme_dark_error') }};
-                  --info-color: {{ states('sensor.theme_dark_info') }};
-                  font-family: {{ states('sensor.theme_dark_card_font') }} !important;
-                  background: transparent !important;
-                  border: none !important;
-                  box-shadow: none !important;
-                }
-              }
-              @media (prefers-color-scheme: light) {
-                ha-card {
-                  --primary-color: {{ states('sensor.theme_light_primary') }};
-                  --accent-color: {{ states('sensor.theme_light_accent') }};
-                  --state-on-color: {{ states('sensor.theme_light_state_on') }};
-                  --state-off-color: {{ states('sensor.theme_light_state_off') }};
-                  --success-color: {{ states('sensor.theme_light_success') }};
-                  --warning-color: {{ states('sensor.theme_light_warning') }};
-                  --error-color: {{ states('sensor.theme_light_error') }};
-                  --info-color: {{ states('sensor.theme_light_info') }};
-                  font-family: {{ states('sensor.theme_light_card_font') }} !important;
-                  background: transparent !important;
-                  border: none !important;
-                  box-shadow: none !important;
-                }
-              }
+            .: *theme_exempt_style
             $: |
               ha-card {
                 margin-top: -8px;
@@ -2008,49 +1782,148 @@ views:
     cards:
     - type: custom:mushroom-title-card
       title: Appearance
-      subtitle: Editing {{ states('input_select.theme_appearance_user') | title }}'s
-        theme
+      subtitle: Your theme
       card_mod:
         style: *theme_exempt_style
-    - type: custom:mushroom-chips-card
-      alignment: center
+    - type: custom:mushroom-title-card
+      title: Mode
+      subtitle: Light, dark, or follow the device
       card_mod:
         style: *theme_exempt_style
-      chips:
-      - type: template
-        content: <entity_1>
-        icon: mdi:account
-        tap_action:
-          action: call-service
-          service: input_select.select_option
-          service_data:
-            entity_id: input_select.theme_appearance_user
-            option: <entity_1>
-        card_mod:
-          style: |
-            :host {
-              {% if is_state('input_select.theme_appearance_user', '<entity_1>') %}
-              --chip-background: var(--primary-color);
-              --color: white;
-              {% endif %}
-            }
-      - type: template
-        content: <entity_2>
-        icon: mdi:account
-        tap_action:
-          action: call-service
-          service: input_select.select_option
-          service_data:
-            entity_id: input_select.theme_appearance_user
-            option: <entity_2>
-        card_mod:
-          style: |
-            :host {
-              {% if is_state('input_select.theme_appearance_user', '<entity_2>') %}
-              --chip-background: var(--primary-color);
-              --color: white;
-              {% endif %}
-            }
+    - type: conditional
+      conditions:
+      - condition: user
+        users:
+        - f47...c86
+      card:
+        type: grid
+        columns: 3
+        square: false
+        cards:
+        - type: custom:mushroom-template-card
+          primary: Light
+          icon: mdi:white-balance-sunny
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_31>
+              option: Light
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_31>', 'Light') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+        - type: custom:mushroom-template-card
+          primary: Dark
+          icon: mdi:weather-night
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_31>
+              option: Dark
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_31>', 'Dark') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+        - type: custom:mushroom-template-card
+          primary: System
+          icon: mdi:theme-light-dark
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_31>
+              option: System
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_31>', 'System') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+    - type: conditional
+      conditions:
+      - condition: user
+        users:
+        - 760...94c
+      card:
+        type: grid
+        columns: 3
+        square: false
+        cards:
+        - type: custom:mushroom-template-card
+          primary: Light
+          icon: mdi:white-balance-sunny
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_32>
+              option: Light
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_32>', 'Light') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+        - type: custom:mushroom-template-card
+          primary: Dark
+          icon: mdi:weather-night
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_32>
+              option: Dark
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_32>', 'Dark') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+        - type: custom:mushroom-template-card
+          primary: System
+          icon: mdi:theme-light-dark
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.theme_mode_<entity_32>
+              option: System
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if is_state('input_select.theme_mode_<entity_32>', 'System') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
     - type: custom:mushroom-title-card
       title: Style
       subtitle: Structural look
@@ -2058,25 +1931,17 @@ views:
         style: *theme_exempt_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_1>
+      - condition: user
+        users:
+        - f47...c86
       card:
         type: grid
         columns: 2
         square: false
         card_mod:
           style: |
-            @media (prefers-color-scheme: dark) {
-              :host {
-                --primary-color:
-                  {{ states('sensor.theme_dark_primary') }};
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              :host {
-                --primary-color:
-                  {{ states('sensor.theme_light_primary') }};
-              }
+            :host {
+              --primary-color: {% from 'general_home_theme.jinja' import theme_value %}{{ theme_value(user, 'primary') }};
             }
         cards:
         - type: custom:mushroom-template-card
@@ -2087,13 +1952,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_1>
+              entity_id: input_select.theme_style_<entity_31>
               option: Clean
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_1>', 'Clean') %}
+                  {% if is_state('input_select.theme_style_<entity_31>', 'Clean') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: rgba(255,255,255,0.95) !important;
@@ -2116,13 +1981,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_1>
+              entity_id: input_select.theme_style_<entity_31>
               option: Glass
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_1>', 'Glass') %}
+                  {% if is_state('input_select.theme_style_<entity_31>', 'Glass') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: rgba(255,255,255,0.55) !important;
@@ -2146,13 +2011,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_1>
+              entity_id: input_select.theme_style_<entity_31>
               option: Dark
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_1>', 'Dark') %}
+                  {% if is_state('input_select.theme_style_<entity_31>', 'Dark') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: #ffffff !important;
@@ -2175,13 +2040,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_1>
+              entity_id: input_select.theme_style_<entity_31>
               option: Glow
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_1>', 'Glow') %}
+                  {% if is_state('input_select.theme_style_<entity_31>', 'Glow') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: #f5f5f0 !important;
@@ -2204,14 +2069,14 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_1>
+              entity_id: input_select.theme_style_<entity_31>
               option: Neon
           card_mod:
             style:
               .: |
                 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_1>', 'Neon') %}
+                  {% if is_state('input_select.theme_style_<entity_31>', 'Neon') %}
                   border: 2px solid var(--primary-color) !important;
                   box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
                   {% endif %}
@@ -2231,25 +2096,17 @@ views:
                   .primary { color: #e0e0e8 !important; font-family: 'Share Tech Mono', monospace !important; }
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_2>
+      - condition: user
+        users:
+        - 760...94c
       card:
         type: grid
         columns: 2
         square: false
         card_mod:
           style: |
-            @media (prefers-color-scheme: dark) {
-              :host {
-                --primary-color:
-                  {{ states('sensor.theme_dark_primary') }};
-              }
-            }
-            @media (prefers-color-scheme: light) {
-              :host {
-                --primary-color:
-                  {{ states('sensor.theme_light_primary') }};
-              }
+            :host {
+              --primary-color: {% from 'general_home_theme.jinja' import theme_value %}{{ theme_value(user, 'primary') }};
             }
         cards:
         - type: custom:mushroom-template-card
@@ -2260,13 +2117,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_2>
+              entity_id: input_select.theme_style_<entity_32>
               option: Clean
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_2>', 'Clean') %}
+                  {% if is_state('input_select.theme_style_<entity_32>', 'Clean') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: rgba(30,30,30,0.95) !important;
@@ -2289,13 +2146,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_2>
+              entity_id: input_select.theme_style_<entity_32>
               option: Glass
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_2>', 'Glass') %}
+                  {% if is_state('input_select.theme_style_<entity_32>', 'Glass') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: rgba(28,29,33,0.55) !important;
@@ -2319,13 +2176,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_2>
+              entity_id: input_select.theme_style_<entity_32>
               option: Dark
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_2>', 'Dark') %}
+                  {% if is_state('input_select.theme_style_<entity_32>', 'Dark') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: #161622 !important;
@@ -2348,13 +2205,13 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_2>
+              entity_id: input_select.theme_style_<entity_32>
               option: Glow
           card_mod:
             style:
               .: |
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_2>', 'Glow') %}
+                  {% if is_state('input_select.theme_style_<entity_32>', 'Glow') %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                   background: #070611 !important;
@@ -2377,14 +2234,14 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_style_<entity_2>
+              entity_id: input_select.theme_style_<entity_32>
               option: Neon
           card_mod:
             style:
               .: |
                 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
                 ha-card {
-                  {% if is_state('input_select.theme_style_<entity_2>', 'Neon') %}
+                  {% if is_state('input_select.theme_style_<entity_32>', 'Neon') %}
                   border: 2px solid var(--primary-color) !important;
                   box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
                   {% endif %}
@@ -2409,15 +2266,16 @@ views:
         style: *theme_exempt_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_1>
+      - condition: user
+        users:
+        - f47...c86
       card:
         type: grid
         columns: 4
         square: false
         cards:
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Indigo
           show_icon: false
           show_state: false
@@ -2426,7 +2284,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Indigo
           custom_fields:
             dots: |
@@ -2444,7 +2302,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Ocean
           show_icon: false
           show_state: false
@@ -2453,7 +2311,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Ocean
           custom_fields:
             dots: |
@@ -2471,7 +2329,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Sunset
           show_icon: false
           show_state: false
@@ -2480,7 +2338,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Sunset
           custom_fields:
             dots: |
@@ -2498,7 +2356,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Forest
           show_icon: false
           show_state: false
@@ -2507,7 +2365,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Forest
           custom_fields:
             dots: |
@@ -2525,7 +2383,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Rose
           show_icon: false
           show_state: false
@@ -2534,7 +2392,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Rose
           custom_fields:
             dots: |
@@ -2552,7 +2410,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Mono
           show_icon: false
           show_state: false
@@ -2561,7 +2419,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Mono
           custom_fields:
             dots: |
@@ -2579,7 +2437,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Cyberdeck
           show_icon: false
           show_state: false
@@ -2588,7 +2446,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Cyberdeck
           custom_fields:
             dots: |
@@ -2606,7 +2464,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_1>
+          entity: input_select.theme_palette_<entity_31>
           name: Mint
           show_icon: false
           show_state: false
@@ -2615,7 +2473,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_1>
+              entity_id: input_select.theme_palette_<entity_31>
               option: Mint
           custom_fields:
             dots: |
@@ -2634,15 +2492,16 @@ views:
             style: *theme_card_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_2>
+      - condition: user
+        users:
+        - 760...94c
       card:
         type: grid
         columns: 4
         square: false
         cards:
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Indigo
           show_icon: false
           show_state: false
@@ -2651,7 +2510,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Indigo
           custom_fields:
             dots: |
@@ -2669,7 +2528,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Ocean
           show_icon: false
           show_state: false
@@ -2678,7 +2537,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Ocean
           custom_fields:
             dots: |
@@ -2696,7 +2555,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Sunset
           show_icon: false
           show_state: false
@@ -2705,7 +2564,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Sunset
           custom_fields:
             dots: |
@@ -2723,7 +2582,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Forest
           show_icon: false
           show_state: false
@@ -2732,7 +2591,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Forest
           custom_fields:
             dots: |
@@ -2750,7 +2609,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Rose
           show_icon: false
           show_state: false
@@ -2759,7 +2618,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Rose
           custom_fields:
             dots: |
@@ -2777,7 +2636,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Mono
           show_icon: false
           show_state: false
@@ -2786,7 +2645,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Mono
           custom_fields:
             dots: |
@@ -2804,7 +2663,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Cyberdeck
           show_icon: false
           show_state: false
@@ -2813,7 +2672,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Cyberdeck
           custom_fields:
             dots: |
@@ -2831,7 +2690,7 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:button-card
-          entity: input_select.theme_palette_<entity_2>
+          entity: input_select.theme_palette_<entity_32>
           name: Mint
           show_icon: false
           show_state: false
@@ -2840,7 +2699,7 @@ views:
             action: call-service
             service: input_select.select_option
             service_data:
-              entity_id: input_select.theme_palette_<entity_2>
+              entity_id: input_select.theme_palette_<entity_32>
               option: Mint
           custom_fields:
             dots: |
@@ -2864,8 +2723,9 @@ views:
         style: *theme_exempt_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_1>
+      - condition: user
+        users:
+        - f47...c86
       card:
         type: vertical-stack
         cards:
@@ -2881,14 +2741,14 @@ views:
               action: call-service
               service: input_text.set_value
               service_data:
-                entity_id: input_text.theme_background_<entity_1>
+                entity_id: input_text.theme_background_<entity_31>
                 value: auto
             card_mod:
               style:
                 .: *theme_card_style
                 $: |
                   ha-card {
-                    {% if states('input_text.theme_background_<entity_1>') in ['auto', 'unknown', 'unavailable', ''] %}
+                    {% if states('input_text.theme_background_<entity_31>') in ['auto', 'unknown', 'unavailable', ''] %}
                     outline: 2px solid var(--primary-color) !important;
                     outline-offset: -2px;
                     {% endif %}
@@ -2901,14 +2761,14 @@ views:
               action: call-service
               service: input_text.set_value
               service_data:
-                entity_id: input_text.theme_background_<entity_1>
+                entity_id: input_text.theme_background_<entity_31>
                 value: none
             card_mod:
               style:
                 .: *theme_card_style
                 $: |
                   ha-card {
-                    {% if is_state('input_text.theme_background_<entity_1>', 'none') %}
+                    {% if is_state('input_text.theme_background_<entity_31>', 'none') %}
                     outline: 2px solid var(--primary-color) !important;
                     outline-offset: -2px;
                     {% endif %}
@@ -2942,8 +2802,9 @@ views:
                 '#fef7ed',
                 '#e8f5e9'
               ] %}
-              {% set bg = states('input_text.theme_background_<entity_1>') %}
-              {% set pri = states('sensor.theme_light_primary') %}
+              {% set bg = states('input_text.theme_background_<entity_31>') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_31>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for hex in colors %}
@@ -2956,7 +2817,7 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'entity_id': 'input_text.theme_background_<entity_31>',
                         'value': hex
                       }
                     },
@@ -2989,7 +2850,7 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set pal = states('input_select.theme_palette_<entity_1>') %}
+              {% set pal = states('input_select.theme_palette_<entity_31>') %}
               {% set shades = {
                 'Indigo': ['#f4f4f8', '#dcdcf4', '#e8e8f8', '#ccccee'],
                 'Ocean': ['#f0f6fa', '#c4e4f4', '#d8eef8', '#b0d8f0'],
@@ -3001,8 +2862,9 @@ views:
                 'Mint': ['#f4faf6', '#c8f0dc', '#daf8e8', '#b8ecd0']
               } %}
               {% set colors = shades.get(pal, shades['Indigo']) %}
-              {% set bg = states('input_text.theme_background_<entity_1>') %}
-              {% set pri = states('sensor.theme_light_primary') %}
+              {% set bg = states('input_text.theme_background_<entity_31>') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_31>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for hex in colors %}
@@ -3015,7 +2877,7 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'entity_id': 'input_text.theme_background_<entity_31>',
                         'value': hex
                       }
                     },
@@ -3032,7 +2894,7 @@ views:
         - type: custom:mushroom-template-card
           primary: Custom color
           secondary: >
-            {% set bg = states('input_text.theme_background_<entity_1>') %}
+            {% set bg = states('input_text.theme_background_<entity_31>') %}
             {% if bg.startswith('#') %}
             {{ bg }}
             {% else %}
@@ -3040,7 +2902,7 @@ views:
             {% endif %}
           icon: mdi:eyedropper
           icon_color: >
-            {% set bg = states('input_text.theme_background_<entity_1>') %}
+            {% set bg = states('input_text.theme_background_<entity_31>') %}
             {% if bg.startswith('#') %}
             {{ bg }}
             {% else %}
@@ -3048,13 +2910,13 @@ views:
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_text.theme_background_<entity_1>
+            entity: input_text.theme_background_<entity_31>
           card_mod:
             style:
               .: *theme_card_style
               $: |
                 ha-card {
-                  {% if states('input_text.theme_background_<entity_1>').startswith('#') %}
+                  {% if states('input_text.theme_background_<entity_31>').startswith('#') %}
                   outline: 2px solid var(--primary-color) !important;
                   outline-offset: -2px;
                   {% endif %}
@@ -3079,7 +2941,8 @@ views:
           filter:
             template: |
               {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
-              {% set pri = states('sensor.theme_light_primary') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_31>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for f in files %}
@@ -3091,13 +2954,13 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_1>',
+                        'entity_id': 'input_text.theme_background_<entity_31>',
                         'value': f
                       }
                     },
                     'card_mod': {
                       'style': 'ha-card { border-radius: 12px !important; ' ~
-                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_1>', f) else '') ~
+                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_31>', f) else '') ~
                         ' }'
                     }
                   }
@@ -3107,8 +2970,9 @@ views:
               {{ ns.cards }}
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_2>
+      - condition: user
+        users:
+        - 760...94c
       card:
         type: vertical-stack
         cards:
@@ -3124,14 +2988,14 @@ views:
               action: call-service
               service: input_text.set_value
               service_data:
-                entity_id: input_text.theme_background_<entity_2>
+                entity_id: input_text.theme_background_<entity_32>
                 value: auto
             card_mod:
               style:
                 .: *theme_card_style
                 $: |
                   ha-card {
-                    {% if states('input_text.theme_background_<entity_2>') in ['auto', 'unknown', 'unavailable', ''] %}
+                    {% if states('input_text.theme_background_<entity_32>') in ['auto', 'unknown', 'unavailable', ''] %}
                     outline: 2px solid var(--primary-color) !important;
                     outline-offset: -2px;
                     {% endif %}
@@ -3144,14 +3008,14 @@ views:
               action: call-service
               service: input_text.set_value
               service_data:
-                entity_id: input_text.theme_background_<entity_2>
+                entity_id: input_text.theme_background_<entity_32>
                 value: none
             card_mod:
               style:
                 .: *theme_card_style
                 $: |
                   ha-card {
-                    {% if is_state('input_text.theme_background_<entity_2>', 'none') %}
+                    {% if is_state('input_text.theme_background_<entity_32>', 'none') %}
                     outline: 2px solid var(--primary-color) !important;
                     outline-offset: -2px;
                     {% endif %}
@@ -3185,8 +3049,9 @@ views:
                 '#fef7ed',
                 '#e8f5e9'
               ] %}
-              {% set bg = states('input_text.theme_background_<entity_2>') %}
-              {% set pri = states('sensor.theme_dark_primary') %}
+              {% set bg = states('input_text.theme_background_<entity_32>') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_32>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for hex in colors %}
@@ -3199,7 +3064,7 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'entity_id': 'input_text.theme_background_<entity_32>',
                         'value': hex
                       }
                     },
@@ -3232,7 +3097,7 @@ views:
           card_param: cards
           filter:
             template: |
-              {% set pal = states('input_select.theme_palette_<entity_2>') %}
+              {% set pal = states('input_select.theme_palette_<entity_32>') %}
               {% set shades = {
                 'Indigo': ['#121218', '#1a1a42', '#141430', '#0e0e28'],
                 'Ocean': ['#0a1218', '#082842', '#0a2038', '#061830'],
@@ -3244,8 +3109,9 @@ views:
                 'Mint': ['#0e1210', '#0a3022', '#0a2518', '#081e14']
               } %}
               {% set colors = shades.get(pal, shades['Indigo']) %}
-              {% set bg = states('input_text.theme_background_<entity_2>') %}
-              {% set pri = states('sensor.theme_dark_primary') %}
+              {% set bg = states('input_text.theme_background_<entity_32>') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_32>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for hex in colors %}
@@ -3258,7 +3124,7 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'entity_id': 'input_text.theme_background_<entity_32>',
                         'value': hex
                       }
                     },
@@ -3275,7 +3141,7 @@ views:
         - type: custom:mushroom-template-card
           primary: Custom color
           secondary: >
-            {% set bg = states('input_text.theme_background_<entity_2>') %}
+            {% set bg = states('input_text.theme_background_<entity_32>') %}
             {% if bg.startswith('#') %}
             {{ bg }}
             {% else %}
@@ -3283,7 +3149,7 @@ views:
             {% endif %}
           icon: mdi:eyedropper
           icon_color: >
-            {% set bg = states('input_text.theme_background_<entity_2>') %}
+            {% set bg = states('input_text.theme_background_<entity_32>') %}
             {% if bg.startswith('#') %}
             {{ bg }}
             {% else %}
@@ -3291,13 +3157,13 @@ views:
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_text.theme_background_<entity_2>
+            entity: input_text.theme_background_<entity_32>
           card_mod:
             style:
               .: *theme_card_style
               $: |
                 ha-card {
-                  {% if states('input_text.theme_background_<entity_2>').startswith('#') %}
+                  {% if states('input_text.theme_background_<entity_32>').startswith('#') %}
                   outline: 2px solid var(--primary-color) !important;
                   outline-offset: -2px;
                   {% endif %}
@@ -3322,7 +3188,8 @@ views:
           filter:
             template: |
               {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
-              {% set pri = states('sensor.theme_dark_primary') %}
+              {% from 'general_home_theme.jinja' import theme_value %}
+              {% set pri = theme_value('<entity_32>', 'primary') %}
               {% set ns = namespace(cards=[]) %}
 
               {% for f in files %}
@@ -3334,13 +3201,13 @@ views:
                       'action': 'call-service',
                       'service': 'input_text.set_value',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_2>',
+                        'entity_id': 'input_text.theme_background_<entity_32>',
                         'value': f
                       }
                     },
                     'card_mod': {
                       'style': 'ha-card { border-radius: 12px !important; ' ~
-                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_2>', f) else '') ~
+                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_32>', f) else '') ~
                         ' }'
                     }
                   }
@@ -3355,30 +3222,31 @@ views:
         style: *theme_exempt_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_1>
+      - condition: user
+        users:
+        - f47...c86
       card:
         type: vertical-stack
         cards:
         - type: custom:mushroom-template-card
           primary: Opacity
           secondary: >
-            {% set v = states('input_number.theme_card_opacity_<entity_1>') | float(-1) %}
+            {% set v = states('input_number.theme_card_opacity_<entity_31>') | float(-1) %}
             {% if v < 0 %}
-            Auto ({{ states('sensor.theme_light_card_opacity') }}%)
+            Auto ({% from 'general_home_theme.jinja' import theme_value %}{{ theme_value('<entity_31>', 'card_opacity') }}%)
             {% else %}
             {{ v | int }}%
             {% endif %}
           icon: mdi:opacity
           icon_color: >
-            {% if states('input_number.theme_card_opacity_<entity_1>') | float(-1) < 0 %}
+            {% if states('input_number.theme_card_opacity_<entity_31>') | float(-1) < 0 %}
             var(--primary-color)
             {% else %}
             grey
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_number.theme_card_opacity_<entity_1>
+            entity: input_number.theme_card_opacity_<entity_31>
           card_mod:
             style: *theme_card_style
         - type: custom:mushroom-chips-card
@@ -3391,12 +3259,12 @@ views:
               action: call-service
               service: input_number.set_value
               service_data:
-                entity_id: input_number.theme_card_opacity_<entity_1>
+                entity_id: input_number.theme_card_opacity_<entity_31>
                 value: -1
             card_mod:
               style: |
                 ha-card {
-                  {% if states('input_number.theme_card_opacity_<entity_1>') | float(-1) < 0 %}
+                  {% if states('input_number.theme_card_opacity_<entity_31>') | float(-1) < 0 %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                 }
@@ -3405,22 +3273,22 @@ views:
         - type: custom:mushroom-template-card
           primary: Blur
           secondary: >
-            {% set v = states('input_number.theme_card_blur_<entity_1>') | float(-1) %}
+            {% set v = states('input_number.theme_card_blur_<entity_31>') | float(-1) %}
             {% if v < 0 %}
-            Auto ({{ states('sensor.theme_light_card_blur') }}px)
+            Auto ({% from 'general_home_theme.jinja' import theme_value %}{{ theme_value('<entity_31>', 'card_blur') }}px)
             {% else %}
             {{ v | int }}px
             {% endif %}
           icon: mdi:blur
           icon_color: >
-            {% if states('input_number.theme_card_blur_<entity_1>') | float(-1) < 0 %}
+            {% if states('input_number.theme_card_blur_<entity_31>') | float(-1) < 0 %}
             var(--primary-color)
             {% else %}
             grey
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_number.theme_card_blur_<entity_1>
+            entity: input_number.theme_card_blur_<entity_31>
           card_mod:
             style: *theme_card_style
         - type: custom:mushroom-chips-card
@@ -3433,12 +3301,12 @@ views:
               action: call-service
               service: input_number.set_value
               service_data:
-                entity_id: input_number.theme_card_blur_<entity_1>
+                entity_id: input_number.theme_card_blur_<entity_31>
                 value: -1
             card_mod:
               style: |
                 ha-card {
-                  {% if states('input_number.theme_card_blur_<entity_1>') | float(-1) < 0 %}
+                  {% if states('input_number.theme_card_blur_<entity_31>') | float(-1) < 0 %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                 }
@@ -3446,30 +3314,31 @@ views:
             style: *theme_exempt_style
     - type: conditional
       conditions:
-      - entity: input_select.theme_appearance_user
-        state: <entity_2>
+      - condition: user
+        users:
+        - 760...94c
       card:
         type: vertical-stack
         cards:
         - type: custom:mushroom-template-card
           primary: Opacity
           secondary: >
-            {% set v = states('input_number.theme_card_opacity_<entity_2>') | float(-1) %}
+            {% set v = states('input_number.theme_card_opacity_<entity_32>') | float(-1) %}
             {% if v < 0 %}
-            Auto ({{ states('sensor.theme_dark_card_opacity') }}%)
+            Auto ({% from 'general_home_theme.jinja' import theme_value %}{{ theme_value('<entity_32>', 'card_opacity') }}%)
             {% else %}
             {{ v | int }}%
             {% endif %}
           icon: mdi:opacity
           icon_color: >
-            {% if states('input_number.theme_card_opacity_<entity_2>') | float(-1) < 0 %}
+            {% if states('input_number.theme_card_opacity_<entity_32>') | float(-1) < 0 %}
             var(--primary-color)
             {% else %}
             grey
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_number.theme_card_opacity_<entity_2>
+            entity: input_number.theme_card_opacity_<entity_32>
           card_mod:
             style: *theme_card_style
         - type: custom:mushroom-chips-card
@@ -3482,12 +3351,12 @@ views:
               action: call-service
               service: input_number.set_value
               service_data:
-                entity_id: input_number.theme_card_opacity_<entity_2>
+                entity_id: input_number.theme_card_opacity_<entity_32>
                 value: -1
             card_mod:
               style: |
                 ha-card {
-                  {% if states('input_number.theme_card_opacity_<entity_2>') | float(-1) < 0 %}
+                  {% if states('input_number.theme_card_opacity_<entity_32>') | float(-1) < 0 %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                 }
@@ -3496,22 +3365,22 @@ views:
         - type: custom:mushroom-template-card
           primary: Blur
           secondary: >
-            {% set v = states('input_number.theme_card_blur_<entity_2>') | float(-1) %}
+            {% set v = states('input_number.theme_card_blur_<entity_32>') | float(-1) %}
             {% if v < 0 %}
-            Auto ({{ states('sensor.theme_dark_card_blur') }}px)
+            Auto ({% from 'general_home_theme.jinja' import theme_value %}{{ theme_value('<entity_32>', 'card_blur') }}px)
             {% else %}
             {{ v | int }}px
             {% endif %}
           icon: mdi:blur
           icon_color: >
-            {% if states('input_number.theme_card_blur_<entity_2>') | float(-1) < 0 %}
+            {% if states('input_number.theme_card_blur_<entity_32>') | float(-1) < 0 %}
             var(--primary-color)
             {% else %}
             grey
             {% endif %}
           tap_action:
             action: more-info
-            entity: input_number.theme_card_blur_<entity_2>
+            entity: input_number.theme_card_blur_<entity_32>
           card_mod:
             style: *theme_card_style
         - type: custom:mushroom-chips-card
@@ -3524,12 +3393,12 @@ views:
               action: call-service
               service: input_number.set_value
               service_data:
-                entity_id: input_number.theme_card_blur_<entity_2>
+                entity_id: input_number.theme_card_blur_<entity_32>
                 value: -1
             card_mod:
               style: |
                 ha-card {
-                  {% if states('input_number.theme_card_blur_<entity_2>') | float(-1) < 0 %}
+                  {% if states('input_number.theme_card_blur_<entity_32>') | float(-1) < 0 %}
                   border: 2px solid var(--primary-color) !important;
                   {% endif %}
                 }
