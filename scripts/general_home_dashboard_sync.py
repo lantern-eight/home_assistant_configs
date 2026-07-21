@@ -40,6 +40,7 @@ FILE_MAP = {
   'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
   'theme_sensors.yaml': 'template_sensors/theme_sensors.yaml',
   'general_home_mobile.yaml': 'packages/general_home_mobile.yaml',
+  'general_home_theme.jinja': 'custom_templates/general_home_theme.jinja',
   'popup_history_fix.js': 'www/popup_history_fix.js',
 }
 
@@ -163,7 +164,8 @@ def _reload_services(token: str) -> None:
     LOGGER.warning('No valid HA token; skipping service reloads')
     return
   headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-  for service in ('template/reload', 'command_line/reload'):
+  # custom_templates first: template sensors and card_mod styles import from it.
+  for service in ('homeassistant/reload_custom_templates', 'template/reload', 'command_line/reload'):
     domain, svc = service.split('/', 1)
     try:
       resp = requests.post(

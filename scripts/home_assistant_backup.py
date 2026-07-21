@@ -99,7 +99,7 @@ BACKUP_FILES = [
 ]
 
 
-PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt')
+PROCESSABLE_EXTENSIONS = ('.yaml', '.json', '.conf', '.txt', '.jinja')
 
 _ID_PATTERN = re.compile(
   r'\b('
