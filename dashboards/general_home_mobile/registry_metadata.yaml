@@ -41,6 +41,91 @@ labels:
     icon: mdi:tune-variant
 
 entities:
+  # --- Multi-user theme helpers (username-suffixed) ---
+  input_select.theme_mode_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_mode_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_text.theme_background_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_text.theme_background_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<entity_32>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<entity_31>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
   input_boolean.cond_bedtime_doors:
     category: GenMobile Dashboard Notifications
     labels:
@@ -56,6 +141,7 @@ entities:
     labels:
       - gm-dashboard
       - gm-notifications
+  # --- Legacy single-account theme entries (for future removal on a cutover) ---
   input_select.theme_appearance_user:
     category: GenMobile Theme System
     labels:

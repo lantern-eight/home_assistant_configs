@@ -30,6 +30,67 @@ input_boolean:
 # --- Theme system ---
 
 input_select:
+  # --- Mulit-user model: one helper set per HA account (username-suffixed). ---
+  # Mode picks which variant of the user's palette renders; System follows the
+  # device's light/dark setting.
+  theme_mode_<entity_32>:
+    name: "Theme Mode (<entity_32>)"
+    options:
+      - Light
+      - Dark
+      - System
+    icon: mdi:theme-light-dark
+  theme_mode_<entity_31>:
+    name: "Theme Mode (<entity_31>)"
+    options:
+      - Light
+      - Dark
+      - System
+    icon: mdi:theme-light-dark
+  theme_style_<entity_32>:
+    name: "Theme Style (<entity_32>)"
+    options:
+      - Clean
+      - Glass
+      - Dark
+      - Glow
+      - Neon
+    icon: mdi:palette-swatch-variant
+  theme_style_<entity_31>:
+    name: "Theme Style (<entity_31>)"
+    options:
+      - Clean
+      - Glass
+      - Dark
+      - Glow
+      - Neon
+    icon: mdi:palette-swatch-variant
+  theme_palette_<entity_32>:
+    name: "Theme Palette (<entity_32>)"
+    options:
+      - Indigo
+      - Ocean
+      - Sunset
+      - Forest
+      - Rose
+      - Mono
+      - Cyberdeck
+      - Mint
+    icon: mdi:palette
+  theme_palette_<entity_31>:
+    name: "Theme Palette (<entity_31>)"
+    options:
+      - Indigo
+      - Ocean
+      - Sunset
+      - Forest
+      - Rose
+      - Mono
+      - Cyberdeck
+      - Mint
+    icon: mdi:palette
+  # --- Legacy single-account helpers (dashboard still reads these; to be removed later
+  # in a cutover). ---
   theme_appearance_user:
     name: "Theme Appearance User"
     options:
@@ -80,6 +141,14 @@ input_select:
     icon: mdi:palette
 
 input_text:
+  theme_background_<entity_32>:
+    name: "Theme Background (<entity_32>)"
+    max: 255
+    icon: mdi:image
+  theme_background_<entity_31>:
+    name: "Theme Background (<entity_31>)"
+    max: 255
+    icon: mdi:image
   theme_background_<entity_1>:
     name: "Theme Background (<entity_1>)"
     max: 255
@@ -90,6 +159,38 @@ input_text:
     icon: mdi:image
 
 input_number:
+  theme_card_opacity_<entity_32>:
+    name: "theme_card_opacity_<entity_32>"
+    min: -1
+    max: 100
+    step: 5
+    icon: mdi:opacity
+    unit_of_measurement: "%"
+    mode: slider
+  theme_card_opacity_<entity_31>:
+    name: "theme_card_opacity_<entity_31>"
+    min: -1
+    max: 100
+    step: 5
+    icon: mdi:opacity
+    unit_of_measurement: "%"
+    mode: slider
+  theme_card_blur_<entity_32>:
+    name: "theme_card_blur_<entity_32>"
+    min: -1
+    max: 30
+    step: 1
+    icon: mdi:blur
+    unit_of_measurement: "px"
+    mode: slider
+  theme_card_blur_<entity_31>:
+    name: "theme_card_blur_<entity_31>"
+    min: -1
+    max: 30
+    step: 1
+    icon: mdi:blur
+    unit_of_measurement: "px"
+    mode: slider
   theme_card_opacity_<entity_1>:
     name: "theme_card_opacity_<entity_1>"
     min: -1
