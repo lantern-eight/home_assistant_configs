@@ -38,7 +38,6 @@ HA_BASE_URL = 'http://homeassistant.local:8123'
 FILE_MAP = {
   'dashboard.yaml': 'dashboards/general_home_mobile/dashboard.yaml',
   'sensors.yaml':   'template_sensors/general_home_sensors.yaml',
-  'theme_sensors.yaml': 'template_sensors/theme_sensors.yaml',
   'general_home_mobile.yaml': 'packages/general_home_mobile.yaml',
   'general_home_theme.jinja': 'custom_templates/general_home_theme.jinja',
   'popup_history_fix.js': 'www/popup_history_fix.js',

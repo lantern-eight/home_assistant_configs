@@ -89,56 +89,6 @@ input_select:
       - Cyberdeck
       - Mint
     icon: mdi:palette
-  # --- Legacy single-account helpers (dashboard still reads these; to be removed later
-  # in a cutover). ---
-  theme_appearance_user:
-    name: "Theme Appearance User"
-    options:
-      - "<entity_1>"
-      - "<entity_2>"
-    icon: mdi:account-switch
-  theme_style_<entity_1>:
-    name: "Theme Style (<entity_1>)"
-    options:
-      - Clean
-      - Glass
-      - Dark
-      - Glow
-      - Neon
-    icon: mdi:palette-swatch-variant
-  theme_style_<entity_2>:
-    name: "Theme Style (<entity_2>)"
-    options:
-      - Clean
-      - Glass
-      - Dark
-      - Glow
-      - Neon
-    icon: mdi:palette-swatch-variant
-  theme_palette_<entity_1>:
-    name: "Theme Palette (<entity_1>)"
-    options:
-      - Indigo
-      - Ocean
-      - Sunset
-      - Forest
-      - Rose
-      - Mono
-      - Cyberdeck
-      - Mint
-    icon: mdi:palette
-  theme_palette_<entity_2>:
-    name: "Theme Palette (<entity_2>)"
-    options:
-      - Indigo
-      - Ocean
-      - Sunset
-      - Forest
-      - Rose
-      - Mono
-      - Cyberdeck
-      - Mint
-    icon: mdi:palette
 
 input_text:
   theme_background_<entity_32>:
@@ -147,14 +97,6 @@ input_text:
     icon: mdi:image
   theme_background_<entity_31>:
     name: "Theme Background (<entity_31>)"
-    max: 255
-    icon: mdi:image
-  theme_background_<entity_1>:
-    name: "Theme Background (<entity_1>)"
-    max: 255
-    icon: mdi:image
-  theme_background_<entity_2>:
-    name: "Theme Background (<entity_2>)"
     max: 255
     icon: mdi:image
 
@@ -185,38 +127,6 @@ input_number:
     mode: slider
   theme_card_blur_<entity_31>:
     name: "theme_card_blur_<entity_31>"
-    min: -1
-    max: 30
-    step: 1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-  theme_card_opacity_<entity_1>:
-    name: "theme_card_opacity_<entity_1>"
-    min: -1
-    max: 100
-    step: 5
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_opacity_<entity_2>:
-    name: "theme_card_opacity_<entity_2>"
-    min: -1
-    max: 100
-    step: 5
-    icon: mdi:opacity
-    unit_of_measurement: "%"
-    mode: slider
-  theme_card_blur_<entity_1>:
-    name: "theme_card_blur_<entity_1>"
-    min: -1
-    max: 30
-    step: 1
-    icon: mdi:blur
-    unit_of_measurement: "px"
-    mode: slider
-  theme_card_blur_<entity_2>:
-    name: "theme_card_blur_<entity_2>"
     min: -1
     max: 30
     step: 1
