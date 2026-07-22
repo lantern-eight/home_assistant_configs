@@ -5,9 +5,9 @@ Runs in kiosk mode (no HA header or sidebar) and uses `type: sections` views
 with a single-column layout optimized for mobile screens.
 
 The theme system supports 5 visual styles, 8 color palettes, custom
-backgrounds, and per-card opacity/blur controls. Each household member gets
-their own independent theme preferences, detected automatically via the
-device's light/dark mode setting.
+backgrounds, and per-card opacity/blur controls. Each HA account gets its
+own independent theme preferences, selected by who is logged in, with a
+per-account light/dark/system mode choice.
 
 **HA version tested:** 2026.6.3
 **Dashboard mode:** YAML (`mode: yaml`)
@@ -42,14 +42,14 @@ card_mod)
   - [HACS Cards](#2-hacs-cards)
   - [card_mod Load Order Fix and Popup History Fix](#3-card_mod-load-order-fix-and-popup-history-fix)
   - [Theme Helpers](#4-theme-helpers)
-  - [Template Sensors](#5-template-sensors)
+  - [Template Sensors and Theme Macros](#5-template-sensors-and-theme-macros)
   - [Background Image Pipeline](#6-background-image-pipeline)
   - [Conditional Card Helpers](#7-conditional-card-helpers)
   - [REST Sensor (UV Forecast)](#8-rest-sensor-uv-forecast)
   - [Kiosk Mode](#9-kiosk-mode)
 - [Theme System](#theme-system)
-  - [How Per-User Detection Works](#how-per-user-detection-works)
-  - [Three Customization Axes](#three-customization-axes)
+  - [How Per-User Theming Works](#how-per-user-theming-works)
+  - [Four Customization Axes](#four-customization-axes)
   - [Styles](#styles)
   - [Palettes](#palettes)
   - [Backgrounds](#backgrounds)
@@ -58,7 +58,7 @@ card_mod)
 - [Notification System](#notification-system)
 - [Architecture](#architecture)
   - [Why Card-Level, Not View-Level](#why-card-level-not-view-level)
-  - [Per-Property Sensors, Not One Big CSS Sensor](#per-property-sensors-not-one-big-css-sensor)
+  - [Macro Library, Not Sensors](#macro-library-not-sensors)
   - [YAML Anchors and Card Tiering](#yaml-anchors-and-card-tiering)
   - [Background Overlay Card](#background-overlay-card)
   - [Popup History Fix](#popup-history-fix-back-button-behavior)
@@ -179,29 +179,38 @@ unstyled for that page load.
 > **Package:** These helpers are defined in `general_home_mobile.yaml` and deployed to
 > `packages/` by the sync script.
 
-### 5. Template Sensors
+### 5. Template Sensors and Theme Macros
 
-Two sensor files need to be placed in your HA template sensors directory:
+Two files feed HA's template engine:
 
 | Repo file | Deploy to |
 |-----------|-----------|
 | `sensors.yaml` | `template_sensors/general_home_sensors.yaml` |
-| `theme_sensors.yaml` | `template_sensors/theme_sensors.yaml` |
+| `general_home_theme.jinja` | `custom_templates/general_home_theme.jinja` |
 
 Your `configuration.yaml` should include:
 ```yaml
 template: !include_dir_merge_list template_sensors
 ```
+(`custom_templates/` needs no registration — HA loads every `.jinja` file in
+it automatically.)
 
-After placing the files, run `template/reload` (Developer Tools > YAML >
-Template Entities) or restart HA.
+After placing the files, reload: `template/reload` for the sensors and
+`homeassistant.reload_custom_templates` for the macro library (the sync
+script runs both), or restart HA.
 
-**Important:** You must find-and-replace the placeholder user names in
-`theme_sensors.yaml` with your actual HA user names. The dark-mode user's
-helpers are read by the `theme_dark_*` sensors; the light-mode user's helpers
-are read by the `theme_light_*` sensors. Search for
-`input_select.theme_style_` and `input_select.theme_palette_` to find all the
-references.
+**Important:** the repo files reference the two HA account usernames through
+the redaction placeholders `<entity_31>` and `<entity_32>`, and the account
+user ids through short-form id keys (see the root README for the entity-map
+mechanism). You never edit the tracked files: map the placeholders to your
+own accounts in your gitignored `entity_map.yaml` (usernames under
+`entities:`, full 32-hex account ids under `ids:`) and the sync script
+substitutes the real values in memory on every upload. Also list your
+usernames in `config.yaml`'s `redact_entities` so the backup script
+re-redacts them on the way back. The one step the scripts can't do for you
+is inside HA itself: set each account's display name to match its username,
+because card-mod's `user` variable (which selects whose theme renders)
+carries the display name, not the username.
 
 ### 6. Background Image Pipeline
 
@@ -264,49 +273,49 @@ More popup > "Home Assistant" link, which navigates to `/lovelace/0`.
 
 ## Theme System
 
-### How Per-User Detection Works
+### How Per-User Theming Works
 
-The theme system uses CSS `@media (prefers-color-scheme: dark/light)` to
-detect which user is viewing the dashboard. This works because one household
-member always uses dark mode and the other always uses light mode.
+Each HA account has its own set of theme helpers (mode, style, palette,
+background, opacity, blur), suffixed with the account's username. Every
+themed card's `card_mod` style imports the theme macro library and asks it
+for CSS:
 
-Every card's `card_mod` style block outputs **both** users' CSS, each wrapped
-in the appropriate `@media` query. The browser applies whichever matches:
-
-```css
-@media (prefers-color-scheme: dark) {
-  ha-card {
-    /* dark-mode user's style + palette */
-    --primary-color: #6a74d3;
-    background: rgba(30,30,30,0.95) !important;
-    /* ... */
-  }
-}
-@media (prefers-color-scheme: light) {
-  ha-card {
-    /* light-mode user's style + palette */
-    --primary-color: #6a74d3;
-    background: rgba(255,255,255,0.95) !important;
-    /* ... */
-  }
-}
+```jinja
+{% from 'general_home_theme.jinja' import theme_css %}
+{{ theme_css(user, 'card') }}
 ```
 
-The Appearance subview has a manual user toggle so you can edit either user's
-preferences from any device — this is an editing control only, not a detection
-mechanism.
+`user` is injected by card-mod and equals the viewing account's display name
+(display names are set to match usernames). The macro resolves which
+account's helpers to read; a session that is neither account falls back to
+the primary account's theme (shared wall devices, guests).
 
-> **Limitation:** This approach supports exactly two users. If you need more,
-> you'd need a different detection mechanism (e.g., browser_mod user
-> identification).
+The account's **Theme Mode** select decides which variant of its palette
+renders:
 
-### Three Customization Axes
+- **Light** / **Dark** — always that variant; the device's own light/dark
+  setting is ignored.
+- **System** — the macro emits both variants wrapped in
+  `@media (prefers-color-scheme)` queries and the device picks.
 
-The theme has three independent axes that can be mixed and matched:
+Only card_mod `style:` templates receive `user`. Other template contexts on
+the dashboard (auto-entities filters, mushroom secondaries) call
+`theme_value(account, prop)` with the account name as a literal — safe
+because those cards sit inside per-account visibility blocks anyway.
 
-1. **Style** — the structural feel (card surfaces, borders, blur, corners)
-2. **Palette** — the color tokens (primary, accent, state colors, glow colors)
-3. **Background** — what's behind the cards (auto, none, solid color, image)
+> **Limitation:** exactly two accounts are wired into the macro's resolver
+> and the Appearance page. A third user means extending the resolver in
+> `general_home_theme.jinja`, adding a helper set, and adding a gated
+> Appearance block.
+
+### Four Customization Axes
+
+The theme has four independent axes that can be mixed and matched:
+
+1. **Mode** — light variant, dark variant, or follow the device (System)
+2. **Style** — the structural feel (card surfaces, borders, blur, corners)
+3. **Palette** — the color tokens (primary, accent, state colors, glow colors)
+4. **Background** — what's behind the cards (auto, none, solid color, image)
 
 Changing one axis does not affect the others. The exception is `Auto`
 background, which dynamically reflects the current style and palette.
@@ -354,7 +363,12 @@ look.
 
 Each palette also defines `--state-on-color`, `--state-off-color`,
 `--success-color`, `--warning-color`, `--error-color`, `--info-color`, and
-three `--glow-color-N` values for the Glow style's radial gradient blobs.
+three glow colors for the Glow style's radial gradient blobs.
+
+Every palette and style value lives in one place: the tables at the top of
+`general_home_theme.jinja` (semantic colors shared by both modes; glows,
+surfaces, and card chrome keyed per mode). Adding a palette is one row per
+table plus a picker tile in each account's Appearance block.
 
 ### Backgrounds
 
@@ -401,9 +415,11 @@ current style's default.
 
 ![Appearance page](images/appearance_page_dark.png)
 
-Accessed from More popup > Appearance. Layout:
+Accessed from More popup > Appearance. The page is self-edit: native
+per-account visibility conditions show each account only its own controls,
+so there is no "which user am I editing" switch. Layout:
 
-1. **User toggle** — two chips to switch which user's preferences you're editing
+1. **Mode picker** — Light / Dark / System tiles
 2. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
 3. **Palette picker** — 8 tiles with 4-dot color swatches
 4. **Background picker:**
@@ -492,7 +508,7 @@ list, etc.), not just a notification dot.
 1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
 2. Add on/off automations (time- or state-triggered) in the same file
 3. Add the card entry to `sensor.dashboard_conditional_visible` in
-   `sensors.yaml` (state, visible_ids, all_cards, active_count)
+   `sensors.yaml` (state template)
 4. Add the conditional card in the `dashboard.yaml` Home view, gated on
    the input_boolean
 5. Add an unconditional copy of the card to the Conditionals page in
@@ -517,7 +533,7 @@ on `type: sections` views in HA 2026.6.
 
 The `card-mod` element created for a sections view **never receives the `hass`
 object**. card_mod needs `hass` to evaluate Jinja2 templates like
-`{{ states('sensor.theme_dark_primary') }}`. Without it, the entire style
+`{{ theme_css(user, 'card') }}`. Without it, the entire style
 string renders to an empty string. All six views in this dashboard use
 `type: sections`, so the entire view-level theming layer was a silent no-op.
 
@@ -528,30 +544,28 @@ receive `hass` and evaluates Jinja2 correctly.
 The view-level anchor (`&theme_view_style`) is kept as an empty string no-op
 so existing references don't break.
 
-### Per-Property Sensors, Not One Big CSS Sensor
+### Macro Library, Not Sensors
 
-Putting the entire CSS block in a single template sensor doesn't work because
-**HA sensor states are capped at 255 characters**. A full `@media` CSS block with
-all palette colors, borders, shadows, etc. far exceeds that limit, causing the 
-ensor to go `unavailable`.
+All theme values and the CSS that carries them live in one Jinja macro
+library, `general_home_theme.jinja`, deployed to HA's `custom_templates/`.
+The YAML anchors in `dashboard.yaml` are thin wrappers that import it and
+call `theme_css(user, kind)`; the macro reads the viewing account's helpers,
+resolves the mode, and emits the complete CSS block server-side.
 
-**Fix:** The theme uses **many small per-property sensors**, each outputting a
-single CSS value well under 255 characters:
+Why this shape:
 
-```
-sensor.theme_dark_primary        → "#6a74d3"
-sensor.theme_dark_card_background → "rgba(30,30,30,0.95)"
-sensor.theme_dark_card_border    → "1px solid rgba(255,255,255,0.06)"
-sensor.theme_dark_card_blur      → "12"
-...
-```
+- **One source of truth.** Every palette, style default, glow alpha, and
+  chrome value is declared exactly once, in the tables at the top of the
+  macro file. Adding a palette is one row per table.
+- **No 255-char problem.** HA template *sensor states* are capped at 255
+  characters (an earlier iteration worked around this with ~40 per-property
+  sensors). card_mod template output has no such cap, so the macro can emit
+  whole CSS blocks directly and the sensor layer isn't needed at all.
+- **Narrow subscriptions.** Each card's template touches only the viewing
+  account's own helpers, so one account changing their theme doesn't
+  re-render the other account's cards.
 
-YAML anchors in `dashboard.yaml` assemble the CSS structure and interpolate
-these sensor values. This gives you granular re-rendering (changing just the
-palette only updates the color sensors, not the entire CSS) and keeps each
-sensor's state safely under the 255-char limit.
-
-> If you ever need a long string from a sensor, put it in an **attribute**
+> If you ever need a long string from a *sensor*, put it in an **attribute**
 > (attributes aren't 255-capped) and read it via `state_attr()`.
 
 ### YAML Anchors and Card Tiering
@@ -634,20 +648,21 @@ break anything) and would need to be updated.
 ### Duplicate Picker Sections
 
 The Appearance subview has **two complete copies** of every picker section
-(Style tiles, Palette tiles, Background options) — one per user, wrapped in
-`conditional` cards that toggle on `input_select.theme_appearance_user`.
+(Mode, Style, Palette, Background, Card effects) — one per account, each
+wrapped in a `conditional` card whose condition is `condition: user`, so
+each account only ever sees its own copy.
 
 This duplication exists because:
 
 1. HA does not support Jinja2 templating inside `tap_action` service call
    `entity_id` fields — you can't write
-   `entity_id: input_select.theme_style_{{ current_user }}`
-2. The tile previews use different hardcoded colors per user (dark-mode user
-   tiles show dark surface previews; light-mode user tiles show light surface
-   previews)
+   `entity_id: input_select.theme_style_{{ current_user }}`, so each copy's
+   tap targets are literals pointing at that account's helpers.
+2. The style-tile previews are hardcoded per copy (one block previews dark
+   surfaces, the other light).
 
-If you add a new style or palette option, you must add the corresponding
-tile in **both** user blocks.
+If you add a new style, palette, or mode option, you must add the
+corresponding tile in **both** account blocks.
 
 ---
 
@@ -669,9 +684,10 @@ uv run python scripts/general_home_dashboard_sync.py -c
 uv run python scripts/general_home_dashboard_sync.py -r
 ```
 
-The script syncs: `dashboard.yaml`, `sensors.yaml`, `theme_sensors.yaml`,
-`general_home_mobile.yaml` (to `packages/`), `popup_history_fix.js` (to `www/`),
-and the two theme Python scripts. It then runs `template/reload` and
+The script syncs: `dashboard.yaml`, `sensors.yaml`, `general_home_theme.jinja`
+(to `custom_templates/`), `general_home_mobile.yaml` (to `packages/`),
+`popup_history_fix.js` (to `www/`), and the two theme Python scripts. It then
+runs `homeassistant.reload_custom_templates`, `template/reload`, and
 `command_line/reload`. With `-c`, it also creates categories and labels via WebSocket and assigns
 them to helper entities. WebSocket is needed because HA categories and labels
 are registry-only objects (stored in `.storage/`, not configurable via YAML) —
@@ -716,10 +732,12 @@ curl -s -X POST "http://YOUR_HA:8123/api/config/core/check_config" \
    remount after every restart. The sync script uses its own SMB connection and
    is unaffected.
 
-2. **Template sensors get stuck at `unknown`.** They won't show even the
-   Indigo fallback until you run `template/reload` (Developer Tools > YAML >
-   Template Entities, or `POST /api/services/template/reload`). Always reload
-   templates after a restart.
+2. **Template sensors get stuck at `unknown`.** Run `template/reload`
+   (Developer Tools > YAML > Template Entities, or
+   `POST /api/services/template/reload`) after a restart. The theme itself
+   is macro-rendered, not sensor-based — after editing
+   `general_home_theme.jinja`, run `homeassistant.reload_custom_templates`
+   and refresh the page.
 
 3. **`initial:` helpers reset.** If your `input_select`/`input_number` helpers
    have `initial:` set, they reset to that value on restart. Remove `initial:`
@@ -729,7 +747,8 @@ curl -s -X POST "http://YOUR_HA:8123/api/config/core/check_config" \
 
 card_mod works by monkey-patching the `hass` setter on card element classes.
 If a card class instantiates **before** card_mod loads, that card will never
-be styled. The `extra_module_url` fix (see [Setup](#3-card_mod-load-order-fix))
+be styled. The `extra_module_url` fix (see
+[Setup](#3-card_mod-load-order-fix-and-popup-history-fix))
 addresses this, but if you ever see unstyled cards, the load order is the
 first thing to check.
 
@@ -739,16 +758,16 @@ cards it missed. The fix is load order, not patience.
 ### Sensor State 255-Char Limit
 
 HA template sensor states are capped at 255 characters. Any sensor state that
-exceeds this goes `unavailable`. This is why the theme uses per-property
-sensors instead of a single CSS-block sensor. If you add a new sensor, keep
-its output under 255 characters.
+exceeds this goes `unavailable` — keep states short and put long values in
+attributes (read via `state_attr()`, uncapped). The theme system sidesteps
+the cap entirely: its CSS is rendered by card_mod templates importing the
+macro library, and card_mod template output has no such limit.
 
 ### Entity ID vs. Unique ID
 
 HA derives entity IDs from the sensor's friendly **name**, not its `unique_id`.
-A sensor with `unique_id: theme_dark_lovelace_bg` but
-`name: "Theme Dark Lovelace Background"` gets entity ID
-`sensor.theme_dark_lovelace_background`. The dashboard references the entity
+A sensor with `unique_id: foo_bar` but `name: "Foo Bar Something"` gets
+entity ID `sensor.foo_bar_something`. The dashboard references the entity
 ID form (derived from the name). Don't assume the unique_id matches.
 
 ### Verifying card_mod Applied
@@ -763,16 +782,18 @@ getComputedStyle(haCard).getPropertyValue('--primary-color')
 ```
 
 If it returns the palette color (e.g., `#6a74d3`), card_mod applied. If it
-returns `#009ac7` (Material You default), it didn't. If it returns `unknown`,
-card_mod applied but the sensors weren't ready (run `template/reload`).
+returns `#009ac7` (Material You default), it didn't. If it returns nothing
+or `unknown`, card_mod applied but the macro render failed — check that
+`custom_templates/general_home_theme.jinja` is deployed, run
+`homeassistant.reload_custom_templates`, and confirm the theme helpers exist.
 
 ### Neon Font Loading
 
 The Neon style loads `Share Tech Mono` via a Google Fonts `@import` in the
 card_mod CSS. This means the first render after a fresh page load may briefly
 show the system font before the web font loads. The `@import` is
-conditionally included only when either user has Neon selected, so it doesn't
-slow down other styles.
+conditionally included only when the viewing account's style is Neon, so it
+doesn't slow down other styles.
 
 ### Light-Mode Glow Blending
 
@@ -780,8 +801,8 @@ The Glow style uses `mix-blend-mode: screen` in dark mode (lightens the glow
 over the dark base) and `mix-blend-mode: multiply` in light mode (darkens the
 pastel glow into the light base for a watercolor-wash effect). The light-mode
 overlay opacity is set to 0.85 (vs 1.0 for dark mode) to keep the wash
-subtle. If glow colors look too faint or too strong, adjust the alpha values
-in `theme_sensors.yaml` for the `glow_1`/`glow_2`/`glow_3` sensors.
+subtle. If glow colors look too faint or too strong, adjust the glow alphas
+in the `palette_by_mode` table in `general_home_theme.jinja`.
 
 ### APIs That Don't Work in 2026.6
 
@@ -801,7 +822,7 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 | File | Purpose |
 |------|---------|
 | `dashboard.yaml` | All views, theme YAML anchors, and card definitions |
-| `theme_sensors.yaml` | Per-property template sensors for dark and light users |
+| `general_home_theme.jinja` | Theme macro library — every palette/style value plus the CSS-emitting macros (deployed to `custom_templates/`) |
 | `sensors.yaml` | Non-theme template sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions applied via sync script `-c` flag |
@@ -828,7 +849,7 @@ HA's `packages/` directory by the same sync script.
 | `packages/general_home_mobile.yaml` | Deployed package (helpers, sensors, shell_command, automations) |
 | `packages/general.yaml` | Deployed general package (house-wide config, from repo-root `packages/`) |
 | `www/popup_history_fix.js` | Deployed copy of popup history fix module |
-| `template_sensors/theme_sensors.yaml` | Deployed copy of theme sensors |
+| `custom_templates/general_home_theme.jinja` | Deployed theme macro library |
 | `template_sensors/general_home_sensors.yaml` | Deployed copy of general sensors |
 | `www/themes/backgrounds/` | User-uploaded background images |
 | `www/themes/backgrounds/thumbs/` | Auto-generated thumbnails |
@@ -837,18 +858,18 @@ HA's `packages/` directory by the same sync script.
 
 ### Key Entities
 
-**Helpers (per user):**
-- `input_select.theme_style_<user>` — Clean / Glass / Dark / Glow / Neon
-- `input_select.theme_palette_<user>` — Indigo / Ocean / Sunset / Forest / Rose / Mono / Cyberdeck / Mint
-- `input_text.theme_background_<user>` — auto / none / #hex / filename
-- `input_number.theme_card_opacity_<user>` — -1 (follow default) to 100
-- `input_number.theme_card_blur_<user>` — -1 (follow default) to 30
+**Helpers (per account, suffixed with the account's username):**
+- `input_select.theme_mode_<username>` — Light / Dark / System
+- `input_select.theme_style_<username>` — Clean / Glass / Dark / Glow / Neon
+- `input_select.theme_palette_<username>` — Indigo / Ocean / Sunset / Forest / Rose / Mono / Cyberdeck / Mint
+- `input_text.theme_background_<username>` — auto / none / #hex / filename
+- `input_number.theme_card_opacity_<username>` — -1 (follow default) to 100
+- `input_number.theme_card_blur_<username>` — -1 (follow default) to 30
 
-**Shared:**
-- `input_select.theme_appearance_user` — which user the Appearance page edits
-
-**Sensors (one set for dark, one for light):**
-`theme_{dark,light}_{primary, accent, state_on, state_off, success, warning,
-error, info, glow_1, glow_2, glow_3, glow_active, lovelace_background,
-card_background, card_border, card_shadow, card_opacity, card_blur,
-card_radius, card_font}`
+**Macros (`general_home_theme.jinja`):**
+- `theme_css(user, kind)` — a card's full card_mod CSS; `kind` is `card`,
+  `exempt`, `chip`, or `chrome` (matching the four YAML anchors)
+- `view_background_css(user)` — the page background + Glow orb overlay
+- `theme_value(account, prop)` — single resolved values (`primary`,
+  `card_opacity`, `card_blur`, `account`) for non-card_mod templates, which
+  don't receive `user` and must pass the account name as a literal

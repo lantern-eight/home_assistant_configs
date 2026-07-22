@@ -6,10 +6,34 @@ documentation.
 
 ## What This Is
 
-A phone-first Home Assistant YAML dashboard with a per-user theme system.
+A phone-first Home Assistant YAML dashboard with a per-account theme system.
 Uses `type: sections` views, kiosk mode, and `card_mod` for all CSS theming.
-5 styles x 8 palettes x independent backgrounds, detected per-user via
-`@media (prefers-color-scheme)`.
+5 styles x 8 palettes x light/dark/system mode x independent backgrounds,
+selected per HA account.
+
+## Identity Model
+
+The household has two HA accounts. All per-user behavior keys off the
+logged-in account, never off device properties:
+
+- **card_mod styles** receive a `user` variable (the account's display name;
+  display names are set to match usernames). The theme macros take it as an
+  argument: `theme_css(user, 'card')`. Any session that is neither account
+  resolves to the primary account's theme (wall tablets, guests).
+- **Card visibility** uses native `condition: user` with account ids. The ids
+  are 32-hex values and flow through `entity_map.yaml`'s `ids` section like
+  every other hex id — never hardcode a raw id in tracked YAML.
+- **Only card_mod `style:` templates get `user`.** auto-entities filters,
+  mushroom `secondary:`/`icon_color:` templates, and markdown content do NOT —
+  in those contexts pass the account name as a literal argument (fine, since
+  such cards sit inside per-account visibility blocks).
+- The usernames themselves are redacted in tracked files as `<entity_31>` and
+  `<entity_32>`; the sync script's restore pass expands them on upload.
+
+To add a per-account feature: create one helper per account (username
+suffix), add one block per account gated by `condition: user`, and give each
+block literal `tap_action` targets (HA forbids Jinja in `tap_action`
+entity_id — see Common Mistakes).
 
 ## Architecture Constraints
 
@@ -24,18 +48,12 @@ All theming lives in card-level `card_mod` blocks. The view-level anchor
 
 ### Sensor states are capped at 255 characters
 
-Any template sensor state exceeding 255 chars goes `unavailable`. A full CSS
-block with palette colors, borders, shadows, etc. far exceeds this. The theme
-uses many small per-property sensors, each outputting a single CSS value:
-
-```
-sensor.theme_dark_primary         -> "#6a74d3"
-sensor.theme_dark_card_background -> "rgba(30,30,30,0.95)"
-sensor.theme_dark_card_border     -> "1px solid rgba(255,255,255,0.06)"
-```
-
-If you need a long value, put it in a sensor **attribute** (not capped) and
-read it via `state_attr()`.
+Any template sensor state exceeding 255 chars goes `unavailable`. Keep
+sensor states short; if you need a long value, put it in a sensor
+**attribute** (not capped) and read it via `state_attr()`. The theme system
+is not subject to this cap — its CSS is rendered directly by card_mod
+templates importing `general_home_theme.jinja`, and card_mod template
+output has no length limit.
 
 ### card_mod load order matters
 
@@ -46,9 +64,8 @@ retry or delay-based fix.
 
 ### Entity IDs derive from sensor name, not unique_id
 
-A sensor with `unique_id: theme_dark_lovelace_bg` but
-`name: "Theme Dark Lovelace Background"` gets entity ID
-`sensor.theme_dark_lovelace_background`. The dashboard references the
+A sensor with `unique_id: foo_bar` but `name: "Foo Bar Something"` gets
+entity ID `sensor.foo_bar_something`. The dashboard references the
 name-derived entity ID. Don't assume the unique_id matches.
 
 ## File Roles
@@ -56,7 +73,7 @@ name-derived entity ID. Don't assume the unique_id matches.
 | File | What it does |
 |------|-------------|
 | `dashboard.yaml` | All views, YAML anchor definitions, card definitions |
-| `theme_sensors.yaml` | Per-property template sensors for dark/light users |
+| `general_home_theme.jinja` | Theme macro library: every palette/style value + the CSS-emitting macros (deployed to `custom_templates/`) |
 | `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions for helpers (applied via sync script `-c`) |
@@ -82,6 +99,11 @@ Six anchors defined at the top of `dashboard.yaml` control card theming:
 | `&theme_bg_card` | Background overlay — must be first card in every view |
 
 To theme a new card: `card_mod: style: *theme_card_style`
+
+The template anchors are thin wrappers — each imports
+`general_home_theme.jinja` and calls `theme_css(user, kind)` (or
+`view_background_css(user)` for `&theme_bg_card`). All values and CSS
+structure live in the macro library; edit there, not in the anchors.
 
 ## Conditional Display System
 
@@ -132,7 +154,7 @@ automatically when their entity state is active.
 1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
 2. Add on/off automations (time- or state-triggered) in the same file
 3. Add the card entry to `sensor.dashboard_conditional_visible` in
-   `sensors.yaml` (state, visible_ids, all_cards, active_count)
+   `sensors.yaml` (state template)
 4. Add the conditional card in the Home view of `dashboard.yaml`, gated
    on the input_boolean
 5. Add an unconditional copy to the Conditionals page in `dashboard.yaml`
@@ -154,26 +176,24 @@ automatically when their entity state is active.
 
 ## Entity Naming
 
-Per-user helpers follow this pattern:
-- `input_select.theme_style_<user>`
-- `input_select.theme_palette_<user>`
-- `input_text.theme_background_<user>`
-- `input_number.theme_card_opacity_<user>` (-1 = follow style default)
-- `input_number.theme_card_blur_<user>` (-1 = follow style default)
+Per-account helpers are suffixed with the account's username:
+- `input_select.theme_mode_<username>` — Light / Dark / System
+- `input_select.theme_style_<username>`
+- `input_select.theme_palette_<username>`
+- `input_text.theme_background_<username>`
+- `input_number.theme_card_opacity_<username>` (-1 = follow style default)
+- `input_number.theme_card_blur_<username>` (-1 = follow style default)
 
-Shared: `input_select.theme_appearance_user` (which user the Appearance
-page edits).
-
-Per-property sensors: `sensor.theme_{dark,light}_{property}`
-Properties: primary, accent, state_on, state_off, success, warning, error,
-info, glow_1, glow_2, glow_3, glow_active, lovelace_background,
-card_background, card_border, card_shadow, card_opacity, card_blur,
-card_radius, card_font.
+There are no theme sensors. All theme values resolve through the macros in
+`general_home_theme.jinja`: `theme_css(user, kind)` for card_mod blocks,
+`view_background_css(user)` for the background card, and
+`theme_value(account, prop)` for single values in non-card_mod templates.
 
 ## Deploy and Test Workflow
 
 ```bash
-# Deploy dashboard + sensors + scripts, reload templates
+# Deploy dashboard + sensors + theme macros + scripts, reload templates
+# (also reloads custom_templates for general_home_theme.jinja changes)
 uv run python scripts/general_home_dashboard_sync.py
 
 # Deploy + apply categories and labels to helpers
@@ -200,13 +220,16 @@ Then reload the page.
 1. **Don't put theming at the view level.** It silently fails on sections
    views. Use card-level `card_mod` only.
 
-2. **Don't build one big CSS sensor.** It will exceed 255 chars and go
-   `unavailable`. One sensor per CSS property.
+2. **Don't add theme values anywhere but the macro library.** Every
+   palette/style value lives in the tables in `general_home_theme.jinja`
+   — no duplicating them into sensors, anchors, or card styles. (For
+   non-theme sensors, remember the 255-char state cap.)
 
 3. **Don't template `entity_id` in `tap_action`.** HA doesn't support
    Jinja2 in tap_action entity_id fields. This is why the Appearance page
-   has duplicate picker sections per user. If you add a style or palette,
-   add the tile in both user blocks.
+   has duplicate picker sections per account (gated by `condition: user`).
+   If you add a mode, style, or palette, add the tile in both account
+   blocks.
 
 4. **Don't remove or reorder the background overlay card.** It must be the
    first card in each view's first section. It uses `position: fixed` with
@@ -228,17 +251,21 @@ Then reload the page.
   (Google Fonts), 4px radius (not 18px), and stays dark even in light mode.
   Don't "fix" these to match other styles.
 
-- **Glow uses different blend modes per scheme.** Dark mode: `screen` blend
-  at opacity 1.0. Light mode: `multiply` blend at opacity 0.85. Adjust
-  glow alpha values in `theme_sensors.yaml` if glow looks wrong.
+- **Glow uses different blend modes per mode.** Dark: `screen` blend at
+  opacity 1.0. Light: `multiply` blend at 0.85. Adjust glow alphas in the
+  `palette_by_mode` table in `general_home_theme.jinja` if glow looks wrong.
 
 - **Dark style in light mode shows white cards.** This is by design — "Dark"
   describes its dark-mode appearance. In light mode it renders as crisp
-  white with subtle definition.
+  white with subtle definition. (Style names and mode names are independent
+  axes; "Dark" here is a style.)
 
 ## Privacy
 
-Real household names appear in entity IDs. In documentation, commits, and public-facing
-content, the backup sync script handles redaction automatically, it must be run before
-committing, `-s sanitize`, restore real values before pushing to Home Assistant,
-`-r restore`.
+Real household names appear in some entity IDs, and the two HA account
+usernames plus their 32-hex user ids are treated the same way: all of them
+are redacted in tracked files (`<entity_N>` placeholders and short-form id
+keys from `entity_map.yaml`). The backup sync script handles redaction
+automatically; it must be run before committing (`-s` sanitize) and the
+deploy scripts restore real values in memory on upload. Never write a raw
+username, person name, or user id into tracked YAML, docs, or commits.
