@@ -373,7 +373,6 @@ def _patch_sanitize_dirs(
   *,
   dest,
   entity_map_path,
-  redact_entities,
   dashboards=None,
 ) -> None:
   '''Point sanitize/restore at temp dirs; omit dashboards to skip it.'''
@@ -384,7 +383,6 @@ def _patch_sanitize_dirs(
     str(dashboards if dashboards is not None else base / 'missing_dashboards'),
   )
   monkeypatch.setattr('home_assistant_backup.ENTITY_MAP_PATH', entity_map_path)
-  monkeypatch.setattr('home_assistant_backup.REDACT_ENTITIES', redact_entities)
 
 class TestRunSanitize:
 
@@ -404,10 +402,9 @@ class TestRunSanitize:
             monkeypatch,
             dest=dest,
             entity_map_path=map_path,
-            redact_entities=["Zavala"],
         )
 
-        _run_sanitize()
+        _run_sanitize(["Zavala"])
 
         assert (dest / "auto.yaml").read_text() == (
             "alias: <entity_3>'s door\nmessage: <entity_3> opened it\n"
@@ -427,10 +424,9 @@ class TestRunSanitize:
             monkeypatch,
             dest=dest,
             entity_map_path=map_path,
-            redact_entities=["Alice"],
         )
 
-        _run_sanitize()
+        _run_sanitize(["Alice"])
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
         assert map_path.exists()
@@ -448,11 +444,10 @@ class TestRunSanitize:
             dest=dest,
             dashboards=tmp_path / "does_not_exist",
             entity_map_path=map_path,
-            redact_entities=["Alice"],
         )
 
         # Should not raise.
-        _run_sanitize()
+        _run_sanitize(["Alice"])
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
 
     def test_processes_all_sanitize_dirs(self, monkeypatch, tmp_path):
@@ -471,10 +466,9 @@ class TestRunSanitize:
             dest=dest,
             dashboards=dashboards,
             entity_map_path=map_path,
-            redact_entities=["Alice", "Bob"],
         )
 
-        _run_sanitize()
+        _run_sanitize(["Alice", "Bob"])
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1> morning\n"
         assert (dashboards / "view.yaml").read_text() == "title: <entity_2> dashboard\n"

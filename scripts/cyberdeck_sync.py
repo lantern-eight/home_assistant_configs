@@ -1,29 +1,25 @@
 """Sync Cyberdeck dashboard and theme to Home Assistant via SMB."""
 
-import logging
 import sys
-from getopt import GetoptError, getopt
 from pathlib import Path
 
-import requests
 import smbclient
 import yaml
 
-from utils import LOGGER
-
-USAGE = (
-  'Usage: uv run python scripts/cyberdeck_sync.py [-d] [-l LEVEL] [-r] [-h]\n'
-  '  -d, --debug      Set log level to DEBUG\n'
-  '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-  '  -r, --restart    Restart HA after sync (required on first deploy)\n'
-  '  -h, --help       Show this help'
+from ha_registry import restore_content
+from utils import (
+  ENTITY_MAP_PATH,
+  LOGGER,
+  REPO_ROOT,
+  apply_log_level,
+  base_arg_parser,
+  call_ha_service,
+  load_config,
+  open_smb_session,
+  restart_ha,
 )
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = REPO_ROOT / 'config.yaml'
-ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
 CYBERDECK_DIR = REPO_ROOT / 'dashboards' / 'cyberdeck'
-HA_BASE_URL = 'http://homeassistant.local:8123'
 
 FILE_MAP = {
   'dashboard.yaml': 'dashboards/cyberdeck/dashboard.yaml',
@@ -31,70 +27,13 @@ FILE_MAP = {
 }
 
 
-def _load_config() -> dict:
-  if CONFIG_PATH.exists():
-    with open(CONFIG_PATH) as f:
-      raw = yaml.safe_load(f) or {}
-    return {
-      'smb_server': str(raw.get('smb_server', '')),
-      'smb_share': str(raw.get('smb_share', '')),
-      'smb_path': str(raw.get('smb_path', '')),
-      'smb_user': str(raw.get('smb_user', '')),
-      'smb_password': str(raw.get('smb_password', '')),
-      'token': str(raw.get('token', '')),
-    }
-  LOGGER.error('config.yaml not found — copy from config.example.yaml and fill in values')
-  sys.exit(1)
-
-
-def _smb_makedirs(smb_path: str) -> None:
-  try:
-    smbclient.stat(smb_path)
-    return
-  except OSError:
-    pass
-  parent = smb_path.rsplit('\\', 1)[0]
-  if parent and parent != smb_path:
-    _smb_makedirs(parent)
-  try:
-    smbclient.mkdir(smb_path)
-  except OSError:
-    pass
-
-
-def _restore_content(content: str) -> str:
-  '''Replace redacted placeholders with real values before pushing to HA.'''
-  if not ENTITY_MAP_PATH.exists():
-    return content
-  with open(ENTITY_MAP_PATH) as f:
-    entity_map = yaml.safe_load(f) or {}
-  for placeholder, real_value in entity_map.get('entities', {}).items():
-    content = content.replace(placeholder, real_value)
-  for short_id, full_id in entity_map.get('ids', {}).items():
-    content = content.replace(short_id, full_id)
-  return content
-
-
 def _sync_files(cfg: dict) -> int:
-  smb_server = cfg['smb_server']
-  smb_share = cfg['smb_share']
-  smb_path = cfg['smb_path']
+  smb_root = open_smb_session(cfg)
 
-  if not smb_server or not smb_share:
-    LOGGER.error('Set smb_server and smb_share in config.yaml')
-    sys.exit(1)
-
-  smb_root = rf'\\{smb_server}\{smb_share}'
-  if smb_path:
-    smb_root = rf'{smb_root}\{smb_path.strip("/").replace("/", chr(92))}'
-
-  smbclient.ClientConfig(username=cfg['smb_user'] or None, password=cfg['smb_password'] or None)
-  smbclient.register_session(
-    smb_server,
-    username=cfg['smb_user'] or None,
-    password=cfg['smb_password'] or None,
-  )
-  LOGGER.info('SMB session registered', extra={'smb_root': smb_root})
+  entity_map = None
+  if ENTITY_MAP_PATH.exists():
+    with open(ENTITY_MAP_PATH) as f:
+      entity_map = yaml.safe_load(f) or {}
 
   uploaded = 0
   for local_name, remote_rel in FILE_MAP.items():
@@ -103,13 +42,14 @@ def _sync_files(cfg: dict) -> int:
       LOGGER.warning('Local file missing, skipping', extra={'file': str(local_path)})
       continue
 
-    remote_path = rf'{smb_root}\{remote_rel.replace("/", chr(92))}'
+    smb_rel = remote_rel.replace("/", "\\")
+    remote_path = rf'{smb_root}\{smb_rel}'
     remote_dir = remote_path.rsplit('\\', 1)[0]
-    _smb_makedirs(remote_dir)
+    smbclient.makedirs(remote_dir, exist_ok=True)
 
     try:
       with open(local_path, 'r', encoding='utf-8') as src:
-        content = _restore_content(src.read())
+        content = restore_content(src.read(), entity_map=entity_map)
       with smbclient.open_file(remote_path, mode='w') as dst:
         dst.write(content)
       uploaded += 1
@@ -121,91 +61,32 @@ def _sync_files(cfg: dict) -> int:
   return uploaded
 
 
-def _reload_themes(token: str) -> bool:
-  if not token or token == 'your_token_here':
-    LOGGER.warning('No valid HA token; skipping theme reload')
-    return False
-  headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-  try:
-    resp = requests.post(f'{HA_BASE_URL}/api/services/frontend/reload_themes', headers=headers, timeout=15)
-    if resp.status_code == 200:
-      LOGGER.info('Themes reloaded')
-      return True
-    LOGGER.warning('Theme reload failed', extra={'status': resp.status_code})
-    return False
-  except requests.RequestException as e:
-    LOGGER.warning('Theme reload error', extra={'error': str(e)})
-    return False
-
-
-def _restart_ha(token: str) -> bool:
-  if not token or token == 'your_token_here':
-    LOGGER.warning('No valid HA token; skipping restart')
-    return False
-  headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-  try:
-    LOGGER.info('Restarting Home Assistant...')
-    resp = requests.post(f'{HA_BASE_URL}/api/services/homeassistant/restart', headers=headers, timeout=30)
-    if resp.status_code == 200:
-      LOGGER.info('HA restart triggered — dashboard will reload on next visit')
-      return True
-    LOGGER.warning('Restart failed', extra={'status': resp.status_code})
-    return False
-  except requests.RequestException as e:
-    LOGGER.warning('Restart error', extra={'error': str(e)})
-    return False
-
-
 def main(argv: list[str] | None = None) -> None:
-  """
-  Sync Cyberdeck printer farm dashboard to Home Assistant.
-
-  Uploads dashboard.yaml and theme via SMB, then reloads themes.
-  Use --restart on first deploy or after editing configuration.yaml.
-
-  Example:
-    > uv run python cyberdeck_sync.py           # sync files + reload themes
-    > uv run python cyberdeck_sync.py -r         # sync + restart HA
-    > uv run python cyberdeck_sync.py -d         # sync with debug logging
-  """
-  argv = argv if argv is not None else sys.argv[1:]
-
-  try:
-    opts, _ = getopt(argv, 'hdl:r', ['help', 'debug', 'log-level=', 'restart'])
-  except GetoptError:
-    LOGGER.error('Invalid options. %s', USAGE)
-    sys.exit(1)
-
-  do_restart = False
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      print(USAGE)
-      sys.exit(0)
-    if opt in ('-d', '--debug'):
-      LOGGER.setLevel(logging.DEBUG)
-    if opt in ('-l', '--log-level'):
-      level = getattr(logging, arg.upper(), None)
-      if level is None:
-        LOGGER.error('Invalid log level: %s', arg)
-        sys.exit(1)
-      LOGGER.setLevel(level)
-    if opt in ('-r', '--restart'):
-      do_restart = True
+  """Sync Cyberdeck printer farm dashboard to Home Assistant."""
+  parser = base_arg_parser(
+    'Sync Cyberdeck dashboard and theme to Home Assistant via SMB.'
+  )
+  parser.add_argument('-r', '--restart', action='store_true',
+                      help='Restart HA after sync (required on first deploy)')
+  args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+  apply_log_level(args)
 
   if not CYBERDECK_DIR.exists():
     LOGGER.error('Cyberdeck directory not found at %s', CYBERDECK_DIR)
     sys.exit(1)
 
-  cfg = _load_config()
+  cfg = load_config()
 
   LOGGER.info('Syncing Cyberdeck dashboard to HA')
   count = _sync_files(cfg)
   LOGGER.info('Sync complete', extra={'files_synced': count})
 
-  if do_restart:
-    _restart_ha(cfg['token'])
+  if args.restart:
+    restart_ha(cfg['token'], ha_base_url=cfg['ha_base_url'])
   else:
-    _reload_themes(cfg['token'])
+    if call_ha_service(cfg['token'], 'frontend', 'reload_themes',
+                       ha_base_url=cfg['ha_base_url']):
+      LOGGER.info('Themes reloaded')
     LOGGER.info('Dashboard YAML reloads automatically on next page visit')
 
 

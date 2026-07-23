@@ -40,6 +40,7 @@ long-lived access token for the HA REST API. Both `config.yaml` and
 | `smb_user` / `smb_password` | SMB credentials |
 | `redact_entities` | Strings to redact from backup files |
 | `token` | HA long-lived access token (for API calls) |
+| `ha_base_url` | HA base URL (optional, defaults to `http://homeassistant.local:8123`) |
 
 ## Backup
 
@@ -182,9 +183,11 @@ uv run pytest tests/ -v
 ├── conftest.py                      # Adds scripts/ to Python path for tests
 │
 ├── scripts/                         # Local Python tooling (runs on your machine)
-│   ├── utils.py                     # Shared logging (JSON + colored TTY output)
+│   ├── utils.py                     # Shared infra (config, SMB, HA services, argparse)
+│   ├── ha_registry.py               # HA registry metadata engine (labels, categories)
 │   ├── home_assistant_backup.py     # Pull HA config over SMB, redact, shorten IDs
 │   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
+│   ├── apply_registry_metadata.py   # CLI: apply registry metadata to HA
 │   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
 │   ├── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
 │   └── ha_scripts/                  # Scripts deployed to and run on HA

@@ -13,8 +13,7 @@ selected per HA account.
 
 ## Identity Model
 
-The household has two HA accounts. All per-user behavior keys off the
-logged-in account, never off device properties:
+All per-user behavior keys off the logged-in account:
 
 - **card_mod styles** receive a `user` variable (the account's display name;
   display names are set to match usernames). The theme macros take it as an
@@ -27,8 +26,8 @@ logged-in account, never off device properties:
   mushroom `secondary:`/`icon_color:` templates, and markdown content do NOT —
   in those contexts pass the account name as a literal argument (fine, since
   such cards sit inside per-account visibility blocks).
-- The usernames themselves are redacted in tracked files as `<entity_31>` and
-  `<entity_32>`; the sync script's restore pass expands them on upload.
+- The usernames themselves are redacted in tracked files as `<entity_n>` and the
+  sync script's restore pass expands them on upload.
 
 To add a per-account feature: create one helper per account (username
 suffix), add one block per account gated by `condition: user`, and give each
@@ -184,8 +183,8 @@ Per-account helpers are suffixed with the account's username:
 - `input_number.theme_card_opacity_<username>` (-1 = follow style default)
 - `input_number.theme_card_blur_<username>` (-1 = follow style default)
 
-There are no theme sensors. All theme values resolve through the macros in
-`general_home_theme.jinja`: `theme_css(user, kind)` for card_mod blocks,
+All theme values resolve through the macros in `general_home_theme.jinja`:
+`theme_css(user, kind)` for card_mod blocks,
 `view_background_css(user)` for the background card, and
 `theme_value(account, prop)` for single values in non-card_mod templates.
 
@@ -262,7 +261,7 @@ Then reload the page.
 
 ## Privacy
 
-Real household names appear in some entity IDs, and the two HA account
+Household names or personal information may appear in some entity IDs, HA account
 usernames plus their 32-hex user ids are treated the same way: all of them
 are redacted in tracked files (`<entity_N>` placeholders and short-form id
 keys from `entity_map.yaml`). The backup sync script handles redaction

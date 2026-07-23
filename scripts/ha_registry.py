@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from utils import LOGGER
+from utils import HA_BASE_URL, LOGGER
 
 try:
   from websockets.sync.client import connect as ws_connect
@@ -13,15 +13,19 @@ try:
 except ImportError:
   HAS_WEBSOCKETS = False
 
-HA_BASE_URL = 'http://homeassistant.local:8123'
 
+def restore_content(content: str, entity_map_path: Path = None, *,
+                    entity_map: dict = None) -> str:
+  """Replace redacted <entity_N> placeholders with real values.
 
-def restore_content(content: str, entity_map_path: Path) -> str:
-  """Replace redacted <entity_N> placeholders with real values."""
-  if not entity_map_path.exists():
-    return content
-  with open(entity_map_path) as f:
-    entity_map = yaml.safe_load(f) or {}
+  Pass entity_map_path to load from disk, or entity_map as a pre-parsed
+  dict to avoid repeated file I/O across multiple calls.
+  """
+  if entity_map is None:
+    if entity_map_path is None or not entity_map_path.exists():
+      return content
+    with open(entity_map_path) as f:
+      entity_map = yaml.safe_load(f) or {}
   for placeholder, real_value in entity_map.get('entities', {}).items():
     content = content.replace(placeholder, real_value)
   for short_id, full_id in entity_map.get('ids', {}).items():
@@ -55,9 +59,14 @@ def apply_registry_metadata(metadata_path: Path, token: str, entity_map_path: Pa
     LOGGER.info('No entities in metadata file, skipping', extra={'path': str(metadata_path)})
     return
 
+  parsed_entity_map = {}
+  if entity_map_path and entity_map_path.exists():
+    with open(entity_map_path) as f:
+      parsed_entity_map = yaml.safe_load(f) or {}
+
   entities_resolved = {}
   for entity_id, props in entities_def.items():
-    entities_resolved[restore_content(entity_id, entity_map_path)] = props
+    entities_resolved[restore_content(entity_id, entity_map=parsed_entity_map)] = props
 
   if not token or token == 'your_token_here':
     LOGGER.warning('No valid HA token; skipping category/label sync')

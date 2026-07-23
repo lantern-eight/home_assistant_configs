@@ -199,9 +199,9 @@ After placing the files, reload: `template/reload` for the sensors and
 `homeassistant.reload_custom_templates` for the macro library (the sync
 script runs both), or restart HA.
 
-**Important:** the repo files reference the two HA account usernames through
-the redaction placeholders `<entity_31>` and `<entity_32>`, and the account
-user ids through short-form id keys (see the root README for the entity-map
+**Important:** the repo files reference HA account usernames through the
+redaction placeholders `<entity_n>`, and the account user ids through
+short-form id keys (see the root README for the entity-map
 mechanism). You never edit the tracked files: map the placeholders to your
 own accounts in your gitignored `entity_map.yaml` (usernames under
 `entities:`, full 32-hex account ids under `ids:`) and the sync script
@@ -303,7 +303,7 @@ the dashboard (auto-entities filters, mushroom secondaries) call
 `theme_value(account, prop)` with the account name as a literal — safe
 because those cards sit inside per-account visibility blocks anyway.
 
-> **Limitation:** exactly two accounts are wired into the macro's resolver
+> **Limitation:** Currently exactly two accounts are wired into the macro's resolver
 > and the Appearance page. A third user means extending the resolver in
 > `general_home_theme.jinja`, adding a helper set, and adding a gated
 > Appearance block.
@@ -416,8 +416,8 @@ current style's default.
 ![Appearance page](images/appearance_page_dark.png)
 
 Accessed from More popup > Appearance. The page is self-edit: native
-per-account visibility conditions show each account only its own controls,
-so there is no "which user am I editing" switch. Layout:
+per-account visibility conditions show each account only its own controls.
+Layout:
 
 1. **Mode picker** — Light / Dark / System tiles
 2. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
@@ -546,7 +546,7 @@ so existing references don't break.
 
 ### Macro Library, Not Sensors
 
-All theme values and the CSS that carries them live in one Jinja macro
+All theme values, and the CSS that carries them, live in one Jinja macro
 library, `general_home_theme.jinja`, deployed to HA's `custom_templates/`.
 The YAML anchors in `dashboard.yaml` are thin wrappers that import it and
 call `theme_css(user, kind)`; the macro reads the viewing account's helpers,

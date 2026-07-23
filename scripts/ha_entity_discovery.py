@@ -1,34 +1,19 @@
 import json
-import logging
 import sys
-from getopt import GetoptError, getopt
 from pathlib import Path
 
 import requests
-import yaml
 
-from utils import LOGGER
-
-USAGE = (
-  'Usage: uv run python scripts/ha_entity_discovery.py [-d] [-l LEVEL] [-h]\n'
-  '  -d, --debug      Set log level to DEBUG\n'
-  '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-  '  -h, --help       Show this help'
+from utils import (
+  HA_BASE_URL,
+  LOGGER,
+  REPO_ROOT,
+  apply_log_level,
+  base_arg_parser,
+  load_config,
 )
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = REPO_ROOT / 'config.yaml'
 OUTPUT_PATH = REPO_ROOT / 'ha_entities.json'
-HA_BASE_URL = 'http://homeassistant.local:8123'
-
-
-def _load_config() -> dict:
-  '''Load HA token from config.yaml if present, else from environment.'''
-  if CONFIG_PATH.exists():
-    with open(CONFIG_PATH) as f:
-      raw = yaml.safe_load(f) or {}
-    return {'token': str(raw.get('token', ''))}
-  return {'token': os.environ.get('HA_TOKEN', '')}
 
 
 def _ha_headers(token: str) -> dict:
@@ -146,38 +131,17 @@ def _print_summary(discovery: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-  '''
-  Discover all entities and areas from a Home Assistant instance and save to JSON.
+  '''Discover all entities and areas from a Home Assistant instance and save to JSON.'''
+  parser = base_arg_parser(
+    'Discover all HA entities and areas, save to JSON.'
+  )
+  args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+  apply_log_level(args)
 
-  Example usage:
-    > uv run python ha_entity_discovery.py
-    > uv run python ha_entity_discovery.py -d
-  '''
-  argv = argv if argv is not None else sys.argv[1:]
-
-  try:
-    opts, _ = getopt(argv, 'hdl:', ['help', 'debug', 'log-level='])
-  except GetoptError:
-    LOGGER.error('Invalid options. %s', USAGE)
-    sys.exit(1)
-
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      print(USAGE)
-      sys.exit(0)
-    if opt in ('-d', '--debug'):
-      LOGGER.setLevel(logging.DEBUG)
-    if opt in ('-l', '--log-level'):
-      level = getattr(logging, arg.upper(), None)
-      if level is None:
-        LOGGER.error('Invalid log level: %s', arg)
-        sys.exit(1)
-      LOGGER.setLevel(level)
-
-  cfg = _load_config()
+  cfg = load_config()
   token = cfg['token']
   if not token or token == 'your_token_here':
-    LOGGER.error('No valid HA token found. Set token in config.yaml or HA_TOKEN env var.')
+    LOGGER.error('No valid HA token found. Set token in config.yaml.')
     sys.exit(1)
 
   LOGGER.info('Starting entity discovery', extra={'ha_url': HA_BASE_URL})

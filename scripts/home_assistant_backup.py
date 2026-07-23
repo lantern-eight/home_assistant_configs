@@ -1,14 +1,21 @@
-import logging
 import os
 import re
 import sys
-from getopt import GetoptError, getopt
 from pathlib import Path
 
 import smbclient
 import yaml
 
-from utils import LOGGER
+from ha_registry import restore_content
+from utils import (
+  ENTITY_MAP_PATH,
+  LOGGER,
+  REPO_ROOT,
+  apply_log_level,
+  base_arg_parser,
+  load_config,
+  open_smb_session,
+)
 
 _BLUE = '\033[1;34m'
 _RESET = '\033[0m'
@@ -22,70 +29,9 @@ def _status(msg: str) -> None:
     print(f'=> {msg}')
 
 
-USAGE = (
-  'Usage: uv run python scripts/home_assistant_backup.py [-d] [-l LEVEL] [-b|-s|-r] [-h]\n'
-  '  -b, --backup     Pull BACKUP_FILES from SMB (no sanitize)\n'
-  '  -s, --sanitize   Run the redaction pass only (no SMB pull); processes\n'
-  '                   home_assistant_backup/, dashboards/, and packages/\n'
-  '  -r, --restore    Restore redacted files using entity_map.yaml\n'
-  '  -d, --debug      Set log level to DEBUG\n'
-  '  -l, --log-level  Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)\n'
-  '  -h, --help       Show this help\n'
-  '\n'
-  'With no -b/-s/-r flag, runs backup followed by sanitize (the default).\n'
-  '\n'
-  'The SMB pull fetches only the files listed in BACKUP_FILES,\n'
-  'not the entire HA config directory.'
-)
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = REPO_ROOT / 'config.yaml'
-ENTITY_MAP_PATH = REPO_ROOT / 'entity_map.yaml'
-
-
-def _load_config() -> dict:
-  '''Load SMB config from config.yaml if present, else from environment.'''
-  if CONFIG_PATH.exists():
-    with open(CONFIG_PATH) as f:
-      raw = yaml.safe_load(f) or {}
-    return {
-      'smb_server': str(raw.get('smb_server', '')),
-      'smb_share': str(raw.get('smb_share', '')),
-      'smb_path': str(raw.get('smb_path', '')),
-      'smb_user': str(raw.get('smb_user', '')),
-      'smb_password': str(raw.get('smb_password', '')),
-      'redact_entities': raw.get('redact_entities', []),
-    }
-  return {
-    'smb_server': os.environ.get('SMB_SERVER', ''),
-    'smb_share': os.environ.get('SMB_SHARE', ''),
-    'smb_path': os.environ.get('SMB_PATH', ''),
-    'smb_user': os.environ.get('SMB_USER', ''),
-    'smb_password': os.environ.get('SMB_PASSWORD', ''),
-    'redact_entities': [],
-  }
-
-
-def _normalize_redact_entities(entities):
-  '''Normalize redact_entities from config: None -> [], str -> [str], list unchanged.'''
-  if entities is None:
-    return []
-  if isinstance(entities, str):
-    return [entities]
-  return entities
-
-
-_cfg = _load_config()
-SMB_SERVER = _cfg['smb_server']
-SMB_SHARE = _cfg['smb_share']
-SMB_PATH = _cfg['smb_path']
-SMB_USER = _cfg['smb_user']
-SMB_PASSWORD = _cfg['smb_password']
-REDACT_ENTITIES = _normalize_redact_entities(_cfg.get('redact_entities', []))
-
-DEST = os.path.join(os.getcwd(), 'home_assistant_backup')
-DASHBOARDS_DIR = os.path.join(os.getcwd(), 'dashboards')
-PACKAGES_DIR = os.path.join(os.getcwd(), 'packages')
+DEST = str(REPO_ROOT / 'home_assistant_backup')
+DASHBOARDS_DIR = str(REPO_ROOT / 'dashboards')
+PACKAGES_DIR = str(REPO_ROOT / 'packages')
 
 
 def _iter_sanitize_dirs():
@@ -116,6 +62,15 @@ PRONOUN_MAP = [
   (r'\bher\b',   'them'),
   (r'\bhers\b',  'theirs'),
 ]
+
+
+def _normalize_redact_entities(entities):
+  '''Normalize redact_entities from config: None -> [], str -> [str], list unchanged.'''
+  if entities is None:
+    return []
+  if isinstance(entities, str):
+    return [entities]
+  return entities
 
 
 def shorten_ids(content: str, id_map: dict | None = None) -> str:
@@ -274,11 +229,12 @@ def _process_backup_files(
 
 def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
   '''Reverse redaction in backup files using a previously saved entity map.'''
-  entities = entity_map.get('entities', {})
-  ids = entity_map.get('ids', {})
   LOGGER.info(
     'Starting restore of backup files',
-    extra={'entity_count': len(entities), 'id_count': len(ids)},
+    extra={
+      'entity_count': len(entity_map.get('entities', {})),
+      'id_count': len(entity_map.get('ids', {})),
+    },
   )
 
   for root, _, files in os.walk(dest_dir):
@@ -292,10 +248,7 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
           content = f.read()
 
         original = content
-        for placeholder, real_value in entities.items():
-          content = content.replace(placeholder, real_value)
-        for short_id, full_id in ids.items():
-          content = content.replace(short_id, full_id)
+        content = restore_content(content, entity_map=entity_map)
 
         if content != original:
           with open(file_path, 'w', encoding='utf-8') as f:
@@ -308,32 +261,14 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
         )
 
 
-def _run_backup() -> None:
+def _run_backup(cfg: dict) -> None:
   '''Pull specific HA config files from the SMB share into DEST.'''
   _status('Starting SMB backup from Home Assistant')
-  if not SMB_SERVER or not SMB_SHARE:
-    LOGGER.error(
-      'Set smb_server and smb_share in config.yaml (copy from config.example.yaml) '
-      'or set SMB_SERVER and SMB_SHARE environment variables.'
-    )
-    sys.exit(1)
-  smb_root = rf'\\{SMB_SERVER}\{SMB_SHARE}'
-  if SMB_PATH:
-    smb_root = rf'{smb_root}\{SMB_PATH.strip('/').replace('/', chr(92))}'
+  _status(f'Connecting to SMB share \\\\{cfg["smb_server"]}\\{cfg["smb_share"]}')
+  smb_root = open_smb_session(cfg)
 
-  _status(f'Connecting to SMB share \\\\{SMB_SERVER}\\{SMB_SHARE}')
-  smbclient.ClientConfig(username=SMB_USER or None, password=SMB_PASSWORD or None)
-  LOGGER.debug(
-    f'SMB_SERVER=\'{SMB_SERVER}\', type={type(SMB_SERVER)}',
-    extra={'SMB_SERVER': SMB_SERVER, 'type': str(type(SMB_SERVER))}
-  )
-  smbclient.register_session(
-    SMB_SERVER,
-    username=SMB_USER or None,
-    password=SMB_PASSWORD or None,
-  )
   LOGGER.info(
-    'SMB session registered; pulling files to local path',
+    'Pulling files to local path',
     extra={'smb_root': smb_root, 'dest': os.path.abspath(DEST)},
   )
 
@@ -343,7 +278,8 @@ def _run_backup() -> None:
   _status(f'Pulling {len(BACKUP_FILES)} file(s) from SMB share...')
   LOGGER.info('Pulling specific files', extra={'files': BACKUP_FILES})
   for relative_path in BACKUP_FILES:
-    smb_file = rf'{smb_root}\{relative_path.replace("/", chr(92))}'
+    smb_rel = relative_path.replace("/", "\\")
+    smb_file = rf'{smb_root}\{smb_rel}'
     local_file = os.path.join(DEST, relative_path)
 
     os.makedirs(os.path.dirname(local_file), exist_ok=True)
@@ -367,7 +303,7 @@ def _run_backup() -> None:
   )
 
 
-def _run_sanitize() -> None:
+def _run_sanitize(redact_entities: list[str]) -> None:
   '''Run the redaction pass over DEST, DASHBOARDS_DIR, and PACKAGES_DIR.
 
   Loads the existing entity_map.yaml first if it exists so that placeholder
@@ -393,7 +329,7 @@ def _run_sanitize() -> None:
     _status(f'Redacting files in {dir_path}')
     normalize = dir_path not in (DASHBOARDS_DIR, PACKAGES_DIR)
     _process_backup_files(
-      dir_path, REDACT_ENTITIES, entity_map,
+      dir_path, redact_entities, entity_map,
       normalize_yaml=normalize,
     )
 
@@ -404,8 +340,7 @@ def _run_sanitize() -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-  '''
-  Pull specific HA config files from the SMB share into home_assistant_backup/.
+  '''Pull specific HA config files from the SMB share into home_assistant_backup/.
 
   Only the files listed in BACKUP_FILES are pulled, not the entire
   HA config directory. To back up additional files, add them to BACKUP_FILES.
@@ -416,45 +351,25 @@ def main(argv: list[str] | None = None) -> None:
     -s/--sanitize  sanitize only (processes DEST, dashboards/, packages/)
     -r/--restore   restore redactions using entity_map.yaml
   '''
-  argv = argv if argv is not None else sys.argv[1:]
+  # description shown at the top of --help output
+  parser = base_arg_parser(
+    'Pull HA config files via SMB, redact sensitive data, '
+    'or restore redacted files.'
+  )
+  mode_group = parser.add_mutually_exclusive_group()
+  mode_group.add_argument('-b', '--backup', action='store_true',
+                          help='Pull BACKUP_FILES from SMB (no sanitize)')
+  mode_group.add_argument('-s', '--sanitize', action='store_true',
+                          help='Run the redaction pass only (no SMB pull)')
+  mode_group.add_argument('-r', '--restore', action='store_true',
+                          help='Restore redacted files using entity_map.yaml')
+  args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+  apply_log_level(args)
 
-  try:
-    opts, _ = getopt(
-      argv,
-      'hdl:rbs',
-      ['help', 'debug', 'log-level=', 'restore', 'backup', 'sanitize'],
-    )
-  except GetoptError:
-    LOGGER.error('Invalid options. %s', USAGE)
-    sys.exit(1)
+  cfg = load_config(allow_env_fallback=True)
+  redact_entities = _normalize_redact_entities(cfg.get('redact_entities', []))
 
-  mode: str | None = None  # None -> default (backup + sanitize)
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      print(USAGE)
-      sys.exit(0)
-    if opt in ('-d', '--debug'):
-      LOGGER.setLevel(logging.DEBUG)
-      LOGGER.debug('Running in debug mode')
-    if opt in ('-l', '--log-level'):
-      level = getattr(logging, arg.upper(), None)
-      if level is None:
-        LOGGER.error('Invalid log level: %s. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL', arg)
-        sys.exit(1)
-      LOGGER.setLevel(level)
-      LOGGER.debug('Log level set to %s', arg.upper())
-    if opt in ('-r', '--restore', '-b', '--backup', '-s', '--sanitize'):
-      requested = {
-        '-r': 'restore', '--restore': 'restore',
-        '-b': 'backup',  '--backup':  'backup',
-        '-s': 'sanitize','--sanitize':'sanitize',
-      }[opt]
-      if mode is not None and mode != requested:
-        LOGGER.error('-b/-s/-r are mutually exclusive')
-        sys.exit(1)
-      mode = requested
-
-  if mode == 'restore':
+  if args.restore:
     _status('Mode: restore — reversing redactions using entity_map.yaml')
     if not ENTITY_MAP_PATH.exists():
       LOGGER.error('entity_map.yaml not found at %s — run a backup first', ENTITY_MAP_PATH)
@@ -467,19 +382,19 @@ def main(argv: list[str] | None = None) -> None:
     LOGGER.info('Restore complete')
     return
 
-  if mode == 'backup':
+  if args.backup:
     _status('Mode: backup only')
-    _run_backup()
+    _run_backup(cfg)
     return
 
-  if mode == 'sanitize':
+  if args.sanitize:
     _status('Mode: sanitize only')
-    _run_sanitize()
+    _run_sanitize(redact_entities)
     return
 
   _status('Mode: backup + sanitize (default)')
-  _run_backup()
-  _run_sanitize()
+  _run_backup(cfg)
+  _run_sanitize(redact_entities)
 
 
 if __name__ == '__main__':

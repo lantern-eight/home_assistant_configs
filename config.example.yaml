@@ -14,3 +14,6 @@ redact_entities:
   - "Bob"
 
 token: "your_token_here"
+
+# HA base URL (optional — defaults to http://homeassistant.local:8123)
+# ha_base_url: "http://homeassistant.local:8123"
