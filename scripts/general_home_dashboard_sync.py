@@ -87,6 +87,11 @@ def _sync_files(cfg: dict) -> int:
                     restore=True, entity_map=entity_map):
       uploaded += 1
 
+  for local_path in sorted(PACKAGES_DIR.glob('*.jinja')):
+    if _upload_file(smb_root, local_path, f'custom_templates/{local_path.name}',
+                    restore=True, entity_map=entity_map):
+      uploaded += 1
+
   for local_name, remote_rel in SCRIPT_MAP.items():
     local_path = SCRIPTS_DIR / local_name
     if not local_path.exists():

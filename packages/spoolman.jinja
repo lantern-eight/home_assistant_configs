@@ -1,0 +1,15 @@
+{%- macro spoolman_grams(slot_name_entity) -%}
+{%- set slot_name = states(slot_name_entity) -%}
+{%- if slot_name in ['unknown', 'unavailable', ''] -%}
+unknown
+{%- else -%}
+{%- set match = expand(integration_entities('spoolman'))
+  | selectattr('attributes.filament_name', 'defined')
+  | selectattr('attributes.filament_name', 'eq', slot_name)
+  | rejectattr('attributes.archived', 'eq', true)
+  | sort(attribute='attributes.remaining_weight', reverse=true)
+  | list -%}
+{{ match[0].attributes.remaining_weight | float(0) | round(1)
+   if match | length > 0 else 'unknown' }}
+{%- endif -%}
+{%- endmacro -%}
