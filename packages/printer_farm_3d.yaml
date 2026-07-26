@@ -349,101 +349,11 @@ automation:
             } | to_json }}
 
   # --------------------------------------------------------------------------
-  # Reset <entity_21> Slot Cache on New Job
-  # --------------------------------------------------------------------------
-  # A new task id means a new print. Clearing the cache to zero-gram slots
-  # ensures a print whose upload never reached the capture proxy (e.g. the
-  # slicer bypassed it) pushes nothing to Spoolman at completion, instead of
-  # silently pushing the PREVIOUS print's slot data. Task id is used rather
-  # than filename because re-printing the same file (multi-plate projects)
-  # keeps the filename but always issues a fresh task id.
-
-  - id: reset_<entity_21>_slot_cache
-    alias: "Reset <entity_21> Slot Cache on New Job"
-    mode: single
-    triggers:
-      - entity_id:
-          - sensor.<entity_22>_task_id
-        trigger: state
-    conditions:
-      - condition: template
-        value_template: >
-          {{ trigger.to_state.state not in ['unknown', 'unavailable', '']
-             and trigger.from_state is not none
-             and trigger.to_state.state != trigger.from_state.state }}
-    actions:
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.<entity_22>_cached_slot_data
-        data:
-          value: >
-            {{ {'a1': {'name': '', 'grams': 0},
-                'a2': {'name': '', 'grams': 0},
-                'a3': {'name': '', 'grams': 0},
-                'a4': {'name': '', 'grams': 0}} | to_json }}
-
-  # --------------------------------------------------------------------------
-  # <entity_21> Spoolman Update
-  # --------------------------------------------------------------------------
-  # On <entity_21> print complete, reads the cached per-slot data and pushes
-  # usage to Spoolman for each slot that consumed filament.
-
-  - id: <entity_21>_spoolman_update
-    alias: "<entity_21> Spoolman Update"
-    mode: single
-    triggers:
-      - entity_id:
-          - sensor.<entity_22>_print_status
-        to: complete
-        trigger: state
-    conditions: []
-    actions:
-      - variables:
-          raw_data: "{{ states('input_text.<entity_22>_cached_slot_data') }}"
-
-      # Guard: make sure we have cached data
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >
-                  {{ raw_data not in ['unknown', 'unavailable', '', 'None'] }}
-            sequence:
-              - variables:
-                  slot_data: "{{ raw_data if raw_data is mapping else raw_data | from_json }}"
-              - repeat:
-                  for_each:
-                    - a1
-                    - a2
-                    - a3
-                    - a4
-                  sequence:
-                    - choose:
-                        - conditions:
-                            - condition: template
-                              value_template: >
-                                {% set slot = slot_data[repeat.item] %}
-                                {{ slot.grams | float(0) > 0
-                                   and slot.name not in ['', none, 'None'] }}
-                          sequence:
-                            - action: script.update_spoolman_from_filament_name
-                              data:
-                                filament_name: "{{ slot_data[repeat.item].name }}"
-                                use_weight: "{{ slot_data[repeat.item].grams | float | round(2) }}"
-        default:
-          - action: persistent_notification.create
-            data:
-              title: "Spoolman: <entity_21> no cached slot data"
-              message: >
-                <entity_21> print completed but no cached slot data was found.
-                Filament usage was not tracked. Make sure the gcode capture
-                proxy is configured and the "Cache <entity_21> Slot Data" automation
-                is enabled.
-
-  # --------------------------------------------------------------------------
   # Cache <entity_20> Slot Data
   # --------------------------------------------------------------------------
-  # Mirrors cache_<entity_21>_slot_data. Caches per-slot filament names and
-  # grams into an input_text helper as JSON before print completes.
+  # Per-printer: mode: restart with a settle delay means each printer needs
+  # its own automation — merging would let one printer's slot update cancel
+  # the other's in-flight settle.
 
   - id: cache_<entity_20>_slot_data
     alias: "Cache <entity_20> Slot Data"
@@ -486,16 +396,22 @@ automation:
             } | to_json }}
 
   # --------------------------------------------------------------------------
-  # Reset <entity_20> Slot Cache on New Job
+  # Reset Slot Cache on New Job
   # --------------------------------------------------------------------------
-  # Mirrors reset_<entity_21>_slot_cache — see that block for the rationale.
+  # A new task id means a new print. Clearing the cache to zero-gram slots
+  # ensures a print whose upload never reached the capture proxy (e.g. the
+  # slicer bypassed it) pushes nothing to Spoolman at completion, instead of
+  # silently pushing the PREVIOUS print's slot data. Task id is used rather
+  # than filename because re-printing the same file (multi-plate projects)
+  # keeps the filename but always issues a fresh task id.
 
-  - id: reset_<entity_20>_slot_cache
-    alias: "Reset <entity_20> Slot Cache on New Job"
-    mode: single
+  - id: reset_3d_slot_cache
+    alias: "Reset Slot Cache on New Job"
+    mode: queued
     triggers:
       - entity_id:
           - sensor.<entity_23>_task_id
+          - sensor.<entity_22>_task_id
         trigger: state
     conditions:
       - condition: template
@@ -506,7 +422,10 @@ automation:
     actions:
       - action: input_text.set_value
         target:
-          entity_id: input_text.<entity_23>_cached_slot_data
+          entity_id: >
+            input_text.{{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_task_id', '_cached_slot_data') }}
         data:
           value: >
             {{ {'a1': {'name': '', 'grams': 0},
@@ -515,23 +434,28 @@ automation:
                 'a4': {'name': '', 'grams': 0}} | to_json }}
 
   # --------------------------------------------------------------------------
-  # <entity_20> Spoolman Update
+  # Spoolman Update on Print Complete
   # --------------------------------------------------------------------------
-  # On <entity_20> print complete, reads the cached per-slot data and pushes
-  # usage to Spoolman for each slot that consumed filament.
+  # On print complete, reads the cached per-slot data and pushes usage to
+  # Spoolman for each slot that consumed filament.
 
-  - id: <entity_20>_spoolman_update
-    alias: "<entity_20> Spoolman Update"
-    mode: single
+  - id: 3d_spoolman_update
+    alias: "Spoolman Update on Print Complete"
+    mode: queued
     triggers:
       - entity_id:
           - sensor.<entity_23>_print_status
+          - sensor.<entity_22>_print_status
         to: complete
         trigger: state
     conditions: []
     actions:
       - variables:
-          raw_data: "{{ states('input_text.<entity_23>_cached_slot_data') }}"
+          base_name: >
+            {{ trigger.entity_id
+              | replace('sensor.', '')
+              | replace('_print_status', '') }}
+          raw_data: "{{ states('input_text.' ~ base_name ~ '_cached_slot_data') }}"
 
       # Guard: make sure we have cached data
       - choose:
@@ -564,12 +488,12 @@ automation:
         default:
           - action: persistent_notification.create
             data:
-              title: "Spoolman: <entity_20> no cached slot data"
+              title: "Spoolman: {{ base_name | replace('_', ' ') | title }} no cached slot data"
               message: >
-                <entity_20> print completed but no cached slot data was found.
-                Filament usage was not tracked. Make sure the gcode capture
-                proxy is configured and the "Cache <entity_20> Slot Data" automation
-                is enabled.
+                {{ base_name | replace('_', ' ') | title }} print completed but
+                no cached slot data was found. Filament usage was not tracked.
+                Make sure the gcode capture proxy is configured and the cache
+                slot data automation is enabled.
 
   # --------------------------------------------------------------------------
   # 3D Print Failure Alert
