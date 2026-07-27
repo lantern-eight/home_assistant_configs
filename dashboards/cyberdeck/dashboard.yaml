@@ -13,7 +13,7 @@ button_card_templates:
     styles:
       card:
         - background: "var(--cyberdeck-surface)"
-        - border: "1px solid rgba(0,229,255,0.12)"
+        - border: "1px solid var(--cd-cyan-12)"
         - border-radius: "4px"
         - box-shadow: "none"
         - font-family: "'Share Tech Mono', monospace"
@@ -29,7 +29,7 @@ button_card_templates:
       [[[
         const u   = variables.unit  || 'U.??';
         const lbl = variables.label || '';
-        return `<span style="display:inline-block;border:1px solid rgba(0,229,255,0.55);
+        return `<span style="display:inline-block;border:1px solid var(--cd-cyan-55);
                      background:rgba(10,28,42,0.92);border-radius:6px;padding:7px 14px;margin-right:10px;
                      color:#f2f6ff;font-size:13px;font-weight:700;line-height:1;
                      font-family:'JetBrains Mono','Fira Code','IBM Plex Mono','Share Tech Mono',monospace;
@@ -219,8 +219,8 @@ button_card_templates:
             '<div style="width:100%;max-width:100%;box-sizing:border-box;padding:6px 0 8px;min-width:0;">' +
             '<div style="display:flex;align-items:center;gap:8px;width:100%;min-width:0;box-sizing:border-box;">' +
             '<span style="flex:0 0 auto;color:var(--cyberdeck-text-dim);font-size:8px;letter-spacing:2px;opacity:0.9;">0</span>' +
-            '<div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid rgba(0,229,255,0.45);' +
-            'border-radius:3px;background:rgba(0,229,255,0.06);padding:3px 4px;' +
+            '<div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid var(--cd-cyan-45);' +
+            'border-radius:3px;background:var(--cd-cyan-06);padding:3px 4px;' +
             'box-shadow:inset 0 0 10px rgba(0,0,0,0.35);">' +
             '<div style="display:flex;gap:2px;width:100%;min-width:0;box-sizing:border-box;">';
 
@@ -338,7 +338,7 @@ button_card_templates:
         [[[
           const prefix = variables.entity_prefix || '<entity_22>';
           const sp = variables.spoolman_prefix || '<entity_21>';
-          let out = '<div style="padding:10px 14px 12px;border-top:1px solid rgba(0,229,255,0.08);">';
+          let out = '<div style="padding:10px 14px 12px;border-top:1px solid var(--cd-cyan-08);">';
           out += '<div style="color:var(--cyberdeck-text-dim);font-size:9px;letter-spacing:2px;margin-bottom:8px;">SPOOLS.LOADED</div>';
 
           const slots = [
@@ -375,7 +375,7 @@ button_card_templates:
             const g = s.grams ? parseFloat(s.grams.state) || 0 : 0;
             const isActive = activeColor && c.toLowerCase() === activeColor.toLowerCase();
             const highlight = isActive
-              ? 'border:1px solid rgba(0,229,255,0.5);border-radius:3px;padding:2px 6px;margin:-2px -6px;background:rgba(0,229,255,0.06);'
+              ? 'border:1px solid var(--cd-cyan-50);border-radius:3px;padding:2px 6px;margin:-2px -6px;background:var(--cd-cyan-06);'
               : '';
 
             out += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;${highlight}">
@@ -411,9 +411,9 @@ button_card_templates:
                             margin-bottom:6px;text-align:center;">ACTIVE<br>FEED</div>
                 <div style="position:relative;width:52px;height:52px;">
                   <div style="position:absolute;inset:0;border-radius:50%;
-                              border:1px solid rgba(0,229,255,0.2);"></div>
+                              border:1px solid var(--cd-cyan-20);"></div>
                   <div style="position:absolute;inset:4px;border-radius:50%;
-                              border:1px dashed rgba(0,229,255,0.3);
+                              border:1px dashed var(--cd-cyan-30);
                               animation:${uid}-ring 3s ease-in-out infinite;"></div>
                   <div style="position:absolute;inset:10px;border-radius:50%;
                               background:${activeColor};
@@ -523,7 +523,7 @@ button_card_templates:
                 </div>
                 <div style="color:var(--cyberdeck-text-dim);font-size:10px;margin-bottom:8px;line-height:1.3;">${sub}</div>
                 <div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0;">
-                  <div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid ${col}55;border-radius:3px;background:rgba(0,229,255,0.04);padding:3px 4px;box-shadow:inset 0 0 10px rgba(0,0,0,0.35);">
+                  <div style="flex:1 1 0;min-width:0;box-sizing:border-box;border:1px solid ${col}55;border-radius:3px;background:var(--cd-cyan-04);padding:3px 4px;box-shadow:inset 0 0 10px rgba(0,0,0,0.35);">
                     ${segsHtml}
                   </div>
                 </div>
@@ -541,7 +541,7 @@ button_card_templates:
         - grid-template-rows: "auto"
       card:
         - background: "var(--cyberdeck-surface-raised)"
-        - border: "1px solid rgba(0,229,255,0.12)"
+        - border: "1px solid var(--cd-cyan-12)"
         - border-radius: "4px"
         - padding: "0"
         - margin: "0 0 6px 0"
@@ -550,6 +550,51 @@ button_card_templates:
       custom_fields:
         row:
           - width: "100%"
+
+  # ── cover image (reads entity_picture from the card's own entity) ──
+  unit_cover_image:
+    template: cyberdeck_base
+    show_entity_picture: false
+    custom_fields:
+      cover: |
+        [[[
+          if (!entity || !entity.attributes || !entity.attributes.entity_picture) return '';
+          const url = entity.attributes.entity_picture;
+          return `
+            <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
+              <div style="border:1px solid var(--cd-cyan-35);border-radius:3px;overflow:hidden;
+                          box-shadow:0 0 8px var(--cd-cyan-15),inset 0 0 12px rgba(0,0,0,0.4);
+                          background:#000;max-width:min(200px,85%);">
+                <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
+              </div>
+            </div>`;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: '"cover"'
+        - grid-template-columns: "1fr"
+        - grid-template-rows: "auto"
+        - justify-items: "center"
+        - align-items: "center"
+      card:
+        - background: "transparent"
+        - border: "none"
+        - padding: "4px"
+        - box-shadow: "none"
+        - display: "flex"
+        - align-items: "center"
+        - justify-content: "center"
+      custom_fields:
+        cover:
+          - width: "100%"
+          - max-width: "100%"
+          - justify-self: "center"
+    card_mod:
+      style: |
+        ha-card {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
 
 # ═══════════════════════════════════════════════════════════════════
 #  VIEW
@@ -668,8 +713,8 @@ views:
                                    background:rgba(0,255,136,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,255,136,0.05);">${count} UP</span>
                       <span style="display:inline-block;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:600;
                                    letter-spacing:1.5px;padding:4px 12px;border-radius:6px;line-height:1.2;
-                                   border:1px solid rgba(0,229,255,0.75);color:var(--cyberdeck-cyan);
-                                   background:rgba(0,229,255,0.07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px rgba(0,229,255,0.05);">LINK OK</span>
+                                   border:1px solid var(--cd-cyan-75);color:var(--cyberdeck-cyan);
+                                   background:var(--cd-cyan-07);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),inset 0 0 14px var(--cd-cyan-05);">LINK OK</span>
                     </div>`;
                 ]]]
             styles:
@@ -682,7 +727,7 @@ views:
                 - background: "rgba(7, 6, 17, 0.45)"
                 - border: "none"
                 - border-radius: "0"
-                - border-bottom: "1px solid rgba(0,229,255,0.08)"
+                - border-bottom: "1px solid var(--cd-cyan-08)"
                 - padding: "14px 16px 10px"
                 - position: "relative"
               custom_fields:
@@ -713,7 +758,7 @@ views:
                 line_width: 2
                 height: 40
                 font_size: 65
-                show:
+                show: &sparkline_show
                   name: true
                   icon: false
                   state: true
@@ -729,7 +774,7 @@ views:
                   style: |
                     ha-card {
                       background: transparent !important;
-                      border: 1px solid rgba(0,229,255,0.16) !important;
+                      border: 1px solid var(--cd-cyan-16) !important;
                       border-radius: 4px !important;
                       box-shadow: none !important;
                       margin: 8px 0 0 14px !important;
@@ -740,7 +785,7 @@ views:
                             letter-spacing: 2px !important; font-family: 'Share Tech Mono', monospace !important; }
                     .states { font-family: 'Share Tech Mono', monospace !important; }
                     .state__value { color: var(--cyberdeck-cyan) !important;
-                      text-shadow: 0 0 14px rgba(0,229,255,0.45) !important; }
+                      text-shadow: 0 0 14px var(--cd-cyan-45) !important; }
                     .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
               - type: custom:mini-graph-card
                 entities:
@@ -753,15 +798,7 @@ views:
                 line_width: 2
                 height: 40
                 font_size: 65
-                show:
-                  name: true
-                  icon: false
-                  state: true
-                  labels: false
-                  points: false
-                  fill: true
-                  legend: false
-                  loading_indicator: false
+                show: *sparkline_show
                 color_thresholds:
                   - value: 0
                     color: "#e91e8c"
@@ -802,9 +839,9 @@ views:
                       style: |
                         ha-card {
                           background: rgba(7, 6, 17, 0.45) !important;
-                          border: 1px solid rgba(0,229,255,0.12) !important;
+                          border: 1px solid var(--cd-cyan-12) !important;
                           border-radius: 6px !important;
-                          margin: 8px 8px 4px !important;
+                          margin: 4px 8px !important;
                           overflow: hidden !important;
                           {% if is_state('sensor.<entity_23>_current_status','unavailable') or
                                 is_state('sensor.<entity_23>_current_status','unknown') %}
@@ -836,15 +873,15 @@ views:
                             show_name: false
                             show_state: false
                             card_mod:
-                              style: |
+                              style: &camera_frame_css |
                                 ha-card {
                                   background: #000 !important;
-                                  border: 1px solid rgba(0,229,255,0.58) !important;
+                                  border: 1px solid var(--cd-cyan-58) !important;
                                   border-radius: 4px !important;
                                   box-shadow:
-                                    0 0 6px rgba(0,229,255,0.45),
-                                    0 0 14px rgba(0,229,255,0.22),
-                                    0 0 24px rgba(0,229,255,0.1) !important;
+                                    0 0 6px var(--cd-cyan-45),
+                                    0 0 14px var(--cd-cyan-22),
+                                    0 0 24px var(--cd-cyan-10) !important;
                                   overflow: hidden !important;
                                   position: relative !important;
                                   margin: 0 14px 10px 14px !important;
@@ -875,11 +912,11 @@ views:
                                   content: '';
                                   position: absolute;
                                   inset: 6px;
-                                  border: 2px solid rgba(0,229,255,0.72);
+                                  border: 2px solid var(--cd-cyan-72);
                                   border-radius: 2px;
                                   pointer-events: none;
                                   z-index: 2;
-                                  filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
+                                  filter: drop-shadow(0 0 5px var(--cd-cyan-55)) drop-shadow(0 0 12px var(--cd-cyan-20));
                                   mask-image:
                                     linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
                                     linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
@@ -891,7 +928,7 @@ views:
                                 }
                           - type: horizontal-stack
                             card_mod:
-                              style: |
+                              style: &cover_job_row_css |
                                 #root {
                                   align-items: stretch !important;
                                   padding: 0 8px 4px 8px !important;
@@ -905,49 +942,7 @@ views:
                             cards:
                               - type: custom:button-card
                                 entity: image.<entity_23>_cover_image
-                                template: cyberdeck_base
-                                show_entity_picture: false
-                                custom_fields:
-                                  cover: |
-                                    [[[
-                                      const e = states['image.<entity_23>_cover_image'];
-                                      if (!e || !e.attributes || !e.attributes.entity_picture) return '';
-                                      const url = e.attributes.entity_picture;
-                                      return `
-                                        <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
-                                          <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
-                                                      box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
-                                                      background:#000;max-width:min(200px,85%);">
-                                            <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
-                                          </div>
-                                        </div>`;
-                                    ]]]
-                                styles:
-                                  grid:
-                                    - grid-template-areas: '"cover"'
-                                    - grid-template-columns: "1fr"
-                                    - grid-template-rows: "auto"
-                                    - justify-items: "center"
-                                    - align-items: "center"
-                                  card:
-                                    - background: "transparent"
-                                    - border: "none"
-                                    - padding: "4px"
-                                    - box-shadow: "none"
-                                    - display: "flex"
-                                    - align-items: "center"
-                                    - justify-content: "center"
-                                  custom_fields:
-                                    cover:
-                                      - width: "100%"
-                                      - max-width: "100%"
-                                      - justify-self: "center"
-                                card_mod:
-                                  style: |
-                                    ha-card {
-                                      width: 100% !important;
-                                      box-sizing: border-box !important;
-                                    }
+                                template: unit_cover_image
                               - type: custom:button-card
                                 entity: sensor.<entity_23>_percent_complete
                                 template: unit_job_info
@@ -965,7 +960,7 @@ views:
                       # ── segmented progress bar ──
                       - type: horizontal-stack
                         card_mod:
-                          style: |
+                          style: &progress_bar_wrapper_css |
                             #root {
                               width: 100% !important;
                               min-width: 0 !important;
@@ -1005,15 +1000,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#e8a910"
@@ -1045,15 +1032,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#00ff88"
@@ -1084,15 +1063,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#e91e8c"
@@ -1119,7 +1090,7 @@ views:
                         columns: 3
                         square: false
                         card_mod:
-                          style: |
+                          style: &control_grid_css |
                             ha-card {
                               padding: 0 10px 10px !important;
                               box-sizing: border-box !important;
@@ -1177,7 +1148,7 @@ views:
                       style: |
                         ha-card {
                           background: rgba(7, 6, 17, 0.45) !important;
-                          border: 1px solid rgba(0,229,255,0.12) !important;
+                          border: 1px solid var(--cd-cyan-12) !important;
                           border-radius: 6px !important;
                           margin: 4px 8px !important;
                           overflow: hidden !important;
@@ -1211,118 +1182,14 @@ views:
                             show_name: false
                             show_state: false
                             card_mod:
-                              style: |
-                                ha-card {
-                                  background: #000 !important;
-                                  border: 1px solid rgba(0,229,255,0.58) !important;
-                                  border-radius: 4px !important;
-                                  box-shadow:
-                                    0 0 6px rgba(0,229,255,0.45),
-                                    0 0 14px rgba(0,229,255,0.22),
-                                    0 0 24px rgba(0,229,255,0.1) !important;
-                                  overflow: hidden !important;
-                                  position: relative !important;
-                                  margin: 0 14px 10px 14px !important;
-                                  width: calc(100% - 28px) !important;
-                                  max-width: calc(100% - 28px) !important;
-                                  box-sizing: border-box !important;
-                                  min-width: 0 !important;
-                                  aspect-ratio: 16 / 9 !important;
-                                  display: flex !important;
-                                  flex-direction: column !important;
-                                }
-                                ha-card .card-content {
-                                  flex: 1 1 auto !important;
-                                  min-height: 0 !important;
-                                  display: flex !important;
-                                  flex-direction: column !important;
-                                }
-                                ha-card img,
-                                ha-card video,
-                                ha-card iframe {
-                                  object-fit: cover !important;
-                                  object-position: center !important;
-                                  width: 100% !important;
-                                  height: 100% !important;
-                                  min-height: 0 !important;
-                                }
-                                ha-card::before {
-                                  content: '';
-                                  position: absolute;
-                                  inset: 6px;
-                                  border: 2px solid rgba(0,229,255,0.72);
-                                  border-radius: 2px;
-                                  pointer-events: none;
-                                  z-index: 2;
-                                  filter: drop-shadow(0 0 5px rgba(0,229,255,0.55)) drop-shadow(0 0 12px rgba(0,229,255,0.2));
-                                  mask-image:
-                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
-                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
-                                  mask-composite: intersect;
-                                  -webkit-mask-image:
-                                    linear-gradient(#fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px)),
-                                    linear-gradient(90deg, #fff 20px, transparent 20px, transparent calc(100% - 20px), #fff calc(100% - 20px));
-                                  -webkit-mask-composite: source-in;
-                                }
+                              style: *camera_frame_css
                           - type: horizontal-stack
                             card_mod:
-                              style: |
-                                #root {
-                                  align-items: stretch !important;
-                                  padding: 0 8px 4px 8px !important;
-                                  box-sizing: border-box !important;
-                                }
-                                #root > hui-card > ha-card {
-                                  flex: 1 1 0% !important;
-                                  min-width: 0 !important;
-                                  max-width: none !important;
-                                }
+                              style: *cover_job_row_css
                             cards:
                               - type: custom:button-card
                                 entity: image.<entity_22>_cover_image
-                                template: cyberdeck_base
-                                show_entity_picture: false
-                                custom_fields:
-                                  cover: |
-                                    [[[
-                                      const e = states['image.<entity_22>_cover_image'];
-                                      if (!e || !e.attributes || !e.attributes.entity_picture) return '';
-                                      const url = e.attributes.entity_picture;
-                                      return `
-                                        <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:120px;">
-                                          <div style="border:1px solid rgba(0,229,255,0.35);border-radius:3px;overflow:hidden;
-                                                      box-shadow:0 0 8px rgba(0,229,255,0.15),inset 0 0 12px rgba(0,0,0,0.4);
-                                                      background:#000;max-width:min(200px,85%);">
-                                            <img src="${url}" style="display:block;width:100%;object-fit:contain;max-height:160px;" />
-                                          </div>
-                                        </div>`;
-                                    ]]]
-                                styles:
-                                  grid:
-                                    - grid-template-areas: '"cover"'
-                                    - grid-template-columns: "1fr"
-                                    - grid-template-rows: "auto"
-                                    - justify-items: "center"
-                                    - align-items: "center"
-                                  card:
-                                    - background: "transparent"
-                                    - border: "none"
-                                    - padding: "4px"
-                                    - box-shadow: "none"
-                                    - display: "flex"
-                                    - align-items: "center"
-                                    - justify-content: "center"
-                                  custom_fields:
-                                    cover:
-                                      - width: "100%"
-                                      - max-width: "100%"
-                                      - justify-self: "center"
-                                card_mod:
-                                  style: |
-                                    ha-card {
-                                      width: 100% !important;
-                                      box-sizing: border-box !important;
-                                    }
+                                template: unit_cover_image
                               - type: custom:button-card
                                 entity: sensor.<entity_22>_percent_complete
                                 template: unit_job_info
@@ -1340,24 +1207,7 @@ views:
                       # ── segmented progress bar ──
                       - type: horizontal-stack
                         card_mod:
-                          style: |
-                            #root {
-                              width: 100% !important;
-                              min-width: 0 !important;
-                              box-sizing: border-box !important;
-                            }
-                            #root > hui-card {
-                              flex: 1 1 0% !important;
-                              min-width: 0 !important;
-                              width: 100% !important;
-                              max-width: 100% !important;
-                            }
-                            #root > hui-card > ha-card {
-                              width: 100% !important;
-                              max-width: 100% !important;
-                              min-width: 0 !important;
-                              box-sizing: border-box !important;
-                            }
+                          style: *progress_bar_wrapper_css
                         cards:
                           - type: custom:button-card
                             entity: sensor.<entity_22>_percent_complete
@@ -1380,15 +1230,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#e8a910"
@@ -1420,15 +1262,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#00ff88"
@@ -1459,15 +1293,7 @@ views:
                             line_width: 2
                             height: 40
                             font_size: 65
-                            show:
-                              name: true
-                              icon: false
-                              state: true
-                              labels: false
-                              points: false
-                              fill: true
-                              legend: false
-                              loading_indicator: false
+                            show: *sparkline_show
                             color_thresholds:
                               - value: 0
                                 color: "#e91e8c"
@@ -1494,16 +1320,7 @@ views:
                         columns: 3
                         square: false
                         card_mod:
-                          style: |
-                            ha-card {
-                              padding: 0 10px 10px !important;
-                              box-sizing: border-box !important;
-                            }
-                            hui-grid-card {
-                              gap: 12px !important;
-                              column-gap: 12px !important;
-                              row-gap: 12px !important;
-                            }
+                          style: *control_grid_css
                         cards:
                           - type: custom:button-card
                             entity: button.<entity_22>_pause_print
@@ -1554,7 +1371,7 @@ views:
               style: |
                 ha-card {
                   background: var(--cyberdeck-surface) !important;
-                  border: 1px solid rgba(0,229,255,0.12) !important;
+                  border: 1px solid var(--cd-cyan-12) !important;
                   border-radius: 6px !important;
                   margin: 4px 8px 4px !important;
                   overflow: hidden !important;
@@ -1621,7 +1438,7 @@ views:
               style: |
                 ha-card {
                   background: var(--cyberdeck-surface) !important;
-                  border: 1px solid rgba(0,229,255,0.12) !important;
+                  border: 1px solid var(--cd-cyan-12) !important;
                   border-radius: 6px !important;
                   margin: 4px 8px 16px !important;
                   overflow: hidden !important;

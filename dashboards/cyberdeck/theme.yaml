@@ -12,7 +12,7 @@ Cyberdeck:
 
   # ── HA Card chrome ──
   ha-card-background: "#0f1018"
-  ha-card-border-color: "rgba(0, 229, 255, 0.12)"
+  ha-card-border-color: "var(--cd-cyan-12)"
   ha-card-border-radius: "4px"
   ha-card-border-width: "1px"
   ha-card-box-shadow: "none"
@@ -46,7 +46,7 @@ Cyberdeck:
   switch-checked-track-color: "#00e5ff44"
 
   # ── Divider / scrollbar ──
-  divider-color: "rgba(0, 229, 255, 0.08)"
+  divider-color: "var(--cd-cyan-08)"
   scrollbar-thumb-color: "#00e5ff44"
 
   # ── Slider / input ──
@@ -81,6 +81,27 @@ Cyberdeck:
   cyberdeck-text: "#e0e0e8"
   cyberdeck-text-dim: "#6a6a7a"
   cyberdeck-font: "'Share Tech Mono', monospace"
+
+  # ── Cyan alpha tokens (derived from cyberdeck-cyan via color-mix) ──
+  cd-cyan-04: "color-mix(in srgb, var(--cyberdeck-cyan) 4%, transparent)"
+  cd-cyan-05: "color-mix(in srgb, var(--cyberdeck-cyan) 5%, transparent)"
+  cd-cyan-06: "color-mix(in srgb, var(--cyberdeck-cyan) 6%, transparent)"
+  cd-cyan-07: "color-mix(in srgb, var(--cyberdeck-cyan) 7%, transparent)"
+  cd-cyan-08: "color-mix(in srgb, var(--cyberdeck-cyan) 8%, transparent)"
+  cd-cyan-10: "color-mix(in srgb, var(--cyberdeck-cyan) 10%, transparent)"
+  cd-cyan-12: "color-mix(in srgb, var(--cyberdeck-cyan) 12%, transparent)"
+  cd-cyan-15: "color-mix(in srgb, var(--cyberdeck-cyan) 15%, transparent)"
+  cd-cyan-16: "color-mix(in srgb, var(--cyberdeck-cyan) 16%, transparent)"
+  cd-cyan-20: "color-mix(in srgb, var(--cyberdeck-cyan) 20%, transparent)"
+  cd-cyan-22: "color-mix(in srgb, var(--cyberdeck-cyan) 22%, transparent)"
+  cd-cyan-30: "color-mix(in srgb, var(--cyberdeck-cyan) 30%, transparent)"
+  cd-cyan-35: "color-mix(in srgb, var(--cyberdeck-cyan) 35%, transparent)"
+  cd-cyan-45: "color-mix(in srgb, var(--cyberdeck-cyan) 45%, transparent)"
+  cd-cyan-50: "color-mix(in srgb, var(--cyberdeck-cyan) 50%, transparent)"
+  cd-cyan-55: "color-mix(in srgb, var(--cyberdeck-cyan) 55%, transparent)"
+  cd-cyan-58: "color-mix(in srgb, var(--cyberdeck-cyan) 58%, transparent)"
+  cd-cyan-72: "color-mix(in srgb, var(--cyberdeck-cyan) 72%, transparent)"
+  cd-cyan-75: "color-mix(in srgb, var(--cyberdeck-cyan) 75%, transparent)"
 
   # ── card-mod global injection ──
   card-mod-theme: Cyberdeck

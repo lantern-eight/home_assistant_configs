@@ -6,6 +6,7 @@
 
 ## Home Assistant
 
+- **Sync scripts** Use `uv run python scripts/<sync_script>.py` to deploy.
 - **Hard restarts take ~5 minutes.** After triggering an HA restart
   (e.g. `sync.py -r`), don't actively poll — use `Bash` with
   `run_in_background` to wait. The web server comes up early, but
@@ -109,11 +110,3 @@ If you changed `configuration.yaml`, a restart is required:
 ```bash
 uv run python scripts/cyberdeck_sync.py -r
 ```
-
-### Key constraints
-
-- Button-card JS templates: the identifier `html` is reserved by lit-html. Never use `let html`, `const html`, or `var html` in `[[[...]]]` blocks.
-- Entity IDs: CC1 uses `*.centauri_carbon_*`, CC2 uses `*.centauri_carbon_2_*`.
-- Theme variables: custom tokens are prefixed `--cyberdeck-` (e.g. `var(--cyberdeck-cyan)`).
-- The dashboard is registered in HA's `configuration.yaml` under `lovelace.dashboards.cyber-deck` (hyphen required in URL path).
-- **Open in browser:** `http://homeassistant.local:8123/cyber-deck/farm-ctl` (view path `farm-ctl` matches `dashboards/cyberdeck/dashboard.yaml` → `views[].path`).
