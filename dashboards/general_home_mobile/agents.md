@@ -156,7 +156,9 @@ automatically when their entity state is active.
    `sensors.yaml` (state template)
 4. Add the conditional card in the Home view of `dashboard.yaml`, gated
    on the input_boolean
-5. Add an unconditional copy to the Conditionals page in `dashboard.yaml`
+5. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
+   (the card body is defined once on the Home view with a `&cond_card_*`
+   anchor; Conditionals uses `*cond_card_*` — no copy needed)
 
 ### Severity colors
 
