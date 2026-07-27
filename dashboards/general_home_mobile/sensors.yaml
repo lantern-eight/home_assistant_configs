@@ -20,9 +20,22 @@
 #   3. Add the card entry to the `cards` list below with id, boolean, and
 #      priority template
 #   4. Add the conditional card in dashboard.yaml
+#   5. Add the entity to this sensor's trigger block
 # =============================================================================
 
-- sensor:
+- trigger:
+    - platform: homeassistant
+      event: start
+    - platform: state
+      entity_id:
+        - input_boolean.cond_bedtime_doors
+        - input_boolean.cond_uv_index
+        - sensor.<entity_10>_uv_index
+    - platform: time
+      at:
+        - "05:00:00"
+        - "22:00:00"
+  sensor:
     # -------------------------------------------------------------------------
     # Conditional card visibility manager
     # -------------------------------------------------------------------------
@@ -40,10 +53,9 @@
           {
             'id': 'uv_index',
             'active': is_state('input_boolean.cond_uv_index', 'on'),
-            'priority': 15 if state_attr('sensor.<entity_10>_uv_index', 'state') | float(0) >= 6 else 40
+            'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
           }
         ] %}
-
         {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
         {{ active[:max_visible] | length }}
 
@@ -172,77 +184,67 @@
                  | list }}
 
 # =============================================================================
-# Notification System — Dashboard Header Bar
+# Notification System — Dashboard Header Bar (trigger-based)
 # =============================================================================
 # Aggregates transient status items into a single sensor for the notification
-# header. State = total active count. Items attribute drives the dot counter
-# and expanded list via button-card JS templates.
-#
-# State and attributes evaluate independently in HA — the item-building logic
-# is intentionally present in both.
+# header. Evaluates only when monitored entities change or once per minute.
+# Items are computed once in the action block; state derives from items.
+# Items attribute drives the dot counter and expanded list via button-card
+# JS templates.
 # =============================================================================
 
-- sensor:
-    - name: "Dashboard Notifications"
-      unique_id: dashboard_notifications
-      icon: mdi:bell
-      state: >
-        {% set ns = namespace(count=0) %}
-
-        {% if is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-        {% if is_state('binary_sensor.<entity_4>s_door_door', 'on') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-        {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% set lc = states.light
-           | selectattr('state', 'eq', 'on')
-           | rejectattr('entity_id', 'search', '_led')
-           | rejectattr('entity_id', 'search', 'chamber_light')
-           | list | length %}
-        {% if lc > 0 %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% if is_state('sensor.<entity_23>_current_status', 'printing') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-        {% if is_state('sensor.<entity_22>_current_status', 'printing') %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% set hvac_action = state_attr('climate.living_room_thermostat', 'hvac_action') %}
-        {% if hvac_action in ['heating', 'cooling'] %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
-        {% if power > 0 %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% set ns.count = ns.count
-           + (states('sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts') | int(0)) %}
-
-        {% if states('sensor.<entity_10>_lightning_count') | int(0) > 0 %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {% if now().month >= 3 and now().month <= 9 %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-
-        {{ ns.count }}
-      attributes:
-        items: >
+- trigger:
+    - platform: homeassistant
+      event: start
+    # Doors
+    - platform: state
+      entity_id:
+        - binary_sensor.<entity_3>s_door_door
+        - binary_sensor.<entity_4>s_door_door
+    # Vacuums
+    - platform: state
+      entity_id:
+        - binary_sensor.<entity_34>_cleaning
+        - binary_sensor.<entity_35>_cleaning
+        - sensor.<entity_34>_cleaning_progress
+        - sensor.<entity_35>_cleaning_progress
+    # Printers
+    - platform: state
+      entity_id:
+        - sensor.<entity_23>_current_status
+        - sensor.<entity_22>_current_status
+        - sensor.<entity_23>_percent_complete
+        - sensor.<entity_22>_percent_complete
+        - sensor.<entity_23>_remaining_print_time
+        - sensor.<entity_22>_remaining_print_time
+    # HVAC
+    - platform: state
+      entity_id: climate.living_room_thermostat
+      attribute: hvac_action
+    # Power plug — threshold crossing (wattage display updates via time_pattern)
+    - platform: numeric_state
+      entity_id: sensor.<entity_33>_power_top
+      above: 0
+    - platform: numeric_state
+      entity_id: sensor.<entity_33>_power_top
+      below: 1
+    # Weather alerts
+    - platform: state
+      entity_id: sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts
+    # Lightning
+    - platform: state
+      entity_id:
+        - sensor.<entity_10>_lightning_count
+        - sensor.<entity_10>_lightning_average_distance
+    # Lawn rain
+    - platform: state
+      entity_id: sensor.lawn_rain_weekly
+    # Periodic: light count, season check, power wattage display
+    - platform: time_pattern
+      minutes: "/1"
+  action:
+    - variables:
+        notification_items: >
           {% set ns = namespace(items=[]) %}
 
           {% set door_<entity_3> = is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
@@ -374,60 +376,60 @@
             }
           ] %}
 
-          {% if is_state('binary_sensor.balrog_cleaning', 'on') %}
-            {% set prog = states('sensor.balrog_cleaning_progress')
+          {% if is_state('binary_sensor.<entity_34>_cleaning', 'on') %}
+            {% set prog = states('sensor.<entity_34>_cleaning_progress')
                | float(0) | round(0) | int %}
             {% set ns.items = ns.items + [
               {
-                'id': 'vacuum_balrog',
+                'id': 'vacuum_<entity_34>',
                 'active': true,
-                'label': 'Balrog',
+                'label': '<entity_34>',
                 'icon': 'mdi:robot-vacuum',
                 'severity': 'amber',
                 'promoted': false,
-                'sort_key': '1_vacuum_balrog',
+                'sort_key': '1_vacuum_<entity_34>',
                 'progress': prog
               }
             ] %}
           {% else %}
             {% set ns.items = ns.items + [
               {
-                'id': 'vacuum_balrog',
+                'id': 'vacuum_<entity_34>',
                 'active': false,
-                'label': 'Balrog',
+                'label': '<entity_34>',
                 'icon': 'mdi:robot-vacuum',
                 'severity': 'green',
                 'promoted': false,
-                'sort_key': '1_vacuum_balrog'
+                'sort_key': '1_vacuum_<entity_34>'
               }
             ] %}
           {% endif %}
 
-          {% if is_state('binary_sensor.shadowfax_cleaning', 'on') %}
-            {% set prog = states('sensor.shadowfax_cleaning_progress')
+          {% if is_state('binary_sensor.<entity_35>_cleaning', 'on') %}
+            {% set prog = states('sensor.<entity_35>_cleaning_progress')
                | float(0) | round(0) | int %}
             {% set ns.items = ns.items + [
               {
-                'id': 'vacuum_shadowfax',
+                'id': 'vacuum_<entity_35>',
                 'active': true,
-                'label': 'Shadowfax',
+                'label': '<entity_35>',
                 'icon': 'mdi:robot-vacuum',
                 'severity': 'amber',
                 'promoted': false,
-                'sort_key': '1_vacuum_shadowfax',
+                'sort_key': '1_vacuum_<entity_35>',
                 'progress': prog
               }
             ] %}
           {% else %}
             {% set ns.items = ns.items + [
               {
-                'id': 'vacuum_shadowfax',
+                'id': 'vacuum_<entity_35>',
                 'active': false,
-                'label': 'Shadowfax',
+                'label': '<entity_35>',
                 'icon': 'mdi:robot-vacuum',
                 'severity': 'green',
                 'promoted': false,
-                'sort_key': '1_vacuum_shadowfax'
+                'sort_key': '1_vacuum_<entity_35>'
               }
             ] %}
           {% endif %}
@@ -538,7 +540,7 @@
             }
           ] %}
 
-          {% set power = states('sensor.eve_energy_20ecn4101_power_top') | float(0) %}
+          {% set power = states('sensor.<entity_33>_power_top') | float(0) %}
           {% set ns.items = ns.items + [
             {
               'id': 'power',
@@ -552,3 +554,12 @@
           ] %}
 
           {{ ns.items | sort(attribute='sort_key') }}
+  sensor:
+    - name: "Dashboard Notifications"
+      unique_id: dashboard_notifications
+      icon: mdi:bell
+      state: >
+        {{ notification_items | selectattr('active') | list | length }}
+      attributes:
+        items: >
+          {{ notification_items }}
