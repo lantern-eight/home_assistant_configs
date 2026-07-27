@@ -26,6 +26,9 @@ labels:
   Security:
     color: red
     icon: mdi:shield-lock
+  Utility Light:
+    color: grey
+    icon: mdi:led-strip-variant
   # Add more labels here...
 
 # Categories — single-assignment, grouped by scope (domain)
@@ -44,3 +47,6 @@ entities:
   sensor.my_sensor:
     labels:
       - Security
+  light.motion_sensor_led:
+    labels:
+      - Utility Light

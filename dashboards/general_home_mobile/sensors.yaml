@@ -104,12 +104,12 @@
       availability: >
         {{ area_entities('main_suite')
            | select('match', '^light\\.')
-           | reject('search', '_led')
+           | reject('in', label_entities('utility_light'))
            | list | length > 0 }}
       state: >
         {{ area_entities('main_suite')
            | select('match', '^light\\.')
-           | reject('search', '_led')
+           | reject('in', label_entities('utility_light'))
            | select('is_state', 'on')
            | list | length > 0 }}
       turn_on:
@@ -118,7 +118,7 @@
             entity_id: >
               {{ area_entities('main_suite')
                  | select('match', '^light\\.')
-                 | reject('search', '_led')
+                 | reject('in', label_entities('utility_light'))
                  | list }}
       turn_off:
         - action: light.turn_off
@@ -126,7 +126,7 @@
             entity_id: >
               {{ area_entities('main_suite')
                  | select('match', '^light\\.')
-                 | reject('search', '_led')
+                 | reject('in', label_entities('utility_light'))
                  | list }}
 
     - name: "Kitchen Lights"
@@ -434,10 +434,10 @@
             ] %}
           {% endif %}
 
+          {% set utility = label_entities('utility_light') %}
           {% set light_count = states.light
              | selectattr('state', 'eq', 'on')
-             | rejectattr('entity_id', 'search', '_led')
-             | rejectattr('entity_id', 'search', 'chamber_light')
+             | rejectattr('entity_id', 'in', utility)
              | list | length %}
           {% set ns.items = ns.items + [
             {
