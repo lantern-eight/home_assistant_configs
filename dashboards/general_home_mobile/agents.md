@@ -150,13 +150,15 @@ automatically when their entity state is active.
 
 ### Adding a conditional card
 
-1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
-2. Add on/off automations (time- or state-triggered) in the same file
-3. Add the card entry to `sensor.dashboard_conditional_visible` in
+1. For **time-based** windows: add a `schedule.cond_<id>` in
+   `general_home_mobile.yaml` with the active time range.
+   For **state-based** triggers: use `input_boolean.cond_<id>` +
+   on/off automations instead.
+2. Add the card entry to `sensor.dashboard_conditional_visible` in
    `sensors.yaml` (state template)
-4. Add the conditional card in the Home view of `dashboard.yaml`, gated
-   on the input_boolean
-5. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
+3. Add the conditional card in the Home view of `dashboard.yaml`, gated
+   on the schedule or input_boolean
+4. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
    (the card body is defined once on the Home view with a `&cond_card_*`
    anchor; Conditionals uses `*cond_card_*` — no copy needed)
 

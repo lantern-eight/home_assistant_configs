@@ -505,14 +505,17 @@ is true.
 Use this when the item needs a full card visualization (chart, entity
 list, etc.), not just a notification dot.
 
-1. Create `input_boolean.cond_<id>` in `general_home_mobile.yaml`
-2. Add on/off automations (time- or state-triggered) in the same file
-3. Add the card entry to `sensor.dashboard_conditional_visible` in
+1. For **time-based** windows: add a `schedule.cond_<id>` in
+   `general_home_mobile.yaml` with the active time range.
+   For **state-based** triggers: use `input_boolean.cond_<id>` +
+   on/off automations instead.
+2. Add the card entry to `sensor.dashboard_conditional_visible` in
    `sensors.yaml` (state template)
-4. Add the conditional card in the `dashboard.yaml` Home view, gated on
-   the input_boolean
-5. Add an unconditional copy of the card to the Conditionals page in
-   `dashboard.yaml` (the Conditionals page always shows all cards)
+3. Add the conditional card in the `dashboard.yaml` Home view, gated on
+   the schedule or input_boolean
+4. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
+   (the card body is defined once on the Home view with a `&cond_card_*`
+   anchor; Conditionals uses `*cond_card_*` — no copy needed)
 
 ### Key Entities
 
@@ -625,14 +628,14 @@ browser history is the root cause.
 
 **Fix:** A small JavaScript module (`popup_history_fix.js`) intercepts
 `history.pushState`. When a navigation happens while the current URL has a
-popup hash (`#more` or `#rooms`), the module calls `replaceState` to strip
-the hash from the current history entry before the new page is pushed. The
-history becomes `home` → `appearance` (the `#more` entry is overwritten),
-so system back goes to a clean `home` URL with no popup.
+popup hash (any non-empty `location.hash`), the module calls `replaceState`
+to strip the hash from the current history entry before the new page is
+pushed. The history becomes `home` → `appearance` (the hash entry is
+overwritten), so system back goes to a clean URL with no popup.
 
 The module is loaded via `frontend.extra_module_url` in `configuration.yaml`
-alongside card-mod. It's a global `pushState` override scoped to the two
-known popup hashes. If HA's frontend ever migrates from `history.pushState`
+alongside card-mod. It's a global `pushState` override that covers all
+hash-based popups automatically. If HA's frontend ever migrates from `history.pushState`
 to the Navigation API, this module would silently stop working (but not
 break anything) and would need to be updated.
 

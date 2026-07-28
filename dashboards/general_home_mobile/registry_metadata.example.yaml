@@ -132,12 +132,12 @@ entities:
       - gm-theme-customization
 
   # --- Conditional card toggles ---
-  input_boolean.cond_bedtime_doors:
+  schedule.cond_bedtime_doors:
     category: GenMobile Dashboard Notifications
     labels:
       - gm-dashboard
       - gm-conditional-cards
-  input_boolean.cond_uv_index:
+  schedule.cond_uv_index:
     category: GenMobile Dashboard Notifications
     labels:
       - gm-dashboard

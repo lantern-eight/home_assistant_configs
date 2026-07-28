@@ -28,8 +28,8 @@
       event: start
     - platform: state
       entity_id:
-        - input_boolean.cond_bedtime_doors
-        - input_boolean.cond_uv_index
+        - schedule.cond_bedtime_doors
+        - schedule.cond_uv_index
         - sensor.<entity_10>_uv_index
     - platform: time
       at:
@@ -47,12 +47,12 @@
         {% set cards = [
           {
             'id': 'bedtime_doors',
-            'active': is_state('input_boolean.cond_bedtime_doors', 'on'),
+            'active': is_state('schedule.cond_bedtime_doors', 'on'),
             'priority': 10 if (now().hour >= 22 or now().hour < 5) else 30
           },
           {
             'id': 'uv_index',
-            'active': is_state('input_boolean.cond_uv_index', 'on'),
+            'active': is_state('schedule.cond_uv_index', 'on'),
             'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
           }
         ] %}

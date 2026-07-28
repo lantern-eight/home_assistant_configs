@@ -479,7 +479,7 @@ views:
         entity: sensor.dashboard_conditional_visible
         state_not: '0'
       - condition: state
-        entity: input_boolean.cond_bedtime_doors
+        entity: schedule.cond_bedtime_doors
         state: 'on'
       card: &cond_card_bedtime_doors
         type: custom:stack-in-card
@@ -514,7 +514,7 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: input_boolean.cond_uv_index
+        entity: schedule.cond_uv_index
         state: 'on'
       card: &cond_card_uv_index
         type: custom:apexcharts-card

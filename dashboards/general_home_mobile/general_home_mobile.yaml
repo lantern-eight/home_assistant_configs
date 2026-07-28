@@ -14,15 +14,37 @@
 # applied by the sync script via WebSocket (-c flag).
 # =============================================================================
 
-# --- Conditional card toggles ---
+# --- Conditional card time windows ---
 
-input_boolean:
+schedule:
   cond_bedtime_doors:
     name: "Conditional: Bedtime Doors"
     icon: mdi:door-open
+    monday: &bedtime_doors_active_window
+      - from: "19:30:00"
+        to: "07:00:00"
+    tuesday: *bedtime_doors_active_window
+    wednesday: *bedtime_doors_active_window
+    thursday: *bedtime_doors_active_window
+    friday: *bedtime_doors_active_window
+    saturday: *bedtime_doors_active_window
+    sunday: *bedtime_doors_active_window
   cond_uv_index:
     name: "Conditional: UV Index"
     icon: mdi:weather-sunny-alert
+    monday: &uv_index_active_window
+      - from: "07:00:00"
+        to: "17:00:00"
+    tuesday: *uv_index_active_window
+    wednesday: *uv_index_active_window
+    thursday: *uv_index_active_window
+    friday: *uv_index_active_window
+    saturday: *uv_index_active_window
+    sunday: *uv_index_active_window
+
+# --- Notification state ---
+
+input_boolean:
   notification_expanded:
     name: "Notification Tray Expanded"
     icon: mdi:chevron-down
@@ -154,46 +176,6 @@ shell_command:
 # --- Automations ---
 
 automation:
-  - id: cond_bedtime_doors_on
-    alias: "Cond: Bedtime Doors ON"
-    trigger:
-      - platform: time
-        at: "19:30:00"
-    action:
-      - service: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.cond_bedtime_doors
-
-  - id: cond_bedtime_doors_off
-    alias: "Cond: Bedtime Doors OFF"
-    trigger:
-      - platform: time
-        at: "07:00:00"
-    action:
-      - service: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.cond_bedtime_doors
-
-  - id: cond_uv_index_on
-    alias: "Cond: UV Index ON"
-    trigger:
-      - platform: time
-        at: "07:00:00"
-    action:
-      - service: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.cond_uv_index
-
-  - id: cond_uv_index_off
-    alias: "Cond: UV Index OFF"
-    trigger:
-      - platform: time
-        at: "17:00:00"
-    action:
-      - service: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.cond_uv_index
-
   - id: theme_generate_background_thumbnails
     alias: "Theme: Generate background thumbnails"
     trigger:
