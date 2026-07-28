@@ -29,8 +29,9 @@ cp config.example.yaml config.yaml
 ```
 
 `config.yaml` contains SMB credentials for connecting to the HA config share and a
-long-lived access token for the HA REST API. Both `config.yaml` and
-`entity_map.yaml` are gitignored.
+long-lived access token for the HA REST API. `config.yaml`, `entity_map.yaml`, and
+`registry_metadata.yaml` files (root and per-dashboard) are all gitignored
+local config — copy from their `.example` counterparts and fill in real values.
 
 | Key | Purpose |
 |---|---|

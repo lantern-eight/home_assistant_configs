@@ -1,7 +1,7 @@
 # =============================================================================
 # Registry Metadata — Categories & Labels for General Home Mobile
 # =============================================================================
-# Copy to registry_metadata.yaml and customize.
+# Copy to registry_metadata.yaml and fill in your HA values.
 # Applied by the dashboard sync script with -c flag:
 #   uv run python scripts/general_home_dashboard_sync.py -c
 #
@@ -9,22 +9,143 @@
 # this dashboard (helpers, theme inputs, conditional card toggles, etc.).
 # General-purpose labels go in the repo-root registry_metadata.yaml instead.
 #
-# Entity IDs use the same <entity_N> placeholders as other project files;
-# the sync script un-redacts them before calling the HA API.
 # =============================================================================
 
 categories:
-  My Dashboard Category:
+  GenMobile Dashboard Notifications:
     scope: helpers
     icon: mdi:bell
+  GenMobile Theme System:
+    scope: helpers
+    icon: mdi:palette
 
 labels:
-  my-dashboard-label:
+  gm-dashboard:
     color: blue
     icon: mdi:cellphone
+  gm-per-user:
+    color: grey
+    icon: mdi:account-multiple
+  gm-theme:
+    color: purple
+    icon: mdi:palette
+  gm-conditional-cards:
+    color: orange
+    icon: mdi:cards
+  gm-notifications:
+    color: red
+    icon: mdi:bell-ring
+  gm-theme-preferences:
+    color: purple
+    icon: mdi:palette-swatch-variant
+  gm-theme-customization:
+    color: purple
+    icon: mdi:tune-variant
 
 entities:
-  input_boolean.my_dashboard_toggle:
-    category: My Dashboard Category
+  # --- Per-user theme preferences (mode, style, palette) ---
+  input_select.theme_mode_<user1>:
+    category: GenMobile Theme System
     labels:
-      - my-dashboard-label
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_mode_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<user1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_style_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<user1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+  input_select.theme_palette_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-preferences
+
+  # --- Per-user theme customization (background, opacity, blur) ---
+  input_text.theme_background_<user1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_text.theme_background_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<user1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_opacity_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<user1>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+  input_number.theme_card_blur_<user2>:
+    category: GenMobile Theme System
+    labels:
+      - gm-dashboard
+      - gm-per-user
+      - gm-theme
+      - gm-theme-customization
+
+  # --- Conditional card toggles ---
+  input_boolean.cond_bedtime_doors:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-conditional-cards
+  input_boolean.cond_uv_index:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-conditional-cards
+
+  # --- Notification state ---
+  input_boolean.notification_expanded:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-notifications
