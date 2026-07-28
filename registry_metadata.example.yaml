@@ -8,9 +8,6 @@
 # HA instance. Dashboard-specific metadata lives in each dashboard's own
 # registry_metadata.yaml (applied by that dashboard's sync script -c flag).
 #
-# Entity IDs use the same <entity_N> placeholders as other project files;
-# the apply script un-redacts them via entity_map.yaml before calling the API.
-#
 # Structure:
 #   labels:      Cross-cutting tags. Entities can have multiple.
 #   categories:  Single-assignment per domain, for Settings UI grouping.
