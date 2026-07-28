@@ -160,21 +160,19 @@ automation:
   # firmware retains the last color set on the bulb (red/purple from the
   # disruption). So after scene.turn_on, the close automation pushes a
   # neutral 4000K white into any tracked light that ended up off. No
-  # per-light helpers needed. Adding a new light just means adding it
-  # to the snapshot_entities list here AND the tracked_lights list in
-  # the close automation.
+  # per-light helpers needed. Adding a new light means adding it to
+  # &tracked_lights — both automations share the list via anchor.
   #
-  # To wire up a new door later:
-  #   1. Add its binary_sensor entity_id to triggers[0].entity_id AND to
-  #      the all_doors variable in the actions below (keep these in sync).
-  #   2. Add a matching key (the base_name — i.e. with the possessive
-  #      trailing 's' stripped) to door_colors with rgb + brightness_pct.
+  # Shared lists are anchored — edit once, all references follow.
+  # To wire up a new door:
+  #   1. Add its binary_sensor entity_id to &all_doors (below).
+  #   2. Add a matching key to &door_colors with rgb + brightness_pct.
 
   - id: door_opens_after_bedtime
     alias: "Door Opens After Bedtime"
     mode: parallel
     triggers:
-      - entity_id:
+      - entity_id: &all_doors
           - binary_sensor.<entity_3>s_door_door
           - binary_sensor.<entity_4>s_door_door
         from: "off"
@@ -187,12 +185,7 @@ automation:
     actions:
       # Derive per-door identity + light color from the trigger entity.
       - variables:
-          # Full list of tracked door sensors. Must stay in sync with
-          # triggers[0].entity_id above. Used by the "first door?" template
-          # below and referenced by the close automation's "all closed?" check.
-          all_doors:
-            - binary_sensor.<entity_3>s_door_door
-            - binary_sensor.<entity_4>s_door_door
+          all_doors: *all_doors
 
           # binary_sensor.<entity_3>s_door_door -> <entity_3>
           # binary_sensor.<entity_4>s_door_door -> <entity_4>
@@ -212,7 +205,7 @@ automation:
           # new door is added to the triggers list above.
           # IMPORTANT: keys must be lowercase — HA entity IDs are always
           # lowercase, so base_name will be lowercase.
-          door_colors:
+          door_colors: &door_colors
             <entity_3>:
               rgb: [255, 0, 0]        # red
               brightness_pct: 15
@@ -249,7 +242,7 @@ automation:
               - action: scene.create
                 data:
                   scene_id: house_state_pre_door_disruption
-                  snapshot_entities:
+                  snapshot_entities: &tracked_lights
                     - light.kitchen_table_light
                     - light.<entity_1>s_lamp
                     - light.<entity_2>s_lamp
@@ -257,16 +250,7 @@ automation:
 
       # Run the bedtime-disruption actions concurrently.
       - parallel:
-          # Turn off TV.
-          - type: turn_off
-            device_id: 165...267
-            entity_id: 741...55f
-            domain: remote
-
-          # Turn off media player.
-          - action: media_player.turn_off
-            target:
-              device_id: 06f...bfc
+          - action: script.media_all_off
 
           # Lights -> door-specific color.
           - action: <entity_29>.set_state
@@ -275,7 +259,7 @@ automation:
               rgb_color: "{{ <entity_29>_rgb }}"
               brightness_pct: "{{ <entity_29>_brightness_pct }}"
             target:
-              device_id:
+              device_id: &bedroom_light_devices
                 - dfd...50b
                 - 921...86f
                 - 83e...943
@@ -305,9 +289,7 @@ automation:
     alias: "Door Closes After Bedtime"
     mode: parallel
     triggers:
-      - entity_id:
-          - binary_sensor.<entity_3>s_door_door
-          - binary_sensor.<entity_4>s_door_door
+      - entity_id: *all_doors
         from: "on"
         to: "off"
         trigger: state
@@ -318,10 +300,7 @@ automation:
     actions:
       # Same base_name + display_name derivation as the opens automation.
       - variables:
-          # Keep in sync with the opens automation's all_doors and triggers.
-          all_doors:
-            - binary_sensor.<entity_3>s_door_door
-            - binary_sensor.<entity_4>s_door_door
+          all_doors: *all_doors
 
           base_name: >
             {{ trigger.entity_id
@@ -331,16 +310,7 @@ automation:
 
           display_name: "{{ base_name | replace('_',' ') | title }}"
 
-          # Per-door light color — same map as the opens automation. Needed
-          # so the "some doors still open" branch can switch to the
-          # remaining door's color.
-          door_colors:
-            <entity_3>:
-              rgb: [255, 0, 0]        # red
-              brightness_pct: 15
-            <entity_4>:
-              rgb: [128, 0, 128]      # purple
-              brightness_pct: 15
+          door_colors: *door_colors
 
           notif_message: "{{ now().strftime('%-I:%M %p') }} {{ display_name }} 🚪🔒"
 
@@ -360,14 +330,8 @@ automation:
                   {% set open = all_doors | map('states') | select('equalto', 'on') | list | length %}
                   {{ open == 0 }}
             sequence:
-              # tracked_lights MUST stay in sync with snapshot_entities in
-              # the opens automation's scene.create call.
               - variables:
-                  tracked_lights:
-                    - light.kitchen_table_light
-                    - light.<entity_1>s_lamp
-                    - light.<entity_2>s_lamp
-                    - light.<entity_11>_ceiling_light
+                  tracked_lights: *tracked_lights
 
               # A) Restore from the scene snapshot. ON lights get their full
               #    color + brightness back; OFF lights get turned off (but
@@ -410,11 +374,7 @@ automation:
               rgb_color: "{{ remaining_rgb }}"
               brightness_pct: "{{ remaining_brightness }}"
             target:
-              device_id:
-                - dfd...50b
-                - 921...86f
-                - 83e...943
-                - d9e...17d
+              device_id: *bedroom_light_devices
 
   # --------------------------------------------------------------------------
   # Go to bed
@@ -428,14 +388,7 @@ automation:
       - trigger: time
         at: "21:00:00"
     actions:
-      - parallel:
-          - type: turn_off
-            device_id: 165...267
-            entity_id: 741...55f
-            domain: remote
-          - action: media_player.turn_off
-            target:
-              device_id: 06f...bfc
+      - action: script.media_all_off
 
   # --------------------------------------------------------------------------
   # Main Suite Weekday Wake
@@ -557,3 +510,21 @@ automation:
           entity_id: light.<entity_4>s_room
         data:
           transition: 60
+
+# =============================================================================
+# Scripts
+# =============================================================================
+
+script:
+  media_all_off:
+    alias: "Media All Off"
+    mode: single
+    sequence:
+      - parallel:
+          - type: turn_off
+            device_id: 165...267
+            entity_id: 741...55f
+            domain: remote
+          - action: media_player.turn_off
+            target:
+              device_id: 06f...bfc
