@@ -140,7 +140,7 @@ command_line:
   - sensor:
       name: theme backgrounds
       command: "python3 /config/scripts/list_theme_backgrounds.py"
-      scan_interval: 30
+      scan_interval: 3600
       value_template: "{{ value_json.count | int(0) }}"
       json_attributes:
         - count
