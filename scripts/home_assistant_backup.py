@@ -91,9 +91,11 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
   previous run loaded off disk), that placeholder is reused so repeated /
   partial sanitize runs and reordering of *entities* stay stable. New values
   pick up the next unused index instead of just enumerating *entities*.
+
+  All entities are matched in a single regex pass. Alternatives are sorted
+  longest-first so that when one entity is a substring of another (e.g.
+  "Eris Morn" vs "Eris"), the longer match wins at any given position.
   '''
-  # Reverse-lookup of real value (lowercased) -> placeholder, plus the set of
-  # already-used <entity_N> indices so we can pick the next free one.
   existing: dict[str, str] = {}
   used_indices: set[int] = set()
   if entities_map is not None:
@@ -104,6 +106,7 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
         used_indices.add(int(m.group(1)))
 
   next_index = 1
+  lookup: dict[str, str] = {}
 
   for entity in entities:
     if not entity or not entity.strip():
@@ -123,9 +126,23 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
       if entities_map is not None:
         entities_map[placeholder] = entity
 
-    content = re.sub(re.escape(entity), placeholder, content, flags=re.IGNORECASE)
+    lookup[entity.lower()] = placeholder
 
-  return content
+  if not lookup:
+    return content
+
+  # Build one regex that matches any entity in a single pass over the text.
+  # Longest keys first so "Eris Morn" matches before "Eris" can claim the prefix.
+  sorted_keys = sorted(lookup.keys(), key=len, reverse=True)
+  '''
+  Build a single regex pattern from all the entity strings. Working inside-out:
+  1. re.escape(k) — escapes each entity so special chars like . are treated as literals.
+  2. '|'.join(...) — joins them with | (regex OR), producing something like: [eris morn|eris|zavala].
+  3. re.compile(..., re.IGNORECASE) — Case insensitive regex object.
+  '''
+  pattern = re.compile('|'.join(re.escape(k) for k in sorted_keys), re.IGNORECASE)
+  # On each match the lambda looks up the matched text's placeholder.
+  return pattern.sub(lambda m: lookup[m.group(0).lower()], content)
 
 
 def neutralize_pronouns(content: str) -> str:

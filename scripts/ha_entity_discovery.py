@@ -38,24 +38,17 @@ def _render_template(token: str, template: str) -> str:
 
 
 def _get_areas(token: str) -> list[dict]:
-  '''Fetch area list with names and entity counts.'''
+  '''Fetch area list with names and entity IDs in a single request.'''
   template = (
     '['
     '{% for area_id in areas() %}'
     '{"id":"{{ area_id }}",'
     '"name":"{{ area_name(area_id) }}",'
-    '"entity_count":{{ area_entities(area_id) | list | length }}}'
+    '"entities":{{ area_entities(area_id) | list | tojson }}}'
     '{% if not loop.last %},{% endif %}'
     '{% endfor %}'
     ']'
   )
-  raw = _render_template(token, template)
-  return json.loads(raw)
-
-
-def _get_area_entities(token: str, area_id: str) -> list[str]:
-  '''Fetch entity IDs belonging to an area.'''
-  template = '{{ area_entities("' + area_id + '") | list | tojson }}'
   raw = _render_template(token, template)
   return json.loads(raw)
 
@@ -81,18 +74,18 @@ def _build_discovery(token: str) -> dict:
 
   area_details = []
   for area in areas:
-    area_entity_ids = _get_area_entities(token, area['id'])
-    area_entities = []
+    area_entity_ids = area['entities']
+    area_entities_enriched = []
     for eid in sorted(area_entity_ids):
       info = entities_by_id.get(eid, {'entity_id': eid})
-      area_entities.append(info)
+      area_entities_enriched.append(info)
     area_details.append({
       'id': area['id'],
       'name': area['name'],
-      'entity_count': area['entity_count'],
-      'entities': area_entities,
+      'entity_count': len(area_entity_ids),
+      'entities': area_entities_enriched,
     })
-    LOGGER.debug('Fetched area', extra={'area': area['name'], 'entities': len(area_entities)})
+    LOGGER.debug('Area loaded', extra={'area': area['name'], 'entities': len(area_entity_ids)})
 
   domain_summary = {}
   for eid in entities_by_id:

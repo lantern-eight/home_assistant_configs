@@ -194,7 +194,7 @@
     - platform: state
       entity_id: climate.living_room_thermostat
       attribute: hvac_action
-    # Power plug — threshold crossing (wattage display updates via time_pattern)
+    # Power plug
     - platform: numeric_state
       entity_id: sensor.<entity_33>_power_top
       above: 0

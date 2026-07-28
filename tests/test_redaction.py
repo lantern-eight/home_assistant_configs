@@ -146,6 +146,27 @@ class TestRedactNamesInText:
     text = "Hello World"
     assert redact_entities_in_text(text, ["Alice"]) == text
 
+  def test_overlapping_alias_longest_wins(self):
+    result = redact_entities_in_text(
+      "Hello Eris Morn and Eris",
+      ["Eris", "Eris Morn"],
+    )
+    assert result == "Hello <entity_2> and <entity_1>"
+
+  def test_overlapping_alias_longest_wins_reverse_order(self):
+    result = redact_entities_in_text(
+      "Hello Eris Morn and Eris",
+      ["Eris Morn", "Eris"],
+    )
+    assert result == "Hello <entity_1> and <entity_2>"
+
+  def test_entities_map_stability(self):
+    entities_map = {}
+    redact_entities_in_text("Eris and Bob", ["Eris", "Bob"], entities_map)
+    assert entities_map == {'<entity_1>': 'Eris', '<entity_2>': 'Bob'}
+    result = redact_entities_in_text("Bob and Eris", ["Eris", "Bob"], entities_map)
+    assert result == "<entity_2> and <entity_1>"
+
 
 # ---------------------------------------------------------------------------
 # neutralize_pronouns

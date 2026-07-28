@@ -21,8 +21,10 @@ schedule:
     name: "Conditional: Bedtime Doors"
     icon: mdi:door-open
     monday: &bedtime_doors_active_window
-      - from: "19:30:00"
+      - from: "00:00:00"
         to: "07:00:00"
+      - from: "19:30:00"
+        to: "23:59:59"
     tuesday: *bedtime_doors_active_window
     wednesday: *bedtime_doors_active_window
     thursday: *bedtime_doors_active_window
