@@ -1,0 +1,7 @@
+{%- macro room_lights(area, exclude_label='') -%}
+{%- set lights = area_entities(area) | select('match', '^light\\.') -%}
+{%- if exclude_label -%}
+{%- set lights = lights | reject('in', label_entities(exclude_label)) -%}
+{%- endif -%}
+{{- lights | list | tojson -}}
+{%- endmacro -%}

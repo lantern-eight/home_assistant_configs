@@ -61,127 +61,100 @@
 
 # Room light toggles (Rooms pop-up)
 # ---------------------------------
-# Uses HA area assignments. Pop-up room → area ID (from entity discovery):
-#   Living Room  → living_room   (no lights in area)
-#   Basement     → basement      (printer chamber lights only)
-#   Main Suite   → main_suite    (ceiling + lamps; excludes *_led presence LEDs)
-#   <entity_3>'s Room → <entity_3>_s_room (no lights in area)
-#   <entity_4>'s Room → <entity_4>_s_room (light.<entity_4>s_room)
-#   Kitchen      → kitchen       (light.kitchen_table_light)
-# <entity_11> ceiling light is in <entity_11> area (not basement pop-up).
+# Uses HA area assignments. Pop-up room → area ID (from entity discovery)
 
 - switch:
     - name: "Basement Lights"
       unique_id: room_lights_basement
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('basement')
-           | select('match', '^light\\.')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('basement') | from_json | length > 0 }}
       state: >
-        {{ area_entities('basement')
-           | select('match', '^light\\.')
-           | select('is_state', 'on')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('basement') | from_json
+           | select('is_state', 'on') | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
             entity_id: >
-              {{ area_entities('basement')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('basement') | from_json | list }}
       turn_off:
         - action: light.turn_off
           target:
             entity_id: >
-              {{ area_entities('basement')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('basement') | from_json | list }}
 
     - name: "Main Suite Lights"
       unique_id: room_lights_main_suite
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('main_suite')
-           | select('match', '^light\\.')
-           | reject('in', label_entities('utility_light'))
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('main_suite', 'utility_light') | from_json | length > 0 }}
       state: >
-        {{ area_entities('main_suite')
-           | select('match', '^light\\.')
-           | reject('in', label_entities('utility_light'))
-           | select('is_state', 'on')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('main_suite', 'utility_light') | from_json
+           | select('is_state', 'on') | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
             entity_id: >
-              {{ area_entities('main_suite')
-                 | select('match', '^light\\.')
-                 | reject('in', label_entities('utility_light'))
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('main_suite', 'utility_light') | from_json | list }}
       turn_off:
         - action: light.turn_off
           target:
             entity_id: >
-              {{ area_entities('main_suite')
-                 | select('match', '^light\\.')
-                 | reject('in', label_entities('utility_light'))
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('main_suite', 'utility_light') | from_json | list }}
 
     - name: "Kitchen Lights"
       unique_id: room_lights_kitchen
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('kitchen')
-           | select('match', '^light\\.')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('kitchen') | from_json | length > 0 }}
       state: >
-        {{ area_entities('kitchen')
-           | select('match', '^light\\.')
-           | select('is_state', 'on')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('kitchen') | from_json
+           | select('is_state', 'on') | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
             entity_id: >
-              {{ area_entities('kitchen')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('kitchen') | from_json | list }}
       turn_off:
         - action: light.turn_off
           target:
             entity_id: >
-              {{ area_entities('kitchen')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('kitchen') | from_json | list }}
 
     - name: "<entity_4>s Room Lights"
       unique_id: room_lights_<entity_4>_s_room
       icon: mdi:lightbulb
       availability: >
-        {{ area_entities('<entity_4>_s_room')
-           | select('match', '^light\\.')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('<entity_4>_s_room') | from_json | length > 0 }}
       state: >
-        {{ area_entities('<entity_4>_s_room')
-           | select('match', '^light\\.')
-           | select('is_state', 'on')
-           | list | length > 0 }}
+        {% from 'room_lights.jinja' import room_lights %}
+        {{ room_lights('<entity_4>_s_room') | from_json
+           | select('is_state', 'on') | list | length > 0 }}
       turn_on:
         - action: light.turn_on
           target:
             entity_id: >
-              {{ area_entities('<entity_4>_s_room')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('<entity_4>_s_room') | from_json | list }}
       turn_off:
         - action: light.turn_off
           target:
             entity_id: >
-              {{ area_entities('<entity_4>_s_room')
-                 | select('match', '^light\\.')
-                 | list }}
+              {% from 'room_lights.jinja' import room_lights %}
+              {{ room_lights('<entity_4>_s_room') | from_json | list }}
 
 # =============================================================================
 # Notification System — Dashboard Header Bar (trigger-based)
