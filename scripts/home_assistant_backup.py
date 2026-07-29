@@ -94,7 +94,8 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
 
   All entities are matched in a single regex pass. Alternatives are sorted
   longest-first so that when one entity is a substring of another (e.g.
-  "Eris Morn" vs "Eris"), the longer match wins at any given position.
+  "Eris Morn" vs "Eris"), the longer match wins at any given position, otherwise "Eris"
+  will create a match, making "<entity_n> Morn", and "Eris Morn" will never match.
   '''
   existing: dict[str, str] = {}
   used_indices: set[int] = set()
@@ -132,7 +133,8 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
     return content
 
   # Build one regex that matches any entity in a single pass over the text.
-  # Longest keys first so "Eris Morn" matches before "Eris" can claim the prefix.
+  # Longest keys first so "Eris Morn" matches before "Eris", otherwise "Eris" will
+  # create a match, making "<entity_n> Morn", and "Eris Morn" will never match.
   sorted_keys = sorted(lookup.keys(), key=len, reverse=True)
   '''
   Build a single regex pattern from all the entity strings. Working inside-out:
