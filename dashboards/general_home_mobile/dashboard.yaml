@@ -1322,1059 +1322,569 @@ views:
       subtitle: Light, dark, or follow the device
       card_mod:
         style: *theme_exempt_style
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - f47...c86
-      card:
-        type: grid
-        columns: 3
-        square: false
-        cards:
-        - type: custom:mushroom-template-card
-          primary: Light
-          icon: mdi:white-balance-sunny
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_31>
-              option: Light
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_31>', 'Light') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-        - type: custom:mushroom-template-card
-          primary: Dark
-          icon: mdi:weather-night
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_31>
-              option: Dark
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_31>', 'Dark') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-        - type: custom:mushroom-template-card
-          primary: System
-          icon: mdi:theme-light-dark
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_31>
-              option: System
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_31>', 'System') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - 760...94c
-      card:
-        type: grid
-        columns: 3
-        square: false
-        cards:
-        - type: custom:mushroom-template-card
-          primary: Light
-          icon: mdi:white-balance-sunny
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_32>
-              option: Light
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_32>', 'Light') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-        - type: custom:mushroom-template-card
-          primary: Dark
-          icon: mdi:weather-night
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_32>
-              option: Dark
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_32>', 'Dark') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-        - type: custom:mushroom-template-card
-          primary: System
-          icon: mdi:theme-light-dark
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_mode_<entity_32>
-              option: System
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if is_state('input_select.theme_mode_<entity_32>', 'System') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
+    - type: grid
+      columns: 3
+      square: false
+      cards:
+      - type: custom:mushroom-template-card
+        primary: Light
+        icon: mdi:white-balance-sunny
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_mode
+            option: Light
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_mode_' ~ u, 'Light') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:mushroom-template-card
+        primary: Dark
+        icon: mdi:weather-night
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_mode
+            option: Dark
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_mode_' ~ u, 'Dark') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:mushroom-template-card
+        primary: System
+        icon: mdi:theme-light-dark
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_mode
+            option: System
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_mode_' ~ u, 'System') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
     - type: custom:mushroom-title-card
       title: Style
       subtitle: Structural look
       card_mod:
         style: *theme_exempt_style
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - f47...c86
-      card:
-        type: grid
-        columns: 2
-        square: false
+    - type: grid
+      columns: 2
+      square: false
+      card_mod:
+        style: |
+          :host {
+            --primary-color: {% from 'general_home_theme.jinja' import theme_value %}{{ theme_value(user, 'primary') }};
+          }
+      cards:
+      - type: custom:mushroom-template-card
+        primary: Clean
+        icon: mdi:rectangle-outline
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_style
+            option: Clean
         card_mod:
-          style: |
-            :host {
-              --primary-color: {% from 'general_home_theme.jinja' import theme_value %}{{ theme_value(user, 'primary') }};
-            }
-        cards:
-        - type: custom:mushroom-template-card
-          primary: Clean
-          icon: mdi:rectangle-outline
-          icon_color: '#1c1c1e'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_31>
-              option: Clean
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_31>', 'Clean') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: rgba(255,255,255,0.95) !important;
-                  --primary-text-color: #1c1c1e;
-                  --card-primary-color: #1c1c1e;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #1c1c1e !important;
-                  --card-secondary-color: #5c5c5c !important;
-                  --icon-color: #1c1c1e !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #1c1c1e !important; }
-        - type: custom:mushroom-template-card
-          primary: Glass
-          icon: mdi:blur
-          icon_color: '#1c1c1e'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_31>
-              option: Glass
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_31>', 'Glass') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: rgba(255,255,255,0.55) !important;
-                  backdrop-filter: blur(8px);
-                  --primary-text-color: #1c1c1e;
-                  --card-primary-color: #1c1c1e;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #1c1c1e !important;
-                  --card-secondary-color: #5c5c5c !important;
-                  --icon-color: #1c1c1e !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #1c1c1e !important; }
-        - type: custom:mushroom-template-card
-          primary: Dark
-          icon: mdi:brightness-4
-          icon_color: '#1c1c1e'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_31>
-              option: Dark
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_31>', 'Dark') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: #ffffff !important;
-                  --primary-text-color: #1c1c1e;
-                  --card-primary-color: #1c1c1e;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #1c1c1e !important;
-                  --card-secondary-color: #5c5c5c !important;
-                  --icon-color: #1c1c1e !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #1c1c1e !important; }
-        - type: custom:mushroom-template-card
-          primary: Glow
-          icon: mdi:gradient-horizontal
-          icon_color: '#1c1c1e'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_31>
-              option: Glow
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_31>', 'Glow') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: #f5f5f0 !important;
-                  --primary-text-color: #1c1c1e;
-                  --card-primary-color: #1c1c1e;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #1c1c1e !important;
-                  --card-secondary-color: #5c5c5c !important;
-                  --icon-color: #1c1c1e !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #1c1c1e !important; }
-        - type: custom:mushroom-template-card
-          primary: Neon
-          icon: mdi:led-outline
-          icon_color: '#00e5ff'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_31>
-              option: Neon
-          card_mod:
-            style:
-              .: |
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_31>', 'Neon') %}
-                  border: 2px solid var(--primary-color) !important;
-                  box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
-                  {% endif %}
-                  background: #0f1018 !important;
-                  border-radius: 4px !important;
-                  --primary-text-color: #e0e0e8;
-                  --card-primary-color: #e0e0e8;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #e0e0e8 !important;
-                  --card-secondary-color: #6a6a7a !important;
-                  --icon-color: #00e5ff !important;
-                  font-family: 'Share Tech Mono', monospace !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #e0e0e8 !important; font-family: 'Share Tech Mono', monospace !important; }
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - 760...94c
-      card:
-        type: grid
-        columns: 2
-        square: false
+          style:
+            .: |
+              {% from 'general_home_theme.jinja' import style_tile_outer %}
+              {{ style_tile_outer(user, 'Clean') }}
+            mushroom-template-card$: |
+              {% from 'general_home_theme.jinja' import style_tile_shadow %}
+              {{ style_tile_shadow(user, 'Clean') }}
+      - type: custom:mushroom-template-card
+        primary: Glass
+        icon: mdi:blur
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_style
+            option: Glass
         card_mod:
-          style: |
-            :host {
-              --primary-color: {% from 'general_home_theme.jinja' import theme_value %}{{ theme_value(user, 'primary') }};
-            }
-        cards:
-        - type: custom:mushroom-template-card
-          primary: Clean
-          icon: mdi:rectangle-outline
-          icon_color: '#e8e8e8'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_32>
-              option: Clean
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_32>', 'Clean') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: rgba(30,30,30,0.95) !important;
-                  --primary-text-color: #e8e8e8;
-                  --card-primary-color: #e8e8e8;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #e8e8e8 !important;
-                  --card-secondary-color: #b0b0b0 !important;
-                  --icon-color: #e8e8e8 !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #e8e8e8 !important; }
-        - type: custom:mushroom-template-card
-          primary: Glass
-          icon: mdi:blur
-          icon_color: '#e8e8e8'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_32>
-              option: Glass
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_32>', 'Glass') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: rgba(28,29,33,0.55) !important;
-                  backdrop-filter: blur(10px);
-                  --primary-text-color: #e8e8e8;
-                  --card-primary-color: #e8e8e8;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #e8e8e8 !important;
-                  --card-secondary-color: #b0b0b0 !important;
-                  --icon-color: #e8e8e8 !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #e8e8e8 !important; }
-        - type: custom:mushroom-template-card
-          primary: Dark
-          icon: mdi:brightness-6
-          icon_color: '#ffffff'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_32>
-              option: Dark
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_32>', 'Dark') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: #161622 !important;
-                  --primary-text-color: #ffffff;
-                  --card-primary-color: #ffffff;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #ffffff !important;
-                  --card-secondary-color: #cccccc !important;
-                  --icon-color: #ffffff !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #ffffff !important; }
-        - type: custom:mushroom-template-card
-          primary: Glow
-          icon: mdi:gradient-horizontal
-          icon_color: '#ffffff'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_32>
-              option: Glow
-          card_mod:
-            style:
-              .: |
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_32>', 'Glow') %}
-                  border: 2px solid var(--primary-color) !important;
-                  {% endif %}
-                  background: #070611 !important;
-                  --primary-text-color: #ffffff;
-                  --card-primary-color: #ffffff;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #ffffff !important;
-                  --card-secondary-color: #cccccc !important;
-                  --icon-color: #ffffff !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #ffffff !important; }
-        - type: custom:mushroom-template-card
-          primary: Neon
-          icon: mdi:led-outline
-          icon_color: '#00e5ff'
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_style_<entity_32>
-              option: Neon
-          card_mod:
-            style:
-              .: |
-                @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-                ha-card {
-                  {% if is_state('input_select.theme_style_<entity_32>', 'Neon') %}
-                  border: 2px solid var(--primary-color) !important;
-                  box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
-                  {% endif %}
-                  background: #0f1018 !important;
-                  border-radius: 4px !important;
-                  --primary-text-color: #e0e0e8;
-                  --card-primary-color: #e0e0e8;
-                }
-              mushroom-template-card$: |
-                :host {
-                  --card-primary-color: #e0e0e8 !important;
-                  --card-secondary-color: #6a6a7a !important;
-                  --icon-color: #00e5ff !important;
-                  font-family: 'Share Tech Mono', monospace !important;
-                }
-                mushroom-state-info$: |
-                  .primary { color: #e0e0e8 !important; font-family: 'Share Tech Mono', monospace !important; }
+          style:
+            .: |
+              {% from 'general_home_theme.jinja' import style_tile_outer %}
+              {{ style_tile_outer(user, 'Glass') }}
+            mushroom-template-card$: |
+              {% from 'general_home_theme.jinja' import style_tile_shadow %}
+              {{ style_tile_shadow(user, 'Glass') }}
+      - type: custom:mushroom-template-card
+        primary: Dark
+        icon: mdi:brightness-4
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_style
+            option: Dark
+        card_mod:
+          style:
+            .: |
+              {% from 'general_home_theme.jinja' import style_tile_outer %}
+              {{ style_tile_outer(user, 'Dark') }}
+            mushroom-template-card$: |
+              {% from 'general_home_theme.jinja' import style_tile_shadow %}
+              {{ style_tile_shadow(user, 'Dark') }}
+      - type: custom:mushroom-template-card
+        primary: Glow
+        icon: mdi:gradient-horizontal
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_style
+            option: Glow
+        card_mod:
+          style:
+            .: |
+              {% from 'general_home_theme.jinja' import style_tile_outer %}
+              {{ style_tile_outer(user, 'Glow') }}
+            mushroom-template-card$: |
+              {% from 'general_home_theme.jinja' import style_tile_shadow %}
+              {{ style_tile_shadow(user, 'Glow') }}
+      - type: custom:mushroom-template-card
+        primary: Neon
+        icon: mdi:led-outline
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_style
+            option: Neon
+        card_mod:
+          style:
+            .: |
+              {% from 'general_home_theme.jinja' import style_tile_outer %}
+              {{ style_tile_outer(user, 'Neon') }}
+            mushroom-template-card$: |
+              {% from 'general_home_theme.jinja' import style_tile_shadow %}
+              {{ style_tile_shadow(user, 'Neon') }}
     - type: custom:mushroom-title-card
       title: Palette
       subtitle: Color accents
       card_mod:
         style: *theme_exempt_style
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - f47...c86
-      card:
-        type: grid
-        columns: 4
-        square: false
-        cards:
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Indigo
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Indigo
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Indigo' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Ocean
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Ocean
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Ocean' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Sunset
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Sunset
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Sunset' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Forest
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Forest
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Forest' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Rose
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Rose
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Rose' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Mono
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Mono
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Mono' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Cyberdeck
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Cyberdeck
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Cyberdeck' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_31>
-          name: Mint
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_31>
-              option: Mint
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Mint' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - 760...94c
-      card:
-        type: grid
-        columns: 4
-        square: false
-        cards:
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Indigo
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Indigo
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Indigo' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Ocean
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Ocean
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Ocean' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Sunset
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Sunset
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Sunset' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Forest
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Forest
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Forest' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Rose
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Rose
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Rose' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Mono
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Mono
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Mono' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Cyberdeck
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Cyberdeck
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Cyberdeck' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
-        - type: custom:button-card
-          entity: input_select.theme_palette_<entity_32>
-          name: Mint
-          show_icon: false
-          show_state: false
-          show_name: true
-          tap_action:
-            action: call-service
-            service: input_select.select_option
-            service_data:
-              entity_id: input_select.theme_palette_<entity_32>
-              option: Mint
-          custom_fields:
-            dots: |
-              [[[
-                const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
-                const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-                return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
-              ]]]
-          styles:
-            <<: *palette_tile_styles
-            card:
-              - padding: 10px 4px
-              - outline: "[[[return entity.state === 'Mint' ? '2px solid var(--primary-color)' : 'none']]]"
-              - outline-offset: '-2px'
-          card_mod:
-            style: *theme_card_style
+    - type: grid
+      columns: 4
+      square: false
+      cards:
+      - type: custom:button-card
+        name: Indigo
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Indigo
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Indigo') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Ocean
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Ocean
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Ocean') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Sunset
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Sunset
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Sunset') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Forest
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Forest
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Forest') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Rose
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Rose
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Rose') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Mono
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Mono
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Mono') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Cyberdeck
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Cyberdeck
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Cyberdeck') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:button-card
+        name: Mint
+        show_icon: false
+        show_state: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_palette
+            option: Mint
+        custom_fields:
+          dots: |
+            [[[
+              const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
+              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+            ]]]
+        styles:
+          <<: *palette_tile_styles
+          card:
+            - padding: 10px 4px
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_palette_' ~ u, 'Mint') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
     - type: custom:mushroom-title-card
       title: Background
       subtitle: Image or color behind cards
       card_mod:
         style: *theme_exempt_style
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - f47...c86
-      card:
-        type: vertical-stack
+    - type: vertical-stack
+      cards:
+      - type: grid
+        columns: 2
+        square: false
         cards:
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-          - type: custom:mushroom-template-card
-            primary: Auto
-            secondary: Follows style
-            icon: mdi:auto-fix
-            tap_action:
-              action: call-service
-              service: input_text.set_value
-              service_data:
-                entity_id: input_text.theme_background_<entity_31>
-                value: auto
-            card_mod:
-              style:
-                .: *theme_card_style
-                $: |
-                  ha-card {
-                    {% if states('input_text.theme_background_<entity_31>') in ['auto', 'unknown', 'unavailable', ''] %}
-                    outline: 2px solid var(--primary-color) !important;
-                    outline-offset: -2px;
-                    {% endif %}
-                  }
-          - type: custom:mushroom-template-card
-            primary: None
-            secondary: Default HA
-            icon: mdi:image-off-outline
-            tap_action:
-              action: call-service
-              service: input_text.set_value
-              service_data:
-                entity_id: input_text.theme_background_<entity_31>
-                value: none
-            card_mod:
-              style:
-                .: *theme_card_style
-                $: |
-                  ha-card {
-                    {% if is_state('input_text.theme_background_<entity_31>', 'none') %}
-                    outline: 2px solid var(--primary-color) !important;
-                    outline-offset: -2px;
-                    {% endif %}
-                  }
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Solid colors
+        - type: custom:mushroom-template-card
+          primary: Auto
+          secondary: Follows style
+          icon: mdi:auto-fix
+          tap_action:
+            action: call-service
+            service: script.theme_set_background
+            service_data:
+              value: auto
           card_mod:
             style:
-              .: *theme_exempt_style
+              .: *theme_card_style
               $: |
                 ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
+                  {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                  {% if states('input_text.theme_background_' ~ u) in ['auto', 'unknown', 'unavailable', ''] %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
                 }
-        - type: custom:auto-entities
-          card:
-            type: grid
-            columns: 4
-            square: true
-          card_param: cards
-          filter:
-            template: |
-              {% set colors = [
-                '#0d1117',
-                '#1a1a2e',
-                '#1b2838',
-                '#2d1b3d',
-                '#f5f5f5',
-                '#e8edf2',
-                '#fef7ed',
-                '#e8f5e9'
-              ] %}
-              {% set bg = states('input_text.theme_background_<entity_31>') %}
-              {% from 'general_home_theme.jinja' import theme_value %}
-              {% set pri = theme_value('<entity_31>', 'primary') %}
-              {% set ns = namespace(cards=[]) %}
+        - type: custom:mushroom-template-card
+          primary: None
+          secondary: Default HA
+          icon: mdi:image-off-outline
+          tap_action:
+            action: call-service
+            service: script.theme_set_background
+            service_data:
+              value: none
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                  {% if is_state('input_text.theme_background_' ~ u, 'none') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+      - type: custom:mushroom-title-card
+        title: ''
+        subtitle: Solid colors
+        card_mod:
+          style:
+            .: *theme_exempt_style
+            $: |
+              ha-card {
+                margin-top: -8px !important;
+                margin-bottom: -8px !important;
+              }
+      - type: custom:auto-entities
+        card:
+          type: grid
+          columns: 4
+          square: true
+        card_param: cards
+        filter:
+          template: |
+            {% set JO = '{%' %}
+            {% set JC = '%}' %}
+            {% set VO = '{{' %}
+            {% set VC = '}}' %}
+            {% set colors = [
+              '#0d1117', '#1a1a2e', '#1b2838', '#2d1b3d',
+              '#f5f5f5', '#e8edf2', '#fef7ed', '#e8f5e9'
+            ] %}
+            {% set ns = namespace(cards=[]) %}
 
-              {% for hex in colors %}
-                {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [
-                  {
-                    'type': 'picture',
-                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                    'tap_action': {
-                      'action': 'call-service',
-                      'service': 'input_text.set_value',
-                      'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_31>',
-                        'value': hex
-                      }
-                    },
-                    'card_mod': {
-                      'style': "ha-card { border-radius: 12px !important; " ~
-                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                        " }"
+            {% for hex in colors %}
+              {% set enc = hex | replace('#', '%23') %}
+              {% set ns.cards = ns.cards + [
+                {
+                  'type': 'picture',
+                  'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
+                  'tap_action': {
+                    'action': 'call-service',
+                    'service': 'script.theme_set_background',
+                    'service_data': {
+                      'value': hex
                     }
+                  },
+                  'card_mod': {
+                    'style':
+                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
+                      JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
+                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
+                      "ha-card { border-radius: 12px !important; " ~
+                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ hex ~ "') " ~ JC ~
+                      " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
+                      JO ~ " endif " ~ JC ~
+                      " }"
                   }
-                ] %}
-              {% endfor %}
-
-              {{ ns.cards }}
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Palette shades
-          card_mod:
-            style:
-              .: *theme_exempt_style
-              $: |
-                ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
                 }
-        - type: custom:auto-entities
+              ] %}
+            {% endfor %}
+
+            {{ ns.cards }}
+      - type: custom:mushroom-title-card
+        title: ''
+        subtitle: Palette shades
+        card_mod:
+          style:
+            .: *theme_exempt_style
+            $: |
+              ha-card {
+                margin-top: -8px !important;
+                margin-bottom: -8px !important;
+              }
+      - type: conditional
+        conditions:
+        - condition: user
+          users:
+          - f47...c86
+        card:
+          type: custom:auto-entities
           card:
             type: grid
             columns: 4
@@ -2423,205 +1933,13 @@ views:
               {% endfor %}
 
               {{ ns.cards }}
-        - type: custom:mushroom-template-card
-          primary: Custom color
-          secondary: >
-            {% set bg = states('input_text.theme_background_<entity_31>') %}
-            {% if bg.startswith('#') %}
-            {{ bg }}
-            {% else %}
-            Tap to enter hex
-            {% endif %}
-          icon: mdi:eyedropper
-          icon_color: >
-            {% set bg = states('input_text.theme_background_<entity_31>') %}
-            {% if bg.startswith('#') %}
-            {{ bg }}
-            {% else %}
-            grey
-            {% endif %}
-          tap_action:
-            action: more-info
-            entity: input_text.theme_background_<entity_31>
-          card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if states('input_text.theme_background_<entity_31>').startswith('#') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Background images
-          card_mod:
-            style:
-              .: *theme_exempt_style
-              $: |
-                ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
-                }
-        - type: custom:auto-entities
-          card:
-            type: grid
-            columns: 3
-            square: false
-          card_param: cards
-          filter:
-            template: |
-              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
-              {% from 'general_home_theme.jinja' import theme_value %}
-              {% set pri = theme_value('<entity_31>', 'primary') %}
-              {% set ns = namespace(cards=[]) %}
-
-              {% for f in files %}
-                {% set ns.cards = ns.cards + [
-                  {
-                    'type': 'picture',
-                    'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
-                    'tap_action': {
-                      'action': 'call-service',
-                      'service': 'input_text.set_value',
-                      'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_31>',
-                        'value': f
-                      }
-                    },
-                    'card_mod': {
-                      'style': 'ha-card { border-radius: 12px !important; ' ~
-                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_31>', f) else '') ~
-                        ' }'
-                    }
-                  }
-                ] %}
-              {% endfor %}
-
-              {{ ns.cards }}
-    - type: conditional
-      conditions:
-      - condition: user
-        users:
-        - 760...94c
-      card:
-        type: vertical-stack
-        cards:
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-          - type: custom:mushroom-template-card
-            primary: Auto
-            secondary: Follows style
-            icon: mdi:auto-fix
-            tap_action:
-              action: call-service
-              service: input_text.set_value
-              service_data:
-                entity_id: input_text.theme_background_<entity_32>
-                value: auto
-            card_mod:
-              style:
-                .: *theme_card_style
-                $: |
-                  ha-card {
-                    {% if states('input_text.theme_background_<entity_32>') in ['auto', 'unknown', 'unavailable', ''] %}
-                    outline: 2px solid var(--primary-color) !important;
-                    outline-offset: -2px;
-                    {% endif %}
-                  }
-          - type: custom:mushroom-template-card
-            primary: None
-            secondary: Default HA
-            icon: mdi:image-off-outline
-            tap_action:
-              action: call-service
-              service: input_text.set_value
-              service_data:
-                entity_id: input_text.theme_background_<entity_32>
-                value: none
-            card_mod:
-              style:
-                .: *theme_card_style
-                $: |
-                  ha-card {
-                    {% if is_state('input_text.theme_background_<entity_32>', 'none') %}
-                    outline: 2px solid var(--primary-color) !important;
-                    outline-offset: -2px;
-                    {% endif %}
-                  }
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Solid colors
-          card_mod:
-            style:
-              .: *theme_exempt_style
-              $: |
-                ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
-                }
-        - type: custom:auto-entities
-          card:
-            type: grid
-            columns: 4
-            square: true
-          card_param: cards
-          filter:
-            template: |
-              {% set colors = [
-                '#0d1117',
-                '#1a1a2e',
-                '#1b2838',
-                '#2d1b3d',
-                '#f5f5f5',
-                '#e8edf2',
-                '#fef7ed',
-                '#e8f5e9'
-              ] %}
-              {% set bg = states('input_text.theme_background_<entity_32>') %}
-              {% from 'general_home_theme.jinja' import theme_value %}
-              {% set pri = theme_value('<entity_32>', 'primary') %}
-              {% set ns = namespace(cards=[]) %}
-
-              {% for hex in colors %}
-                {% set enc = hex | replace('#', '%23') %}
-                {% set ns.cards = ns.cards + [
-                  {
-                    'type': 'picture',
-                    'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
-                    'tap_action': {
-                      'action': 'call-service',
-                      'service': 'input_text.set_value',
-                      'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_32>',
-                        'value': hex
-                      }
-                    },
-                    'card_mod': {
-                      'style': "ha-card { border-radius: 12px !important; " ~
-                        ("border: 2px solid " ~ pri ~ " !important;" if bg == hex else "") ~
-                        " }"
-                    }
-                  }
-                ] %}
-              {% endfor %}
-
-              {{ ns.cards }}
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Palette shades
-          card_mod:
-            style:
-              .: *theme_exempt_style
-              $: |
-                ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
-                }
-        - type: custom:auto-entities
+      - type: conditional
+        conditions:
+        - condition: user
+          users:
+          - 760...94c
+        card:
+          type: custom:auto-entities
           card:
             type: grid
             columns: 4
@@ -2670,7 +1988,49 @@ views:
               {% endfor %}
 
               {{ ns.cards }}
-        - type: custom:mushroom-template-card
+      - type: conditional
+        conditions:
+        - condition: user
+          users:
+          - f47...c86
+        card:
+          type: custom:mushroom-template-card
+          primary: Custom color
+          secondary: >
+            {% set bg = states('input_text.theme_background_<entity_31>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            Tap to enter hex
+            {% endif %}
+          icon: mdi:eyedropper
+          icon_color: >
+            {% set bg = states('input_text.theme_background_<entity_31>') %}
+            {% if bg.startswith('#') %}
+            {{ bg }}
+            {% else %}
+            grey
+            {% endif %}
+          tap_action:
+            action: more-info
+            entity: input_text.theme_background_<entity_31>
+          card_mod:
+            style:
+              .: *theme_card_style
+              $: |
+                ha-card {
+                  {% if states('input_text.theme_background_<entity_31>').startswith('#') %}
+                  outline: 2px solid var(--primary-color) !important;
+                  outline-offset: -2px;
+                  {% endif %}
+                }
+      - type: conditional
+        conditions:
+        - condition: user
+          users:
+          - 760...94c
+        card:
+          type: custom:mushroom-template-card
           primary: Custom color
           secondary: >
             {% set bg = states('input_text.theme_background_<entity_32>') %}
@@ -2700,53 +2060,60 @@ views:
                   outline-offset: -2px;
                   {% endif %}
                 }
-        - type: custom:mushroom-title-card
-          title: ''
-          subtitle: Background images
-          card_mod:
-            style:
-              .: *theme_exempt_style
-              $: |
-                ha-card {
-                  margin-top: -8px !important;
-                  margin-bottom: -8px !important;
-                }
-        - type: custom:auto-entities
-          card:
-            type: grid
-            columns: 3
-            square: false
-          card_param: cards
-          filter:
-            template: |
-              {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
-              {% from 'general_home_theme.jinja' import theme_value %}
-              {% set pri = theme_value('<entity_32>', 'primary') %}
-              {% set ns = namespace(cards=[]) %}
+      - type: custom:mushroom-title-card
+        title: ''
+        subtitle: Background images
+        card_mod:
+          style:
+            .: *theme_exempt_style
+            $: |
+              ha-card {
+                margin-top: -8px !important;
+                margin-bottom: -8px !important;
+              }
+      - type: custom:auto-entities
+        card:
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
+        filter:
+          template: |
+            {% set JO = '{%' %}
+            {% set JC = '%}' %}
+            {% set VO = '{{' %}
+            {% set VC = '}}' %}
+            {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
+            {% set ns = namespace(cards=[]) %}
 
-              {% for f in files %}
-                {% set ns.cards = ns.cards + [
-                  {
-                    'type': 'picture',
-                    'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
-                    'tap_action': {
-                      'action': 'call-service',
-                      'service': 'input_text.set_value',
-                      'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_32>',
-                        'value': f
-                      }
-                    },
-                    'card_mod': {
-                      'style': 'ha-card { border-radius: 12px !important; ' ~
-                        ('border: 2px solid ' ~ pri ~ ' !important;' if is_state('input_text.theme_background_<entity_32>', f) else '') ~
-                        ' }'
+            {% for f in files %}
+              {% set ns.cards = ns.cards + [
+                {
+                  'type': 'picture',
+                  'image': '/local/themes/backgrounds/thumbs/' ~ f.rsplit('.', 1)[0] ~ '.jpg',
+                  'tap_action': {
+                    'action': 'call-service',
+                    'service': 'script.theme_set_background',
+                    'service_data': {
+                      'value': f
                     }
+                  },
+                  'card_mod': {
+                    'style':
+                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
+                      JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
+                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
+                      "ha-card { border-radius: 12px !important; " ~
+                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ f ~ "') " ~ JC ~
+                      " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
+                      JO ~ " endif " ~ JC ~
+                      " }"
                   }
-                ] %}
-              {% endfor %}
+                }
+              ] %}
+            {% endfor %}
 
-              {{ ns.cards }}
+            {{ ns.cards }}
     - type: custom:mushroom-title-card
       title: Card effects
       subtitle: Transparency and blur

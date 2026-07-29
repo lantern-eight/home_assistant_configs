@@ -178,6 +178,67 @@ command_line:
 shell_command:
   generate_theme_thumbnails: "python3 /config/scripts/generate_theme_thumbnails.py"
 
+# --- Theme action scripts ---
+# Tap actions on the Appearance page route through these scripts so that
+# tiles can be shared across accounts instead of duplicated per user.
+# Each script resolves context.user_id to the calling account's helpers.
+
+script:
+  theme_select:
+    description: "Set a per-user theme input_select by resolving the calling user"
+    fields:
+      helper:
+        description: "Helper name without username suffix (e.g., theme_mode)"
+        selector:
+          text:
+      option:
+        description: "Option to select"
+        selector:
+          text:
+    sequence:
+    - variables:
+        username: >-
+          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+    - service: input_select.select_option
+      target:
+        entity_id: "input_select.{{ helper }}_{{ username }}"
+      data:
+        option: "{{ option }}"
+
+  theme_set_background:
+    description: "Set the per-user theme background"
+    fields:
+      value:
+        description: "Background value (auto, none, hex color, or filename)"
+        selector:
+          text:
+    sequence:
+    - variables:
+        username: >-
+          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+    - service: input_text.set_value
+      target:
+        entity_id: "input_text.theme_background_{{ username }}"
+      data:
+        value: "{{ value }}"
+
+  theme_reset_customization:
+    description: "Reset a per-user theme input_number to its default (-1)"
+    fields:
+      helper:
+        description: "Helper name without username suffix (e.g., theme_card_opacity)"
+        selector:
+          text:
+    sequence:
+    - variables:
+        username: >-
+          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+    - service: input_number.set_value
+      target:
+        entity_id: "input_number.{{ helper }}_{{ username }}"
+      data:
+        value: -1
+
 # --- Automations ---
 
 automation:

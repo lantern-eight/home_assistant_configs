@@ -62,7 +62,7 @@ card_mod)
   - [YAML Anchors and Card Tiering](#yaml-anchors-and-card-tiering)
   - [Background Overlay Card](#background-overlay-card)
   - [Popup History Fix](#popup-history-fix-back-button-behavior)
-  - [Duplicate Picker Sections](#duplicate-picker-sections)
+  - [Script-Routed Picker Tiles](#script-routed-picker-tiles)
 - [Deployment](#deployment)
 - [Gotchas](#gotchas)
 - [File Inventory](#file-inventory)
@@ -304,9 +304,9 @@ the dashboard (auto-entities filters, mushroom secondaries) call
 because those cards sit inside per-account visibility blocks anyway.
 
 > **Limitation:** Currently exactly two accounts are wired into the macro's resolver
-> and the Appearance page. A third user means extending the resolver in
-> `general_home_theme.jinja`, adding a helper set, and adding a gated
-> Appearance block.
+> and the Appearance page scripts. A third user means extending the resolver in
+> `general_home_theme.jinja`, the `context.user_id` branch in the theme scripts
+> (`general_home_mobile.yaml`), and adding a helper set.
 
 ### Four Customization Axes
 
@@ -368,7 +368,7 @@ three glow colors for the Glow style's radial gradient blobs.
 Every palette and style value lives in one place: the tables at the top of
 `general_home_theme.jinja` (semantic colors shared by both modes; glows,
 surfaces, and card chrome keyed per mode). Adding a palette is one row per
-table plus a picker tile in each account's Appearance block.
+table plus a shared picker tile on the Appearance page.
 
 ### Backgrounds
 
@@ -415,9 +415,9 @@ current style's default.
 
 ![Appearance page](images/appearance_page_dark.png)
 
-Accessed from More popup > Appearance. The page is self-edit: native
-per-account visibility conditions show each account only its own controls.
-Layout:
+Accessed from More popup > Appearance. Most picker sections are shared
+across accounts — tap actions route through scripts that resolve
+`context.user_id` to target the correct per-user helpers. Layout:
 
 1. **Mode picker** — Light / Dark / System tiles
 2. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
@@ -648,24 +648,27 @@ break anything) and would need to be updated.
 - CSS-only drawer via card_mod — would need to reimplement bubble-card's
   popup behavior manually
 
-### Duplicate Picker Sections
+### Script-Routed Picker Tiles
 
-The Appearance subview has **two complete copies** of every picker section
-(Mode, Style, Palette, Background, Card effects) — one per account, each
-wrapped in a `conditional` card whose condition is `condition: user`, so
-each account only ever sees its own copy.
+HA does not support Jinja2 in `tap_action` fields, so picker tiles cannot
+template the target entity. The Appearance page works around this with
+three scripts in `general_home_mobile.yaml`:
 
-This duplication exists because:
+- `script.theme_select` — sets any `input_select` helper (mode, style, palette)
+- `script.theme_set_background` — sets the `input_text` background helper
+- `script.theme_reset_customization` — resets an `input_number` to its default
 
-1. HA does not support Jinja2 templating inside `tap_action` service call
-   `entity_id` fields — you can't write
-   `entity_id: input_select.theme_style_{{ current_user }}`, so each copy's
-   tap targets are literals pointing at that account's helpers.
-2. The style-tile previews are hardcoded per copy (one block previews dark
-   surfaces, the other light).
+Each script resolves `context.user_id` at runtime to build the correct
+per-user entity ID. Selection outlines use card_mod Jinja (which receives
+`user`). This lets Mode, Style, Palette, and Background tiles be shared
+across accounts instead of duplicated.
 
-If you add a new style, palette, or mode option, you must add the
-corresponding tile in **both** account blocks.
+Sections that need `tap_action: more-info` with a static entity (Opacity/Blur
+sliders, Custom color card) still use per-account `condition: user` blocks.
+
+Style preview tiles are mode-aware — the `style_tile_outer` and
+`style_tile_shadow` macros emit `@media (prefers-color-scheme)` blocks for
+System mode and static colors for Light/Dark.
 
 ---
 

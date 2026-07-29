@@ -30,9 +30,10 @@ All per-user behavior keys off the logged-in account:
   sync script's restore pass expands them on upload.
 
 To add a per-account feature: create one helper per account (username
-suffix), add one block per account gated by `condition: user`, and give each
-block literal `tap_action` targets (HA forbids Jinja in `tap_action`
-entity_id — see Common Mistakes).
+suffix). Prefer routing tap_actions through a script that resolves
+`context.user_id` (see `script.theme_select` in `general_home_mobile.yaml`
+for the pattern). Fall back to per-account `condition: user` blocks only
+when the tile needs `more-info` with a static entity (see Common Mistakes).
 
 ## Architecture Constraints
 
@@ -229,10 +230,14 @@ Then reload the page.
    non-theme sensors, remember the 255-char state cap.)
 
 3. **Don't template `entity_id` in `tap_action`.** HA doesn't support
-   Jinja2 in tap_action entity_id fields. This is why the Appearance page
-   has duplicate picker sections per account (gated by `condition: user`).
-   If you add a mode, style, or palette, add the tile in both account
-   blocks.
+   Jinja2 in tap_action fields. The Appearance page works around this by
+   routing tap_actions through scripts (`script.theme_select`,
+   `script.theme_set_background`, `script.theme_reset_customization`)
+   that resolve `context.user_id` at runtime to target the correct
+   per-user helper. Selection outlines use card_mod Jinja (which does
+   get `user`). Sections that need `more-info` with a static entity
+   (Opacity/Blur sliders, Custom color card) still use per-user
+   `condition: user` blocks.
 
 4. **Don't remove or reorder the background overlay card.** It must be the
    first card in each view's first section. It uses `position: fixed` with

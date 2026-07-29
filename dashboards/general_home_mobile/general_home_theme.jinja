@@ -142,6 +142,25 @@
 
 {%- set style_blur = {'Clean': 0, 'Glass': 12, 'Dark': 0, 'Glow': 2, 'Neon': 0} -%}
 
+{#- Preview appearance for the Appearance page's style picker tiles.
+    Values are cosmetic (what each style looks like as a preview swatch). -#}
+{%- set style_tile_preview = {
+  'light': {
+    'Clean': {'bg': 'rgba(255,255,255,0.95)', 'text': '#1c1c1e', 'sec': '#5c5c5c'},
+    'Glass': {'bg': 'rgba(255,255,255,0.55)', 'blur': 8, 'text': '#1c1c1e', 'sec': '#5c5c5c'},
+    'Dark':  {'bg': '#ffffff', 'text': '#1c1c1e', 'sec': '#5c5c5c'},
+    'Glow':  {'bg': '#f5f5f0', 'text': '#1c1c1e', 'sec': '#5c5c5c'},
+    'Neon':  {'bg': '#0f1018', 'text': '#e0e0e8', 'sec': '#6a6a7a', 'icon': '#00e5ff'}
+  },
+  'dark': {
+    'Clean': {'bg': 'rgba(30,30,30,0.95)', 'text': '#e8e8e8', 'sec': '#b0b0b0'},
+    'Glass': {'bg': 'rgba(28,29,33,0.55)', 'blur': 10, 'text': '#e8e8e8', 'sec': '#b0b0b0'},
+    'Dark':  {'bg': '#161622', 'text': '#ffffff', 'sec': '#cccccc'},
+    'Glow':  {'bg': '#070611', 'text': '#ffffff', 'sec': '#cccccc'},
+    'Neon':  {'bg': '#0f1018', 'text': '#e0e0e8', 'sec': '#6a6a7a', 'icon': '#00e5ff'}
+  }
+} -%}
+
 {#-
   theme_css(user, kind) — the card_mod style body for one card.
   kind: 'card'   full themed surface (background, border, shadow, blur)
@@ -304,4 +323,89 @@ ha-card::after {
 {%- set override = states('input_number.theme_card_blur_' ~ u) | float(-1) -%}
 {{- (style_blur.get(style, 0) if override < 0 else override) | int -}}
 {%- endif -%}
+{%- endmacro -%}
+
+{#-
+  style_tile_outer(user, style_name) — card_mod `.:` CSS for a style
+  preview tile on the Appearance page. Emits background, selection border,
+  and text color overrides. For System mode, wraps in @media blocks.
+-#}
+{%- macro style_tile_outer(user, style_name) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
+{%- set is_selected = is_state('input_select.theme_style_' ~ u, style_name) -%}
+{%- if style_name == 'Neon' %}
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+{%- endif %}
+{%- for m in modes %}
+{%- set p = style_tile_preview[m][style_name] %}
+{%- if modes | length > 1 %}
+@media (prefers-color-scheme: {{ m }}) {
+{%- endif %}
+ha-card {
+{%- if is_selected %}
+  border: 2px solid var(--primary-color) !important;
+{%- if style_name == 'Neon' %}
+  box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
+{%- endif %}
+{%- endif %}
+  background: {{ p.bg }} !important;
+{%- if p.get('blur') %}
+  backdrop-filter: blur({{ p.blur }}px);
+{%- endif %}
+{%- if style_name == 'Neon' %}
+  border-radius: 4px !important;
+{%- endif %}
+  --primary-text-color: {{ p.text }};
+  --card-primary-color: {{ p.text }};
+}
+{%- if modes | length > 1 %}
+}
+{%- endif %}
+{%- endfor %}
+{%- endmacro -%}
+
+{#-
+  style_tile_shadow(user, style_name) — card_mod `mushroom-template-card$:`
+  CSS for a style preview tile. Emits icon/text/secondary color overrides
+  and the nested mushroom-state-info$ selector.
+-#}
+{%- macro style_tile_shadow(user, style_name) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
+{%- for m in modes %}
+{%- set p = style_tile_preview[m][style_name] %}
+{%- if modes | length > 1 %}
+@media (prefers-color-scheme: {{ m }}) {
+{%- endif %}
+:host {
+  --card-primary-color: {{ p.text }} !important;
+  --card-secondary-color: {{ p.sec }} !important;
+  --icon-color: {{ p.get('icon', p.text) }} !important;
+{%- if style_name == 'Neon' %}
+  font-family: 'Share Tech Mono', monospace !important;
+{%- endif %}
+}
+{%- if modes | length > 1 %}
+}
+{%- endif %}
+{%- endfor %}
+mushroom-state-info$: |
+{%- for m in modes %}
+{%- set p = style_tile_preview[m][style_name] %}
+{%- if modes | length > 1 %}
+  @media (prefers-color-scheme: {{ m }}) {
+{%- endif %}
+  .primary {
+    color: {{ p.text }} !important;
+{%- if style_name == 'Neon' %}
+    font-family: 'Share Tech Mono', monospace !important;
+{%- endif %}
+  }
+{%- if modes | length > 1 %}
+  }
+{%- endif %}
+{%- endfor %}
 {%- endmacro -%}
