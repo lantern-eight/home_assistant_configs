@@ -17,14 +17,17 @@ history.pushState = function (state, title, url) {
   let retries = 0;
   function collapseNotificationTray() {
     const ha = document.querySelector("home-assistant");
-    if (!ha || !ha.hass) {
+    if (!ha || !ha.hass || !ha.hass.user) {
       if (retries++ < 20) setTimeout(collapseNotificationTray, 250);
       return;
     }
-    const state = ha.hass.states["input_boolean.notification_expanded"];
+    const entity = ha.hass.user.name === '<entity_31>'
+      ? 'input_boolean.notification_expanded_<entity_31>'
+      : 'input_boolean.notification_expanded_<entity_32>';
+    const state = ha.hass.states[entity];
     if (state && state.state === "on") {
       ha.hass.callService("input_boolean", "turn_off", {
-        entity_id: "input_boolean.notification_expanded",
+        entity_id: entity,
       });
     }
   }

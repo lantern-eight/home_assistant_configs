@@ -291,7 +291,12 @@ views:
             action: call-service
             service: input_boolean.toggle
             service_data:
-              entity_id: input_boolean.notification_expanded
+              entity_id: |
+                [[[
+                  return user.name === '<entity_31>'
+                    ? 'input_boolean.notification_expanded_<entity_31>'
+                    : 'input_boolean.notification_expanded_<entity_32>';
+                ]]]
           custom_fields:
             dots: |
               [[[
@@ -305,7 +310,10 @@ views:
                   green: '#3ecf8e'
                 };
                 const order = ['red', 'amber', 'blue', 'green'];
-                const expanded = states['input_boolean.notification_expanded']?.state === 'on';
+                const expandedEntity = user.name === '<entity_31>'
+                  ? 'input_boolean.notification_expanded_<entity_31>'
+                  : 'input_boolean.notification_expanded_<entity_32>';
+                const expanded = states[expandedEntity]?.state === 'on';
                 const chevron = expanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
                 let out = '<div style="display:flex;flex-direction:column;gap:3px;">';
 
@@ -344,10 +352,13 @@ views:
             style: *theme_exempt_style
         - type: conditional
           conditions:
+          - condition: user
+            users:
+            - 760...94c
           - condition: state
-            entity: input_boolean.notification_expanded
+            entity: input_boolean.notification_expanded_<entity_32>
             state: 'on'
-          card:
+          card: &expanded_notification_list
             type: custom:button-card
             template: notification_list
             variables:
@@ -356,6 +367,15 @@ views:
               show_overflow: true
             card_mod:
               style: *theme_exempt_style
+        - type: conditional
+          conditions:
+          - condition: user
+            users:
+            - f47...c86
+          - condition: state
+            entity: input_boolean.notification_expanded_<entity_31>
+            state: 'on'
+          card: *expanded_notification_list
   - type: grid
     column_span: 1
     cards:

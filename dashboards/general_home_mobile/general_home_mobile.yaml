@@ -47,8 +47,11 @@ schedule:
 # --- Notification state ---
 
 input_boolean:
-  notification_expanded:
-    name: "Notification Tray Expanded"
+  notification_expanded_<entity_32>:
+    name: "Notification Tray Expanded (<entity_32>)"
+    icon: mdi:chevron-down
+  notification_expanded_<entity_31>:
+    name: "Notification Tray Expanded (<entity_31>)"
     icon: mdi:chevron-down
 
 # --- Theme system ---

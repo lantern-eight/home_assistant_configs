@@ -174,7 +174,7 @@ automatically when their entity state is active.
 ### Key entities
 
 - `sensor.dashboard_notifications` — aggregation sensor (state = count, attrs = items list)
-- `input_boolean.notification_expanded` — expand/collapse toggle
+- `input_boolean.notification_expanded_<username>` — per-user expand/collapse toggle
 - `&theme_chip_style` — YAML anchor for promoted chip cards (theme chrome without bg/border)
 
 ## Entity Naming

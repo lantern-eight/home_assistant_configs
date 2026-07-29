@@ -143,8 +143,13 @@ entities:
       - gm-dashboard
       - gm-conditional-cards
 
-  # --- Notification state ---
-  input_boolean.notification_expanded:
+  # --- Notification state (one per user) ---
+  input_boolean.notification_expanded_<user1>:
+    category: GenMobile Dashboard Notifications
+    labels:
+      - gm-dashboard
+      - gm-notifications
+  input_boolean.notification_expanded_<user2>:
     category: GenMobile Dashboard Notifications
     labels:
       - gm-dashboard
