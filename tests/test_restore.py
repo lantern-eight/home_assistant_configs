@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from conftest import _read_file, _write_file
 from home_assistant_backup import (
     _process_backup_files,
     _restore_backup_files,
@@ -16,19 +17,6 @@ from home_assistant_backup import (
     save_entity_map,
     shorten_ids,
 )
-
-
-def _write_file(directory: str, name: str, content: str) -> str:
-    path = os.path.join(directory, name)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
-    return path
-
-
-def _read_file(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
 
 
 # ---------------------------------------------------------------------------

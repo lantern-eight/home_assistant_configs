@@ -115,6 +115,12 @@ class TestLoadConfigFromEnv:
         utils.load_config()
 
 
+class TestBackupFiles:
+
+  def test_configuration_yaml_present(self):
+    assert 'configuration.yaml' in hab.BACKUP_FILES
+
+
 class TestRedactEntitiesNormalization:
   """The module-level normalization of redact_entities handles None, str, and list."""
 
