@@ -98,6 +98,21 @@ thermal_comfort:
 #   - state: cumulative rain in inches since Monday 00:00
 #   - last_period attribute: previous full week's total rain in inches
 
+# =============================================================================
+# Plant Monitoring
+# =============================================================================
+# Configurable soil moisture threshold. Editable from the HA UI so different
+# plants can have different minimums without touching code.
+
+input_number:
+  soil_moisture_minimum:
+    name: "Soil Moisture Minimum"
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:flower
+
 utility_meter:
   lawn_rain_weekly:
     source: sensor.<entity_10>_precipitation
@@ -510,6 +525,32 @@ automation:
           entity_id: light.<entity_4>s_room
         data:
           transition: 60
+
+  # --------------------------------------------------------------------------
+  # Soil moisture low
+  # --------------------------------------------------------------------------
+  # Fires when soil moisture drops at or below the configurable threshold.
+  # Only alerts once per crossing — won't re-fire until moisture goes back
+  # above the threshold and drops again.
+
+  - id: soil_moisture_low
+    alias: "Soil Moisture Low"
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.soil_moisture_sensor_moisture
+        below: input_number.soil_moisture_minimum
+    actions:
+      - variables:
+          moisture: >
+            {{ states('sensor.soil_moisture_sensor_moisture')
+               | float(0) | round(0) | int }}
+          threshold: >
+            {{ states('input_number.soil_moisture_minimum')
+               | float(0) | round(0) | int }}
+      - action: notify.boss_phones
+        data:
+          message: "🪴 Soil moisture is {{ moisture }}% (threshold: {{ threshold }}%)"
 
 # =============================================================================
 # Scripts

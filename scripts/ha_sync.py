@@ -93,15 +93,6 @@ _ID_PATTERN = re.compile(
   r')\b'
 )
 
-PRONOUN_MAP = [
-  (r'\bhe\b',    'they'),
-  (r'\bhim\b',   'them'),
-  (r'\bhis\b',   'theirs'),
-  (r'\bshe\b',   'they'),
-  (r'\bher\b',   'them'),
-  (r'\bhers\b',  'theirs'),
-]
-
 
 # ---------------------------------------------------------------------------
 # Redaction helpers
@@ -190,12 +181,6 @@ def redact_entities_in_text(content: str, entities: list[str], entities_map: dic
   # On each match the lambda looks up the matched text's placeholder.
   return pattern.sub(lambda m: lookup[m.group(0).lower()], content)
 
-
-def neutralize_pronouns(content: str) -> str:
-  '''Replace gendered pronouns with gender-neutral equivalents.'''
-  for pattern, replacement in PRONOUN_MAP:
-    content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
-  return content
 
 
 class _LiteralDumper(yaml.SafeDumper):
@@ -465,7 +450,6 @@ def _process_backup_files(
         original = content
         content = shorten_ids(content, id_map)
         content = redact_entities_in_text(content, redact_entities, entities_map)
-        content = neutralize_pronouns(content)
         if normalize_yaml and file.endswith('.yaml'):
           content = normalize_yaml_escapes(content)
 

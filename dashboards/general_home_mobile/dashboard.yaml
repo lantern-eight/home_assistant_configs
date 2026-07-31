@@ -267,6 +267,64 @@ views:
         name: "<entity_4>'s Door Open"
     - type: conditional
       conditions:
+      - condition: numeric_state
+        entity: sensor.soil_moisture_sensor_moisture
+        below: input_number.soil_moisture_minimum
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.soil_moisture_sensor_moisture
+        icon: mdi:water-percent
+        name: |
+          [[[
+            const m = Math.round(parseFloat(entity.state));
+            return `Soil Moisture ${m}%`;
+          ]]]
+        styles:
+          card:
+          - background: "rgba(239, 100, 97, 0.10)"
+          - border: "1px solid rgba(239, 100, 97, 0.18)"
+          - padding: 10px 16px
+          icon:
+          - color: "#ef6461"
+          - width: 20px
+          name:
+          - font-size: 14px
+          - font-weight: 500
+          - justify-self: start
+        card_mod:
+          style: *theme_chip_style
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.soil_moisture_sensor_battery
+        below: 11
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.soil_moisture_sensor_battery
+        icon: mdi:battery-low
+        name: |
+          [[[
+            const b = Math.round(parseFloat(entity.state));
+            return `Soil Sensor Battery ${b}%`;
+          ]]]
+        styles:
+          card:
+          - background: "rgba(239, 100, 97, 0.10)"
+          - border: "1px solid rgba(239, 100, 97, 0.18)"
+          - padding: 10px 16px
+          icon:
+          - color: "#ef6461"
+          - width: 20px
+          name:
+          - font-size: 14px
+          - font-weight: 500
+          - justify-self: start
+        card_mod:
+          style: *theme_chip_style
+    - type: conditional
+      conditions:
       - condition: state
         entity: sensor.dashboard_notifications
         state_not: '0'
@@ -434,7 +492,8 @@ views:
         - decimals: 0
           apex_config:
             tickAmount: 4
-            forceNiceScale: true
+            labels:
+              show: true
         apex_config:
           chart:
             height: 130
@@ -467,9 +526,6 @@ views:
                     hour12: true,
                   });
                 }
-          yaxis:
-            labels:
-              show: true
         series:
         - entity: sensor.backyard_absolute_humidity
           name: Absolute humidity
@@ -705,6 +761,48 @@ views:
               #uom {
                 display: none !important;
               }
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.soil_moisture_sensor_moisture
+        state_not: unavailable
+      card: &cond_card_soil_moisture
+        type: custom:stack-in-card
+        mode: vertical
+        card_mod:
+          style:
+            .: *theme_card_style
+            hui-vertical-stack-card$: |
+              #root > * {
+                margin: 0 !important;
+                --ha-card-border-width: 0 !important;
+              }
+        cards:
+        - type: custom:mushroom-title-card
+          title: Soil Moisture
+          subtitle: |
+            {% set threshold = states('input_number.soil_moisture_minimum')
+               | float(25) | round(0) | int %}
+            Min threshold: {{ threshold }}%
+          icon: mdi:flower
+          card_mod:
+            style: *theme_exempt_style
+        - type: gauge
+          entity: sensor.soil_moisture_sensor_moisture
+          name: Moisture
+          unit: "%"
+          min: 0
+          max: 100
+          needle: true
+          segments:
+            - from: 0
+              color: "#ef6461"
+            - from: 20
+              color: "#e8a840"
+            - from: 40
+              color: "#3ecf8e"
+          card_mod:
+            style: *theme_card_style
   - type: grid
     column_span: 1
     cards:
@@ -1290,6 +1388,7 @@ views:
     cards:
     - *cond_card_bedtime_doors
     - *cond_card_uv_index
+    - *cond_card_soil_moisture
   - type: grid
     column_span: 1
     cards:

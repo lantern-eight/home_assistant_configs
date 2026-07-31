@@ -25,21 +25,12 @@ class TestProcessBackupFilesYaml:
       assert "Alice" not in result
       assert "<entity_1>" in result
 
-  def test_pronouns_neutralized_in_yaml(self):
-    with tempfile.TemporaryDirectory() as tmp:
-      content = "message: Tell him his light is on\n"
-      path = _write_file(tmp, "scripts.yaml", content)
-      _process_backup_files(tmp, [])
-      result = _read_file(path)
-      assert result == "message: Tell them their light is on\n"
-
   def test_all_transformations_combined(self):
     with tempfile.TemporaryDirectory() as tmp:
       hex_id = "aabbccdd11223344aabbccdd11223344"
       content = (
         f"unique_id: {hex_id}\n"
         "alias: Wake up Alice\n"
-        "message: Tell her the lights are on\n"
       )
       path = _write_file(tmp, "automation.yaml", content)
       _process_backup_files(tmp, ["Alice"])
@@ -48,7 +39,6 @@ class TestProcessBackupFilesYaml:
       assert hex_id not in result
       assert "Alice" not in result
       assert "<entity_1>" in result
-      assert "Tell them the lights are on" in result
 
 
 class TestProcessBackupFilesExtensions:
@@ -142,7 +132,6 @@ class TestProcessBackupFilesEdgeCases:
       _process_backup_files(tmp, [])
       result = _read_file(path)
       assert "Alice" in result, "No name redaction with empty list"
-      assert "call them" in result, "Pronouns still neutralized"
 
   def test_file_without_any_matches_unchanged(self):
     with tempfile.TemporaryDirectory() as tmp:

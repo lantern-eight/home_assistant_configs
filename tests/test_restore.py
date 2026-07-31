@@ -223,19 +223,6 @@ class TestProcessThenRestore:
             assert hex_id in restored
             assert "Alice" in restored
 
-    def test_round_trip_preserves_pronouns_as_neutral(self):
-        """Pronouns stay neutralized after restore (expected limitation)."""
-        original = "message: Tell him his light is on\n"
-
-        with tempfile.TemporaryDirectory() as tmp:
-            path = _write_file(tmp, "scripts.yaml", original)
-
-            entity_map = {"ids": {}, "entities": {}}
-            _process_backup_files(tmp, [], entity_map)
-            _restore_backup_files(tmp, entity_map)
-
-            assert _read_file(path) == "message: Tell them their light is on\n"
-
     def test_round_trip_via_saved_map_file(self):
         """Full cycle: process -> save map to disk -> load map -> restore."""
         hex_id = "11223344556677881122334455667788"

@@ -1,8 +1,8 @@
-"""Tests for the pure text-transformation functions: shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes."""
+"""Tests for the pure text-transformation functions: shorten_ids, redact_entities_in_text, normalize_yaml_escapes."""
 
 import pytest
 
-from ha_sync import shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes
+from ha_sync import shorten_ids, redact_entities_in_text, normalize_yaml_escapes
 
 
 # ---------------------------------------------------------------------------
@@ -167,99 +167,6 @@ class TestRedactNamesInText:
     result = redact_entities_in_text("Bob and Eris", ["Eris", "Bob"], entities_map)
     assert result == "<entity_2> and <entity_1>"
 
-
-# ---------------------------------------------------------------------------
-# neutralize_pronouns
-# ---------------------------------------------------------------------------
-
-class TestNeutralizePronouns:
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("he is home", "they is home"),
-    ("He is home", "they is home"),
-    ("HE is home", "they is home"),
-  ])
-  def test_he_to_they(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("call him now", "call them now"),
-    ("call Him now", "call them now"),
-  ])
-  def test_him_to_them(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("his room", "their room"),
-    ("His room", "their room"),
-  ])
-  def test_his_to_their(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("she is home", "they is home"),
-    ("She is home", "they is home"),
-  ])
-  def test_she_to_they(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("call her now", "call them now"),
-    ("Call Her Now", "Call them Now"),
-  ])
-  def test_her_to_them(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  @pytest.mark.parametrize("input_text,expected", [
-    ("that is hers", "that is theirs"),
-    ("that is Hers", "that is theirs"),
-  ])
-  def test_hers_to_theirs(self, input_text, expected):
-    assert neutralize_pronouns(input_text) == expected
-
-  def test_word_boundary_the(self):
-    """'the' should not be affected (contains 'he')."""
-    assert neutralize_pronouns("the dog") == "the dog"
-
-  def test_word_boundary_there(self):
-    """'there' should not be affected (starts with 'the' + 're')."""
-    assert neutralize_pronouns("over there") == "over there"
-
-  def test_word_boundary_other(self):
-    """'other' should not be affected (contains 'her')."""
-    assert neutralize_pronouns("the other one") == "the other one"
-
-  def test_word_boundary_this(self):
-    """'this' should not be affected (contains 'his')."""
-    assert neutralize_pronouns("this is fine") == "this is fine"
-
-  def test_word_boundary_sheer(self):
-    """'sheer' should not be affected (starts with 'she')."""
-    assert neutralize_pronouns("sheer force") == "sheer force"
-
-  def test_word_boundary_hero(self):
-    """'hero' should not be affected (starts with 'her')."""
-    assert neutralize_pronouns("a hero") == "a hero"
-
-  def test_word_boundary_sheet(self):
-    """'sheet' should not be affected (starts with 'she')."""
-    assert neutralize_pronouns("a sheet") == "a sheet"
-
-  def test_empty_string(self):
-    assert neutralize_pronouns("") == ""
-
-  def test_no_pronouns(self):
-    text = "the cat sat on the mat"
-    assert neutralize_pronouns(text) == text
-
-  def test_multiple_pronouns_in_sentence(self):
-    result = neutralize_pronouns("he gave his book to her")
-    assert result == "they gave their book to them"
-
-  def test_hers_before_her(self):
-    """'hers' must be matched; 'her' inside 'hers' should not cause partial match."""
-    result = neutralize_pronouns("that bag is hers")
-    assert result == "that bag is theirs"
 
 
 # ---------------------------------------------------------------------------

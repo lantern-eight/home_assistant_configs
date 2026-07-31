@@ -209,6 +209,12 @@
       entity_id:
         - sensor.<entity_10>_lightning_count
         - sensor.<entity_10>_lightning_average_distance
+    # Soil moisture
+    - platform: state
+      entity_id:
+        - sensor.soil_moisture_sensor_moisture
+        - sensor.soil_moisture_sensor_battery
+        - input_number.soil_moisture_minimum
     # Lawn rain
     - platform: state
       entity_id: sensor.lawn_rain_weekly
@@ -346,6 +352,41 @@
               'severity': 'blue' if in_lawn_rain_season else 'green',
               'promoted': false,
               'sort_key': '2_lawn_rain'
+            }
+          ] %}
+
+          {% set soil_moisture = states('sensor.soil_moisture_sensor_moisture')
+             | float(-1) %}
+          {% set soil_threshold = states('input_number.soil_moisture_minimum')
+             | float(25) %}
+          {% set soil_low = soil_moisture >= 0 and soil_moisture <= soil_threshold %}
+          {% set soil_label = 'Soil Moisture: ' ~ (soil_moisture | round(0) | int)
+             ~ '% (min ' ~ (soil_threshold | round(0) | int) ~ '%)' %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'soil_moisture',
+              'active': soil_low,
+              'label': soil_label,
+              'icon': 'mdi:water-percent',
+              'severity': 'red' if soil_low else 'green',
+              'promoted': soil_low,
+              'sort_key': '0_soil_moisture'
+            }
+          ] %}
+
+          {% set soil_battery = states('sensor.soil_moisture_sensor_battery')
+             | float(-1) %}
+          {% set soil_battery_low = soil_battery >= 0 and soil_battery <= 10 %}
+          {% set ns.items = ns.items + [
+            {
+              'id': 'soil_battery',
+              'active': soil_battery_low,
+              'label': 'Soil Sensor Battery: '
+                 ~ (soil_battery | round(0) | int) ~ '%',
+              'icon': 'mdi:battery-low',
+              'severity': 'red' if soil_battery_low else 'green',
+              'promoted': soil_battery_low,
+              'sort_key': '0_soil_battery'
             }
           ] %}
 
