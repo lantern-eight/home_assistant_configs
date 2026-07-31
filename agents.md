@@ -34,8 +34,8 @@ dashboard's package file.
   per concern. A large coherent domain can graduate to its own file —
   `!include_dir_named` picks up any new yaml file automatically.
 - Every `*.yaml` file in `packages/` is synced to HA's `packages/`
-  directory by `scripts/general_home_dashboard_sync.py`, which restores
-  `<entity_N>` placeholders from `entity_map.yaml` on push.
+  directory by `scripts/ha_sync.py`, which restores `<entity_N>`
+  placeholders from `entity_map.yaml` on push.
 - HA's `configuration.yaml` loads the whole directory via
   `packages: !include_dir_named packages` — each file becomes a package
   keyed by its filename. New files need no configuration.yaml edit.
@@ -51,20 +51,23 @@ Relevant when working under `home_assistant_backup/**` or `dashboards/**`.
 Do not edit `home_assistant_backup/` directly — it is overwritten on every SMB
 pull. Config managed in code lives in `packages/` and `dashboards/`.
 
-### Syncing from Home Assistant
+### Syncing
 
 ```bash
-# Pull from HA + redact (default)
-uv run python scripts/home_assistant_backup.py
+# Full sync: push + metadata + reload + pull + redact (default)
+uv run python scripts/ha_sync.py
 
-# Pull only, no redaction
-uv run python scripts/home_assistant_backup.py -b
+# Full sync with HA restart instead of reload
+uv run python scripts/ha_sync.py --restart
 
-# Redact only, no pull
-uv run python scripts/home_assistant_backup.py -s
+# Redact entities in local files only (no push/pull)
+uv run python scripts/ha_sync.py --redact
 
-# Reverse redaction before pushing to HA
-uv run python scripts/home_assistant_backup.py -r
+# Undo redaction
+uv run python scripts/ha_sync.py -u
+
+# Apply categories + labels only
+uv run python scripts/ha_sync.py -c
 ```
 
 Do not push to HA unless the user explicitly asks.
@@ -81,6 +84,14 @@ Do not push to HA unless the user explicitly asks.
 
 **Adding an ID**: no config step. If a full 32-char hex ID or hyphenated UUID appears in a file, sanitize shortens it to `first3...last3` and saves the mapping in `entity_map.ids`. Pre-populating `entity_map.ids` does not shorten anything — the full ID must be present in the file when sanitize runs.
 
+## New Device Integration
+
+When a new device or entity has been added to Home Assistant, follow
+the checklist in `skills/new-device.md`. It covers every integration
+point across the codebase — registry metadata, labels, notifications,
+conditional cards, dashboard views, packages, and redaction. Walk
+through it interactively with the user.
+
 ## Cyberdeck printer farm dashboard
 
 Relevant when working under `dashboards/cyberdeck/**` (sync and development workflow for the Cyberdeck printer farm dashboard).
@@ -93,20 +104,22 @@ The Cyberdeck dashboard lives in `dashboards/cyberdeck/` with two files:
 | `theme.yaml` | `themes/cyberdeck/cyberdeck.yaml` |
 
 The Cyberdeck's template sensors live in `packages/printer_farm_3d.yaml`,
-deployed by `general_home_dashboard_sync.py` (not `cyberdeck_sync.py`).
+deployed by `ha_sync.py` along with all other files.
 
 ### Syncing to Home Assistant
 
-After editing a Cyberdeck dashboard or theme file, run:
+After editing any dashboard, theme, or package file, run:
 
 ```bash
-uv run python scripts/cyberdeck_sync.py
+uv run python scripts/ha_sync.py
 ```
 
-This uploads both files to HA via SMB and reloads themes. The dashboard YAML is re-read by HA on the next page visit — no restart needed for dashboard-only changes.
+This uploads all files (dashboards + packages + scripts)
+to HA via SMB and reloads services. The dashboard YAML is re-read by
+HA on the next page visit — no restart needed for dashboard-only changes.
 
-If you changed `configuration.yaml`, a restart is required:
+If you changed `configuration.yaml` or packages, a restart is required:
 
 ```bash
-uv run python scripts/cyberdeck_sync.py -r
+uv run python scripts/ha_sync.py --restart
 ```

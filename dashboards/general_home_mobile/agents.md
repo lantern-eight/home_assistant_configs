@@ -196,15 +196,14 @@ All theme values resolve through the macros in `general_home_theme.jinja`:
 ## Deploy and Test Workflow
 
 ```bash
-# Deploy dashboard + sensors + theme macros + scripts, reload templates
-# (also reloads custom_templates for general_home_theme.jinja changes)
-uv run python scripts/general_home_dashboard_sync.py
+# Full sync: push all files, apply metadata, reload services, pull + redact
+uv run python scripts/ha_sync.py
 
-# Deploy + apply categories and labels to helpers
-uv run python scripts/general_home_dashboard_sync.py -c
+# Apply registry metadata only (labels + categories)
+uv run python scripts/ha_sync.py -c
 
-# Deploy + full HA restart (for configuration.yaml / frontend changes)
-uv run python scripts/general_home_dashboard_sync.py -r
+# Full sync + HA restart (for configuration.yaml / frontend changes)
+uv run python scripts/ha_sync.py --restart
 ```
 
 After deploying sensor changes: run `template/reload` (Developer Tools >

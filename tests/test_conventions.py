@@ -11,8 +11,7 @@ import subprocess
 
 from utils import REPO_ROOT
 
-import general_home_dashboard_sync as gen_sync
-import cyberdeck_sync
+import ha_sync
 
 _ID_PATTERN = re.compile(
   r'\b('
@@ -30,24 +29,24 @@ class TestFileMapExistence:
 
   def test_general_file_map(self):
     missing = []
-    for local_name in gen_sync.FILE_MAP:
-      path = gen_sync.DASHBOARD_DIR / local_name
+    for local_name in ha_sync.GENERAL_HOME_FILE_MAP:
+      path = ha_sync.GENERAL_HOME_DIR / local_name
       if not path.exists():
         missing.append(str(path))
     assert not missing, f"FILE_MAP source files missing: {missing}"
 
   def test_general_script_map(self):
     missing = []
-    for local_name in gen_sync.SCRIPT_MAP:
-      path = gen_sync.SCRIPTS_DIR / local_name
+    for local_name in ha_sync.GENERAL_HOME_SCRIPT_MAP:
+      path = ha_sync.SCRIPTS_DIR / local_name
       if not path.exists():
         missing.append(str(path))
     assert not missing, f"SCRIPT_MAP source files missing: {missing}"
 
   def test_cyberdeck_file_map(self):
     missing = []
-    for local_name in cyberdeck_sync.FILE_MAP:
-      path = cyberdeck_sync.CYBERDECK_DIR / local_name
+    for local_name in ha_sync.CYBERDECK_FILE_MAP:
+      path = ha_sync.CYBERDECK_DIR / local_name
       if not path.exists():
         missing.append(str(path))
     assert not missing, f"FILE_MAP source files missing: {missing}"
@@ -126,7 +125,7 @@ class TestDocMapAgreement:
   def test_cyberdeck_deploy_table_matches_file_map(self):
     agents_md = (REPO_ROOT / 'agents.md').read_text(encoding='utf-8')
     doc_files = _extract_table_column(agents_md, r'Local file.*HA destination')
-    map_files = sorted(cyberdeck_sync.FILE_MAP.keys())
+    map_files = sorted(ha_sync.CYBERDECK_FILE_MAP.keys())
     assert sorted(doc_files) == map_files, (
       f"Cyberdeck deploy table drift:\n"
       f"  in docs but not FILE_MAP: {sorted(set(doc_files) - set(map_files))}\n"
@@ -140,7 +139,7 @@ class TestDocMapAgreement:
     )
     doc_files = _extract_table_column(agents_md, r'Local file.*HA destination')
     doc_map = dict(zip(doc_files, doc_destinations))
-    for local_name, remote_path in cyberdeck_sync.FILE_MAP.items():
+    for local_name, remote_path in ha_sync.CYBERDECK_FILE_MAP.items():
       assert local_name in doc_map, f"{local_name} missing from deploy table"
       assert doc_map[local_name] == remote_path, (
         f"{local_name}: docs say '{doc_map[local_name]}', "
@@ -152,7 +151,7 @@ class TestDocMapAgreement:
       REPO_ROOT / 'dashboards' / 'general_home_mobile' / 'agents.md'
     ).read_text(encoding='utf-8')
     doc_files = _extract_table_column(agents_md, r'File\s*\|.*What it does')
-    map_files = set(gen_sync.FILE_MAP.keys())
+    map_files = set(ha_sync.GENERAL_HOME_FILE_MAP.keys())
     missing = map_files - set(doc_files)
     assert not missing, (
       f"FILE_MAP entries missing from File Roles table: {sorted(missing)}"

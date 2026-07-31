@@ -2,11 +2,11 @@
 # General Registry Metadata — Labels & Categories
 # =============================================================================
 # Copy to registry_metadata.yaml and customize.
-# Applied by: uv run python scripts/apply_registry_metadata.py
+# Applied by: uv run python scripts/ha_sync.py -c
 #
 # This file defines general-purpose labels and categories that span the whole
 # HA instance. Dashboard-specific metadata lives in each dashboard's own
-# registry_metadata.yaml (applied by that dashboard's sync script -c flag).
+# registry_metadata.yaml (also applied by ha_sync.py -c).
 #
 # Structure:
 #   labels:      Cross-cutting tags. Entities can have multiple.

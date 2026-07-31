@@ -1,4 +1,4 @@
-"""Tests for load_config (utils) and _normalize_redact_entities (home_assistant_backup)."""
+"""Tests for load_config (utils) and _normalize_redact_entities (ha_sync)."""
 
 import os
 import tempfile
@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-import home_assistant_backup as hab
+import ha_sync as hab
 import utils
 
 

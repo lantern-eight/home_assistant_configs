@@ -2,8 +2,8 @@
 # Registry Metadata — Categories & Labels for General Home Mobile
 # =============================================================================
 # Copy to registry_metadata.yaml and fill in your HA values.
-# Applied by the dashboard sync script with -c flag:
-#   uv run python scripts/general_home_dashboard_sync.py -c
+# Applied by the sync script with -c flag:
+#   uv run python scripts/ha_sync.py -c
 #
 # Dashboard-specific labels and categories for entities that are owned by
 # this dashboard (helpers, theme inputs, conditional card toggles, etc.).

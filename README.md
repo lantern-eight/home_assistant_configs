@@ -6,7 +6,7 @@ Home Assistant configuration backup, dashboard management, and tooling. Runs on 
 ## Table of Contents
 
 - [Setup](#setup)
-- [Backup](#backup)
+- [Sync](#sync)
 - [General HA Packages](#general-ha-packages)
 - [Dashboards](#dashboards)
   - [General Home Mobile](#general-home-mobile)
@@ -43,55 +43,53 @@ local config — copy from their `.example` counterparts and fill in real values
 | `token` | HA long-lived access token (for API calls) |
 | `ha_base_url` | HA base URL (optional, defaults to `http://homeassistant.local:8123`) |
 
-## Backup
+## Sync
 
-Pull specific HA config files over SMB (process list in `BACKUP_FILES`), then
-redact names and shorten hex IDs for safe version control. An entity map is
-saved so redaction can be reversed. Most config now lives in repo-managed
-packages, so only files that HA owns (like `configuration.yaml`) need pulling.
+One script handles everything: push files to HA via SMB, apply categories &
+labels, reload services, pull backup files, and redact sensitive info. Most
+config lives in repo-managed packages and dashboards, so only files that HA
+owns (like `configuration.yaml`) need pulling back.
 
 ```bash
-# Backup + sanitize (default, with no flags)
-uv run python scripts/home_assistant_backup.py
+# Full sync (default, with no flags)
+uv run python scripts/ha_sync.py
 
-# SMB pull only, no redaction pass
-# - backup
-uv run python scripts/home_assistant_backup.py -b
+# Full sync + HA restart (for package/configuration.yaml changes)
+uv run python scripts/ha_sync.py --restart
 
-# Redaction pass only, no SMB pull
-# (processes home_assistant_backup/, dashboards/, and packages/)
-# - sanitize
-uv run python scripts/home_assistant_backup.py -s
+# Redact entities in local files only (no push/pull)
+uv run python scripts/ha_sync.py --redact
 
-# Restore redacted files to original values using entity_map.yaml
-# - restore
-uv run python scripts/home_assistant_backup.py -r
+# Undo redaction
+uv run python scripts/ha_sync.py -u
+
+# Apply categories & labels
+uv run python scripts/ha_sync.py -c
 
 # Debug logging
-uv run python scripts/home_assistant_backup.py -d
-
-# Set a specific log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-uv run python scripts/home_assistant_backup.py -l DEBUG
+uv run python scripts/ha_sync.py -d
 
 # Help
-uv run python scripts/home_assistant_backup.py -h
+uv run python scripts/ha_sync.py -h
 ```
 
 | Flag | Long form | Purpose |
 |---|---|---|
-| `-b` | `--backup` | SMB pull only (no sanitize) |
-| `-s` | `--sanitize` | Redaction pass only (no SMB pull) |
-| `-r` | `--restore` | Restore redacted files using `entity_map.yaml` |
+| | `--redact` | Redact PII in local files only (no push/pull) |
+| `-u` | `--unredact` | Undo redaction using `entity_map.yaml` |
+| `-c` | `--categories` | Apply registry metadata only |
+| | `--restart` | Restart HA after push (instead of reloading) |
 | `-d` | `--debug` | Set log level to `DEBUG` |
 | `-l` | `--log-level` | Set log level explicitly |
 | `-h` | `--help` | Show usage |
 
-The `-b`, `-s`, and `-r` flags are mutually exclusive. With none of them set,
-the script runs backup followed by sanitize.
+The `--redact`, `-u`, and `-c` flags are mutually exclusive. With none of
+them set, the script runs a full sync (push + metadata + reload + pull +
+redact).
 
-The backup lands in `home_assistant_backup/`. To back up additional files, add
-their paths (relative to the HA config root) to the `BACKUP_FILES` list in
-`scripts/home_assistant_backup.py`.
+Pulled backup files land in `home_assistant_backup/`. To back up additional
+files, add their paths (relative to the HA config root) to the
+`BACKUP_FILES` list in `scripts/ha_sync.py`.
 
 ## General HA Packages
 
@@ -100,7 +98,7 @@ sensors, utility meters, helpers — that is not specific to one dashboard.
 Dashboards consume these entities. General config goes in `packages/general.yaml`,
 one commented section per concern. A large coherent domain can graduate to its
 own file. Every yaml file in `packages/` is uploaded to HA's `packages/` directory
-by `scripts/general_home_dashboard_sync.py`, and HA loads the whole directory via
+by `scripts/ha_sync.py`, and HA loads the whole directory via
 `packages: !include_dir_named packages` — new files need no `configuration.yaml` edit,
 they'll be auto-picked up. Package changes require an HA restart.
 
@@ -126,25 +124,19 @@ backgrounds). See the full
 and screenshots.
 
 ```bash
-# Deploy to HA
-uv run python scripts/general_home_dashboard_sync.py
+# Deploy to HA (syncs all dashboards, packages, and scripts)
+uv run python scripts/ha_sync.py
 ```
 
 ### Cyberdeck (3D Printer Farm)
 
-Dashboard for monitoring and controlling 3D printers. Synced to HA via its
-own sync script.
-
-```bash
-# Deploy to HA
-uv run python scripts/cyberdeck_sync.py
-```
+Dashboard for monitoring and controlling 3D printers.
 
 ### Uploading to Home Assistant
 
-Each dashboard has its own sync script that pushes files to the HA config
-share over SMB and reloads the relevant services. See the per-dashboard
-READMEs for details.
+`scripts/ha_sync.py` pushes all dashboard files, packages, and scripts to
+the HA config share over SMB and reloads the relevant services. See the
+per-dashboard READMEs for details.
 
 ## Entity Discovery
 
@@ -169,11 +161,11 @@ IDs, friendly names, and states.
 uv run pytest tests/ -v
 ```
 
-- `test_redaction.py` -- name redaction, pronoun neutralization, ID shortening
-- `test_process_backup_files.py` -- end-to-end backup file processing
-- `test_restore.py` -- entity map round-trip restore
-- `test_ignore_patterns.py` -- backup file process list validation
-- `test_config.py` -- config loading from YAML and environment
+- `test_redaction.py` — name redaction, pronoun neutralization, ID shortening
+- `test_process_backup_files.py` — end-to-end backup file processing
+- `test_restore.py` — entity map round-trip restore
+- `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement
+- `test_config.py` — config loading from YAML and environment
 
 ## Project Structure
 
@@ -184,13 +176,9 @@ uv run pytest tests/ -v
 ├── conftest.py                      # Adds scripts/ to Python path for tests
 │
 ├── scripts/                         # Local Python tooling (runs on your machine)
-│   ├── utils.py                     # Shared infra (config, SMB, HA services, argparse)
-│   ├── ha_registry.py               # HA registry metadata engine (labels, categories)
-│   ├── home_assistant_backup.py     # Pull HA config over SMB, redact, shorten IDs
+│   ├── utils.py                     # Shared infra (config, SMB, entity map restore, registry metadata sync, argparse)
+│   ├── ha_sync.py                   # Sync: push, metadata, reload, pull, redact
 │   ├── ha_entity_discovery.py       # Query HA API for entities/areas -> JSON
-│   ├── apply_registry_metadata.py   # CLI: apply registry metadata to HA
-│   ├── cyberdeck_sync.py            # Sync Cyberdeck dashboard to HA via SMB
-│   ├── general_home_dashboard_sync.py  # Sync General Home Mobile dashboard to HA
 │   └── ha_scripts/                  # Scripts deployed to and run on HA
 │       ├── generate_theme_thumbnails.py
 │       └── list_theme_backgrounds.py
@@ -209,6 +197,6 @@ uv run pytest tests/ -v
     ├── test_redaction.py
     ├── test_process_backup_files.py
     ├── test_restore.py
-    ├── test_ignore_patterns.py
+    ├── test_conventions.py
     └── test_config.py
 ```

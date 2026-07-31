@@ -8,10 +8,10 @@ from pathlib import Path
 import yaml
 
 from conftest import _read_file, _write_file
-from home_assistant_backup import (
+from ha_sync import (
     _process_backup_files,
     _restore_backup_files,
-    _run_sanitize,
+    _run_redact,
     load_entity_map,
     redact_entities_in_text,
     save_entity_map,
@@ -353,7 +353,7 @@ class TestPartialSanitization:
 
 
 # ---------------------------------------------------------------------------
-# _run_sanitize: loads existing entity_map, processes sanitize dirs, saves merged
+# _run_redact: loads existing entity_map, processes sanitize dirs, saves merged
 # ---------------------------------------------------------------------------
 
 def _patch_sanitize_dirs(
@@ -365,12 +365,12 @@ def _patch_sanitize_dirs(
 ) -> None:
   '''Point sanitize/restore at temp dirs; omit dashboards to skip it.'''
   base = Path(dest).parent
-  monkeypatch.setattr('home_assistant_backup.DEST', str(dest))
+  monkeypatch.setattr('ha_sync.DEST', str(dest))
   monkeypatch.setattr(
-    'home_assistant_backup.DASHBOARDS_DIR',
+    'ha_sync.DASHBOARDS_DIR',
     str(dashboards if dashboards is not None else base / 'missing_dashboards'),
   )
-  monkeypatch.setattr('home_assistant_backup.ENTITY_MAP_PATH', entity_map_path)
+  monkeypatch.setattr('ha_sync.ENTITY_MAP_PATH', entity_map_path)
 
 class TestRunSanitize:
 
@@ -392,7 +392,7 @@ class TestRunSanitize:
             entity_map_path=map_path,
         )
 
-        _run_sanitize(["Zavala"])
+        _run_redact(["Zavala"])
 
         assert (dest / "auto.yaml").read_text() == (
             "alias: <entity_3>'s door\nmessage: <entity_3> opened it\n"
@@ -414,7 +414,7 @@ class TestRunSanitize:
             entity_map_path=map_path,
         )
 
-        _run_sanitize(["Alice"])
+        _run_redact(["Alice"])
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
         assert map_path.exists()
@@ -435,7 +435,7 @@ class TestRunSanitize:
         )
 
         # Should not raise.
-        _run_sanitize(["Alice"])
+        _run_redact(["Alice"])
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1>'s morning\n"
 
     def test_processes_all_sanitize_dirs(self, monkeypatch, tmp_path):
@@ -456,7 +456,7 @@ class TestRunSanitize:
             entity_map_path=map_path,
         )
 
-        _run_sanitize(["Alice", "Bob"])
+        _run_redact(["Alice", "Bob"])
 
         assert (dest / "auto.yaml").read_text() == "alias: <entity_1> morning\n"
         assert (dashboards / "view.yaml").read_text() == "title: <entity_2> dashboard\n"

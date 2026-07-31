@@ -4,7 +4,7 @@ function, and verify the output content matches expectations."""
 import tempfile
 
 from conftest import _read_file, _write_file
-from home_assistant_backup import _process_backup_files
+from ha_sync import _process_backup_files
 
 
 class TestProcessBackupFilesYaml:

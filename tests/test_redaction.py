@@ -2,7 +2,7 @@
 
 import pytest
 
-from home_assistant_backup import shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes
+from ha_sync import shorten_ids, redact_entities_in_text, neutralize_pronouns, normalize_yaml_escapes
 
 
 # ---------------------------------------------------------------------------

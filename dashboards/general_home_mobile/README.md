@@ -680,14 +680,14 @@ The repo includes a sync script that deploys files to HA via SMB and reloads
 the relevant services:
 
 ```bash
-# Deploy dashboard + sensors + scripts, reload templates
-uv run python scripts/general_home_dashboard_sync.py
+# Full sync: push all files, apply metadata, reload services, pull + redact
+uv run python scripts/ha_sync.py
 
-# Deploy + apply categories and labels to helpers
-uv run python scripts/general_home_dashboard_sync.py -c
+# Apply registry metadata only (labels + categories)
+uv run python scripts/ha_sync.py -c
 
-# Deploy + restart HA (needed for configuration.yaml / frontend changes)
-uv run python scripts/general_home_dashboard_sync.py -r
+# Full sync + HA restart (needed for configuration.yaml / frontend changes)
+uv run python scripts/ha_sync.py --restart
 ```
 
 The script syncs: `dashboard.yaml`, `sensors.yaml`, `general_home_theme.jinja`
@@ -843,7 +843,7 @@ HA's `packages/` directory by the same sync script.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/general_home_dashboard_sync.py` | SMB deploy + service reload (runs locally) |
+| `scripts/ha_sync.py` | Unified HA sync: push, metadata, reload, pull, redact (runs locally) |
 | `scripts/ha_scripts/generate_theme_thumbnails.py` | Creates ~300px JPEG thumbnails for the background picker (deployed to HA) |
 | `scripts/ha_scripts/list_theme_backgrounds.py` | Lists background images as JSON for the command_line sensor (deployed to HA) |
 
