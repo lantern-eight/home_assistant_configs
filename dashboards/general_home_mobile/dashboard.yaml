@@ -1850,6 +1850,57 @@ views:
                 {% endif %}
               }
     - type: custom:mushroom-title-card
+      title: Severity Colors
+      subtitle: Status indicator colors
+      card_mod:
+        style: *theme_exempt_style
+    - type: grid
+      columns: 2
+      square: false
+      cards:
+      - type: custom:mushroom-template-card
+        primary: Standard
+        secondary: Universal colors
+        icon: mdi:palette-swatch
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_severity_colors
+            option: Standard
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_severity_colors_' ~ u, 'Standard') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+      - type: custom:mushroom-template-card
+        primary: Match Palette
+        secondary: Tinted to palette
+        icon: mdi:palette
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_severity_colors
+            option: Match Palette
+        card_mod:
+          style:
+            .: *theme_card_style
+            $: |
+              ha-card {
+                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
+                {% if is_state('input_select.theme_severity_colors_' ~ u, 'Match Palette') %}
+                outline: 2px solid var(--primary-color) !important;
+                outline-offset: -2px;
+                {% endif %}
+              }
+    - type: custom:mushroom-title-card
       title: Background
       subtitle: Image or color behind cards
       card_mod:
