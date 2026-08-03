@@ -182,6 +182,29 @@ button_card_templates:
       - border: none
       grid:
       - grid-template-areas: '"list"'
+  palette_tile:
+    show_icon: false
+    show_state: false
+    show_name: true
+    tap_action:
+      action: call-service
+      service: script.theme_select
+      service_data:
+        helper: theme_palette
+        option: "[[[ return variables.palette_name ]]]"
+    custom_fields:
+      dots: |
+        [[[
+          const id = variables.identity_colors;
+          const sev = variables.severity_colors;
+          const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
+          const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+          return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
+        ]]]
+    styles:
+      <<: *palette_tile_styles
+      card:
+        - padding: 10px 4px
   air_dot_tile:
     show_state: false
     show_icon: false
@@ -1604,232 +1627,96 @@ views:
       square: false
       cards:
       - type: custom:button-card
+        template: palette_tile
         name: Indigo
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Indigo
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#6a74d3","#8890dc","#76d698","#ea7287"];
-              const sev = ["#5b8cc9","#ffdb75","#76d698","#ea7287"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Indigo
+          identity_colors: ["#6a74d3","#8890dc","#76d698","#ea7287"]
+          severity_colors: ["#5b8cc9","#ffdb75","#76d698","#ea7287"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Indigo') }}
       - type: custom:button-card
+        template: palette_tile
         name: Ocean
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Ocean
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#0077b6","#00b4d8","#48cae4","#e07070"];
-              const sev = ["#0096c7","#f4d35e","#52b788","#e07070"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Ocean
+          identity_colors: ["#0077b6","#00b4d8","#48cae4","#e07070"]
+          severity_colors: ["#0096c7","#f4d35e","#52b788","#e07070"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Ocean') }}
       - type: custom:button-card
+        template: palette_tile
         name: Sunset
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Sunset
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
-              const sev = ["#6898b8","#f4d35e","#76c893","#e76f51"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Sunset
+          identity_colors: ["#e07040","#d4a03c","#f4a261","#8a8a9a"]
+          severity_colors: ["#6898b8","#f4d35e","#76c893","#e76f51"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Sunset') }}
       - type: custom:button-card
+        template: palette_tile
         name: Forest
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Forest
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#2d6a4f","#74a67a","#52b788","#a08080"];
-              const sev = ["#4a8fa8","#d4a03c","#40916c","#c0706a"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Forest
+          identity_colors: ["#2d6a4f","#74a67a","#52b788","#a08080"]
+          severity_colors: ["#4a8fa8","#d4a03c","#40916c","#c0706a"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Forest') }}
       - type: custom:button-card
+        template: palette_tile
         name: Rose
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Rose
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
-              const sev = ["#7a8eb8","#f0c070","#76c893","#d45070"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Rose
+          identity_colors: ["#c9607a","#a86090","#d4849a","#8a8a9a"]
+          severity_colors: ["#7a8eb8","#f0c070","#76c893","#d45070"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Rose') }}
       - type: custom:button-card
+        template: palette_tile
         name: Mono
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Mono
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
-              const sev = ["#7088a0","#c0c0c0","#a0a0a0","#909090"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Mono
+          identity_colors: ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"]
+          severity_colors: ["#7088a0","#c0c0c0","#a0a0a0","#909090"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Mono') }}
       - type: custom:button-card
+        template: palette_tile
         name: Cyberdeck
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Cyberdeck
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
-              const sev = ["#0080ff","#ffd700","#00ff88","#ff003c"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Cyberdeck
+          identity_colors: ["#00e5ff","#e91e8c","#00ff88","#ffd700"]
+          severity_colors: ["#0080ff","#ffd700","#00ff88","#ff003c"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
             {{ theme_css(user, 'card') }}
             {{ active_outline(user, 'theme_palette', 'Cyberdeck') }}
       - type: custom:button-card
+        template: palette_tile
         name: Mint
-        show_icon: false
-        show_state: false
-        show_name: true
-        tap_action:
-          action: call-service
-          service: script.theme_select
-          service_data:
-            helper: theme_palette
-            option: Mint
-        custom_fields:
-          dots: |
-            [[[
-              const id = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
-              const sev = ["#a0c0d0","#e0d090","#7ec8a0","#d09090"];
-              const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
-              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
-            ]]]
-        styles:
-          <<: *palette_tile_styles
-          card:
-            - padding: 10px 4px
+        variables:
+          palette_name: Mint
+          identity_colors: ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"]
+          severity_colors: ["#a0c0d0","#e0d090","#7ec8a0","#d09090"]
         card_mod:
           style: |
             {% from 'general_home_theme.jinja' import theme_css, active_outline %}
