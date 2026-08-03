@@ -309,8 +309,6 @@ views:
             const b = Math.round(parseFloat(entity.state));
             return `Soil Sensor Battery ${b}%`;
           ]]]
-        card_mod:
-          style: *theme_chip_style
     - type: conditional
       conditions:
       - condition: state
