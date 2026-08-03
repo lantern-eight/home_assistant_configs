@@ -117,6 +117,25 @@ input_select:
       - Mint
     icon: mdi:palette
 
+  # Severity color mode: "Standard" uses fixed, universally recognizable
+  # red/amber/blue/green for status indicators regardless of palette.
+  # "Match Palette" tints severity colors to match the active palette's
+  # aesthetic, trading universal recognition for visual cohesion.
+  theme_severity_colors_<entity_32>:
+    name: "Severity Colors (<entity_32>)"
+    options:
+      - Standard
+      - Match Palette
+      - Match Identity
+    icon: mdi:alert-circle-outline
+  theme_severity_colors_<entity_31>:
+    name: "Severity Colors (<entity_31>)"
+    options:
+      - Standard
+      - Match Palette
+      - Match Identity
+    icon: mdi:alert-circle-outline
+
 input_text:
   theme_background_<entity_32>:
     name: "Theme Background (<entity_32>)"

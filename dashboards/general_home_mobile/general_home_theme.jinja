@@ -16,10 +16,11 @@
   the account name as a literal argument instead.
 
   Tables:
-    palette_colors   — semantic accent colors, identical in both modes
-    palette_by_mode  — glows / page surface / glass background, per mode
-    style_by_mode    — card chrome + background fallbacks, per style per mode
-    style_blur       — blur defaults, per style (same in both modes)
+    palette_colors     — semantic accent colors, identical in both modes
+    universal_severity — fixed severity colors used in Standard mode
+    palette_by_mode    — glows / page surface / glass background, per mode
+    style_by_mode      — card chrome + background fallbacks, per style per mode
+    style_blur         — blur defaults, per style (same in both modes)
 -#}
 
 {%- set palette_colors = {
@@ -27,7 +28,7 @@
     'primary': '#6a74d3', 'accent': '#6a74d3',
     'state_on': 'rgb(118, 214, 152)', 'state_off': 'rgb(234, 114, 135)',
     'success': 'rgb(118, 214, 152)', 'warning': 'rgb(255, 219, 117)',
-    'error': 'rgb(234, 114, 135)', 'info': '#6a74d3'
+    'error': 'rgb(234, 114, 135)', 'info': '#5b8cc9'
   },
   'Ocean': {
     'primary': '#0077b6', 'accent': '#00b4d8',
@@ -39,31 +40,31 @@
     'primary': '#e07040', 'accent': '#d4a03c',
     'state_on': '#f4a261', 'state_off': '#8a8a9a',
     'success': '#76c893', 'warning': '#f4d35e',
-    'error': '#e76f51', 'info': '#e09050'
+    'error': '#e76f51', 'info': '#6898b8'
   },
   'Forest': {
     'primary': '#2d6a4f', 'accent': '#74a67a',
     'state_on': '#52b788', 'state_off': '#a08080',
     'success': '#40916c', 'warning': '#d4a03c',
-    'error': '#c0706a', 'info': '#2d6a4f'
+    'error': '#c0706a', 'info': '#4a8fa8'
   },
   'Rose': {
     'primary': '#c9607a', 'accent': '#a86090',
     'state_on': '#d4849a', 'state_off': '#8a8a9a',
     'success': '#76c893', 'warning': '#f0c070',
-    'error': '#d45070', 'info': '#c080a0'
+    'error': '#d45070', 'info': '#7a8eb8'
   },
   'Mono': {
     'primary': '#7a7a8a', 'accent': '#9a9aaa',
     'state_on': '#e0e0e0', 'state_off': '#5a5a6a',
     'success': '#a0a0a0', 'warning': '#c0c0c0',
-    'error': '#909090', 'info': '#8a8a9a'
+    'error': '#909090', 'info': '#7088a0'
   },
   'Cyberdeck': {
     'primary': '#00e5ff', 'accent': '#e91e8c',
     'state_on': '#00ff88', 'state_off': '#3a3a4a',
     'success': '#00ff88', 'warning': '#ffd700',
-    'error': '#ff003c', 'info': '#00e5ff'
+    'error': '#ff003c', 'info': '#0080ff'
   },
   'Mint': {
     'primary': '#7ec8a0', 'accent': '#a8a0d6',
@@ -71,6 +72,16 @@
     'success': '#7ec8a0', 'warning': '#e0d090',
     'error': '#d09090', 'info': '#a0c0d0'
   }
+} -%}
+
+{#- Fixed severity colors, independent of palette. Used when severity color
+    mode is "Standard" so that red always means urgent, amber always means
+    warning, etc. regardless of which palette is active. -#}
+{%- set universal_severity = {
+  'success': '#3ecf8e',
+  'warning': '#e8a840',
+  'error': '#ef6461',
+  'info': '#6b9fff'
 } -%}
 
 {%- set palette_by_mode = {
@@ -177,6 +188,20 @@
 {%- set opacity_override = states('input_number.theme_card_opacity_' ~ u) | float(-1) -%}
 {%- set blur_override = states('input_number.theme_card_blur_' ~ u) | float(-1) -%}
 {%- set colors = palette_colors.get(pal, palette_colors['Indigo']) -%}
+{%- set severity_mode = states('input_select.theme_severity_colors_' ~ u) -%}
+{#- Resolve severity colors: "Standard" uses fixed universal values so
+    severity meaning is visually consistent across all palettes. "Match
+    Palette" uses the palette's own severity tints for visual cohesion.
+    "Match Identity" maps the palette's identity colors (primary, accent,
+    state_on, state_off) onto the severity slots for full palette
+    immersion at the cost of all severity distinction. -#}
+{%- if severity_mode == 'Match Palette' -%}
+  {%- set sev = colors -%}
+{%- elif severity_mode == 'Match Identity' -%}
+  {%- set sev = {'error': colors.state_off, 'warning': colors.accent, 'success': colors.state_on, 'info': colors.primary} -%}
+{%- else -%}
+  {%- set sev = universal_severity -%}
+{%- endif -%}
 {%- set radius = '4px' if style == 'Neon' else '18px' -%}
 {%- set font = "'Share Tech Mono', monospace" if style == 'Neon' else 'inherit' -%}
 {%- set blur = (style_blur.get(style, 0) if blur_override < 0 else blur_override) | int -%}
@@ -193,13 +218,17 @@
 ha-card {
   --primary-color: {{ colors.primary }};
   --accent-color: {{ colors.accent }};
-{%- if kind in ['card', 'exempt'] %}
+{#- Chips sit at section-grid top level, not inside a parent ha-card, so they
+    need these variables set directly — they won't inherit from a parent card.
+    State colors always follow the palette; severity colors respect the
+    user's severity color mode preference (Standard vs Match Palette). -#}
+{%- if kind in ['card', 'exempt', 'chip'] %}
   --state-on-color: {{ colors.state_on }};
   --state-off-color: {{ colors.state_off }};
-  --success-color: {{ colors.success }};
-  --warning-color: {{ colors.warning }};
-  --error-color: {{ colors.error }};
-  --info-color: {{ colors.info }};
+  --success-color: {{ sev.success }};
+  --warning-color: {{ sev.warning }};
+  --error-color: {{ sev.error }};
+  --info-color: {{ sev.info }};
 {%- endif %}
 {%- if kind != 'exempt' %}
   border-radius: {{ radius }} !important;
@@ -241,6 +270,45 @@ ha-card {
 {%- if kind == 'exempt' %}
 ha-card::before {
   content: none !important;
+}
+{%- endif %}
+{%- endmacro -%}
+
+{#-
+  active_outline(user, helper, option) — selection outline for Appearance
+  page picker tiles. Emits a primary-colored outline on the ha-card when
+  the user's input_select for `helper` matches `option`. Append this to
+  the card_mod `.` style alongside theme_css — it must be at the host
+  level, not inside `$:`, because ha-card IS the host element.
+-#}
+{%- macro active_outline(user, helper, option) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- if is_state('input_select.' ~ helper ~ '_' ~ u, option) %}
+ha-card {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: -2px;
+}
+{%- endif %}
+{%- endmacro -%}
+
+{#-
+  background_outline(user, match) — selection outline for Background picker
+  tiles. The background helper is an input_text (not input_select), with
+  three match modes:
+    'auto'   — active when background is auto, unknown, unavailable, or empty
+    'custom' — active when background starts with '#' (hex color)
+    any other value — exact match against the background state
+-#}
+{%- macro background_outline(user, match) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set bg = states('input_text.theme_background_' ~ u) -%}
+{%- set active = (match == 'auto' and bg in ['auto', 'unknown', 'unavailable', '']) or
+                 (match == 'custom' and bg.startswith('#')) or
+                 (match != 'auto' and match != 'custom' and bg == match) -%}
+{%- if active %}
+ha-card {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: -2px;
 }
 {%- endif %}
 {%- endmacro -%}
