@@ -126,12 +126,14 @@ input_select:
     options:
       - Standard
       - Match Palette
+      - Match Identity
     icon: mdi:alert-circle-outline
   theme_severity_colors_<entity_31>:
     name: "Severity Colors (<entity_31>)"
     options:
       - Standard
       - Match Palette
+      - Match Identity
     icon: mdi:alert-circle-outline
 
 input_text:

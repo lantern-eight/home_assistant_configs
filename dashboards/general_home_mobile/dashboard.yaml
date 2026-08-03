@@ -522,22 +522,33 @@ views:
         - entity: sensor.backyard_absolute_humidity
           name: Absolute humidity
           type: area
+          color: var(--primary-color)
           show:
             name_in_header: false
           group_by:
             func: avg
             duration: 1h
         card_mod:
-          style:
-            .: *theme_exempt_style
-            $: |
-              ha-card {
-                margin-top: -8px;
-                padding-top: 0 !important;
-              }
-              .apexcharts-xaxis text {
-                font-size: 10px !important;
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css %}
+            {{ theme_css(user, 'exempt') }}
+            ha-card {
+              margin-top: -8px;
+              padding-top: 0 !important;
+            }
+            .apexcharts-xaxis text {
+              font-size: 10px !important;
+            }
+            .apexcharts-area-series path[stroke] {
+              stroke: var(--primary-color) !important;
+            }
+            .apexcharts-area-series path[fill^="url"] {
+              fill: var(--primary-color) !important;
+              opacity: 0.15;
+            }
+            .apexcharts-area-series path[fill]:not([fill^="url"]):not([fill="none"]) {
+              fill: var(--primary-color) !important;
+            }
   - type: grid
     column_span: 1
     cards:
@@ -788,11 +799,11 @@ views:
           needle: true
           segments:
             - from: 0
-              color: "#ef6461"
+              color: var(--error-color)
             - from: 20
-              color: "#e8a840"
+              color: var(--warning-color)
             - from: 40
-              color: "#3ecf8e"
+              color: var(--success-color)
           card_mod:
             style: *theme_card_style
   - type: grid
@@ -1427,16 +1438,10 @@ views:
             helper: theme_mode
             option: Light
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_mode_' ~ u, 'Light') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_mode', 'Light') }}
       - type: custom:mushroom-template-card
         primary: Dark
         icon: mdi:weather-night
@@ -1447,16 +1452,10 @@ views:
             helper: theme_mode
             option: Dark
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_mode_' ~ u, 'Dark') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_mode', 'Dark') }}
       - type: custom:mushroom-template-card
         primary: System
         icon: mdi:theme-light-dark
@@ -1467,16 +1466,10 @@ views:
             helper: theme_mode
             option: System
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_mode_' ~ u, 'System') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_mode', 'System') }}
     - type: custom:mushroom-title-card
       title: Style
       subtitle: Structural look
@@ -1581,6 +1574,33 @@ views:
       subtitle: Color accents
       card_mod:
         style: *theme_exempt_style
+    - type: custom:button-card
+      show_icon: false
+      show_state: false
+      show_name: false
+      tap_action:
+        action: none
+      custom_fields:
+        legend: |
+          [[[
+            const left = ['Primary', 'Accent', 'On', 'Off'];
+            const right = ['Info', 'Warning', 'Success', 'Error'];
+            const sevColors = ['#6b9fff','#e8a840','#3ecf8e','#ef6461'];
+            const outline = `width:8px;height:8px;border-radius:50%;border:1.5px solid var(--secondary-text-color);opacity:0.35;`;
+            const item = (l) => `<div style="display:flex;align-items:center;gap:4px;"><div style="${outline}"></div><span style="font-size:10px;color:var(--secondary-text-color);">${l}</span></div>`;
+            const sevItem = (l, i) => `<div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:50%;background:${sevColors[i]};"></div><span style="font-size:10px;color:var(--secondary-text-color);">${l}</span></div>`;
+            const col = (items, title, fn) => `<div><div style="font-size:9px;color:var(--secondary-text-color);opacity:0.5;text-align:center;margin-bottom:4px;">${title}</div><div style="display:flex;flex-direction:column;gap:3px;">${items.map(fn).join('')}</div></div>`;
+            return `<div style="display:flex;gap:20px;justify-content:center;">${col(left,'Identity',item)}${col(right,'Severity',sevItem)}</div>`;
+          ]]]
+      styles:
+        card:
+          - padding: 8px 16px
+        grid:
+          - grid-template-areas: '"legend"'
+      card_mod:
+        style: |
+          {% from 'general_home_theme.jinja' import theme_css %}
+          {{ theme_css(user, 'card') }}
     - type: grid
       columns: 4
       square: false
@@ -1599,25 +1619,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#6a74d3","#8890dc","#76d698","#ea7287"];
+              const id = ["#6a74d3","#8890dc","#76d698","#ea7287"];
+              const sev = ["#5b8cc9","#ffdb75","#76d698","#ea7287"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Indigo') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Indigo') }}
       - type: custom:button-card
         name: Ocean
         show_icon: false
@@ -1632,25 +1648,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#0077b6","#00b4d8","#48cae4","#e07070"];
+              const id = ["#0077b6","#00b4d8","#48cae4","#e07070"];
+              const sev = ["#0096c7","#f4d35e","#52b788","#e07070"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Ocean') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Ocean') }}
       - type: custom:button-card
         name: Sunset
         show_icon: false
@@ -1665,25 +1677,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
+              const id = ["#e07040","#d4a03c","#f4a261","#8a8a9a"];
+              const sev = ["#6898b8","#f4d35e","#76c893","#e76f51"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Sunset') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Sunset') }}
       - type: custom:button-card
         name: Forest
         show_icon: false
@@ -1698,25 +1706,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#2d6a4f","#74a67a","#52b788","#a08080"];
+              const id = ["#2d6a4f","#74a67a","#52b788","#a08080"];
+              const sev = ["#4a8fa8","#d4a03c","#40916c","#c0706a"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Forest') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Forest') }}
       - type: custom:button-card
         name: Rose
         show_icon: false
@@ -1731,25 +1735,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
+              const id = ["#c9607a","#a86090","#d4849a","#8a8a9a"];
+              const sev = ["#7a8eb8","#f0c070","#76c893","#d45070"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Rose') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Rose') }}
       - type: custom:button-card
         name: Mono
         show_icon: false
@@ -1764,25 +1764,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
+              const id = ["#7a7a8a","#9a9aaa","#e0e0e0","#5a5a6a"];
+              const sev = ["#7088a0","#c0c0c0","#a0a0a0","#909090"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Mono') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Mono') }}
       - type: custom:button-card
         name: Cyberdeck
         show_icon: false
@@ -1797,25 +1793,21 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
+              const id = ["#00e5ff","#e91e8c","#00ff88","#ffd700"];
+              const sev = ["#0080ff","#ffd700","#00ff88","#ff003c"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Cyberdeck') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Cyberdeck') }}
       - type: custom:button-card
         name: Mint
         show_icon: false
@@ -1830,37 +1822,33 @@ views:
         custom_fields:
           dots: |
             [[[
-              const colors = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
+              const id = ["#7ec8a0","#a8a0d6","#90ddb0","#b0a0a0"];
+              const sev = ["#a0c0d0","#e0d090","#7ec8a0","#d09090"];
               const dot = (c) => `<div style="width:8px;height:8px;border-radius:50%;background:${c}"></div>`;
-              return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${colors.map(dot).join('')}</div>`;
+              const col = (cs) => `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">${cs.map(dot).join('')}</div>`;
+              return `<div style="display:flex;gap:8px;justify-content:center;">${col(id)}${col(sev)}</div>`;
             ]]]
         styles:
           <<: *palette_tile_styles
           card:
             - padding: 10px 4px
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_palette_' ~ u, 'Mint') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_palette', 'Mint') }}
     - type: custom:mushroom-title-card
       title: Severity Colors
       subtitle: Status indicator colors
       card_mod:
         style: *theme_exempt_style
     - type: grid
-      columns: 2
+      columns: 3
       square: false
       cards:
       - type: custom:mushroom-template-card
         primary: Standard
-        secondary: Universal colors
+        secondary: Default
         icon: mdi:palette-swatch
         tap_action:
           action: call-service
@@ -1869,20 +1857,14 @@ views:
             helper: theme_severity_colors
             option: Standard
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_severity_colors_' ~ u, 'Standard') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_severity_colors', 'Standard') }}
       - type: custom:mushroom-template-card
-        primary: Match Palette
-        secondary: Tinted to palette
-        icon: mdi:palette
+        primary: Tinted
+        secondary: ''
+        icon: mdi:invert-colors
         tap_action:
           action: call-service
           service: script.theme_select
@@ -1890,16 +1872,25 @@ views:
             helper: theme_severity_colors
             option: Match Palette
         card_mod:
-          style:
-            .: *theme_card_style
-            $: |
-              ha-card {
-                {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                {% if is_state('input_select.theme_severity_colors_' ~ u, 'Match Palette') %}
-                outline: 2px solid var(--primary-color) !important;
-                outline-offset: -2px;
-                {% endif %}
-              }
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_severity_colors', 'Match Palette') }}
+      - type: custom:mushroom-template-card
+        primary: Palette
+        secondary: Identity
+        icon: mdi:palette
+        tap_action:
+          action: call-service
+          service: script.theme_select
+          service_data:
+            helper: theme_severity_colors
+            option: Match Identity
+        card_mod:
+          style: |
+            {% from 'general_home_theme.jinja' import theme_css, active_outline %}
+            {{ theme_css(user, 'card') }}
+            {{ active_outline(user, 'theme_severity_colors', 'Match Identity') }}
     - type: custom:mushroom-title-card
       title: Background
       subtitle: Image or color behind cards
@@ -1921,16 +1912,10 @@ views:
             service_data:
               value: auto
           card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                  {% if states('input_text.theme_background_' ~ u) in ['auto', 'unknown', 'unavailable', ''] %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css, background_outline %}
+              {{ theme_css(user, 'card') }}
+              {{ background_outline(user, 'auto') }}
         - type: custom:mushroom-template-card
           primary: None
           secondary: Default HA
@@ -1941,16 +1926,10 @@ views:
             service_data:
               value: none
           card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' %}
-                  {% if is_state('input_text.theme_background_' ~ u, 'none') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css, background_outline %}
+              {{ theme_css(user, 'card') }}
+              {{ background_outline(user, 'none') }}
       - type: custom:mushroom-title-card
         title: ''
         subtitle: Solid colors
@@ -2157,15 +2136,10 @@ views:
             action: more-info
             entity: input_text.theme_background_<entity_31>
           card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if states('input_text.theme_background_<entity_31>').startswith('#') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css, background_outline %}
+              {{ theme_css(user, 'card') }}
+              {{ background_outline(user, 'custom') }}
       - type: conditional
         conditions:
         - condition: user
@@ -2193,15 +2167,10 @@ views:
             action: more-info
             entity: input_text.theme_background_<entity_32>
           card_mod:
-            style:
-              .: *theme_card_style
-              $: |
-                ha-card {
-                  {% if states('input_text.theme_background_<entity_32>').startswith('#') %}
-                  outline: 2px solid var(--primary-color) !important;
-                  outline-offset: -2px;
-                  {% endif %}
-                }
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css, background_outline %}
+              {{ theme_css(user, 'card') }}
+              {{ background_outline(user, 'custom') }}
       - type: custom:mushroom-title-card
         title: ''
         subtitle: Background images

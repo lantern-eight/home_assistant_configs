@@ -191,8 +191,17 @@
 {%- set severity_mode = states('input_select.theme_severity_colors_' ~ u) -%}
 {#- Resolve severity colors: "Standard" uses fixed universal values so
     severity meaning is visually consistent across all palettes. "Match
-    Palette" uses the palette's own severity tints for visual cohesion. -#}
-{%- set sev = universal_severity if severity_mode != 'Match Palette' else colors -%}
+    Palette" uses the palette's own severity tints for visual cohesion.
+    "Match Identity" maps the palette's identity colors (primary, accent,
+    state_on, state_off) onto the severity slots for full palette
+    immersion at the cost of all severity distinction. -#}
+{%- if severity_mode == 'Match Palette' -%}
+  {%- set sev = colors -%}
+{%- elif severity_mode == 'Match Identity' -%}
+  {%- set sev = {'error': colors.state_off, 'warning': colors.accent, 'success': colors.state_on, 'info': colors.primary} -%}
+{%- else -%}
+  {%- set sev = universal_severity -%}
+{%- endif -%}
 {%- set radius = '4px' if style == 'Neon' else '18px' -%}
 {%- set font = "'Share Tech Mono', monospace" if style == 'Neon' else 'inherit' -%}
 {%- set blur = (style_blur.get(style, 0) if blur_override < 0 else blur_override) | int -%}
@@ -261,6 +270,45 @@ ha-card {
 {%- if kind == 'exempt' %}
 ha-card::before {
   content: none !important;
+}
+{%- endif %}
+{%- endmacro -%}
+
+{#-
+  active_outline(user, helper, option) — selection outline for Appearance
+  page picker tiles. Emits a primary-colored outline on the ha-card when
+  the user's input_select for `helper` matches `option`. Append this to
+  the card_mod `.` style alongside theme_css — it must be at the host
+  level, not inside `$:`, because ha-card IS the host element.
+-#}
+{%- macro active_outline(user, helper, option) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- if is_state('input_select.' ~ helper ~ '_' ~ u, option) %}
+ha-card {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: -2px;
+}
+{%- endif %}
+{%- endmacro -%}
+
+{#-
+  background_outline(user, match) — selection outline for Background picker
+  tiles. The background helper is an input_text (not input_select), with
+  three match modes:
+    'auto'   — active when background is auto, unknown, unavailable, or empty
+    'custom' — active when background starts with '#' (hex color)
+    any other value — exact match against the background state
+-#}
+{%- macro background_outline(user, match) -%}
+{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set bg = states('input_text.theme_background_' ~ u) -%}
+{%- set active = (match == 'auto' and bg in ['auto', 'unknown', 'unavailable', '']) or
+                 (match == 'custom' and bg.startswith('#')) or
+                 (match != 'auto' and match != 'custom' and bg == match) -%}
+{%- if active %}
+ha-card {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: -2px;
 }
 {%- endif %}
 {%- endmacro -%}
