@@ -174,8 +174,8 @@
 
 {#- resolve_user(user) — canonical username suffix for helper entity IDs.
     card_mod injects `user` as the HA display name; this maps it to the
-    suffix used by all theme helpers. Unknown users fall back to
-    <entity_32> (shared-device / guest behavior). -#}
+    suffix used by all theme helpers. Unknown users fall back to a default
+    user (shared-device / guest behavior). -#}
 {%- macro resolve_user(user) -%}
 {%- if user == '<entity_31>' -%}<entity_31>{%- else -%}<entity_32>{%- endif -%}
 {%- endmacro -%}
@@ -384,7 +384,7 @@ ha-card::after {
   displays the dark-mode default.
 -#}
 {%- macro theme_value(account, prop) -%}
-{%- set u = '<entity_31>' if account == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(account) -%}
 {%- set style = states('input_select.theme_style_' ~ u) -%}
 {%- if prop == 'account' -%}
 {{- u -}}
