@@ -415,7 +415,7 @@ ha-card::after {
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 {%- endif %}
 {%- for m in modes %}
-{%- set p = style_tile_preview[m][style_name] %}
+{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
 @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
@@ -452,7 +452,7 @@ ha-card {
 {%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
 {%- for m in modes %}
-{%- set p = style_tile_preview[m][style_name] %}
+{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
 @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
@@ -470,7 +470,7 @@ ha-card {
 {%- endfor %}
 mushroom-state-info$: |
 {%- for m in modes %}
-{%- set p = style_tile_preview[m][style_name] %}
+{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
   @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
