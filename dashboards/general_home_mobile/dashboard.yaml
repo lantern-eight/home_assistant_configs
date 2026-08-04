@@ -2083,6 +2083,7 @@ views:
             {% set ns = namespace(cards=[]) %}
 
             {% for f in files %}
+              {% set f_escaped = f | replace("'", "\\'") %}
               {% set ns.cards = ns.cards + [
                 {
                   'type': 'picture',
@@ -2100,7 +2101,7 @@ views:
                       JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
                       JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
                       "ha-card { border-radius: 12px !important; " ~
-                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ f ~ "') " ~ JC ~
+                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ f_escaped ~ "') " ~ JC ~
                       " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
                       JO ~ " endif " ~ JC ~
                       " }"
