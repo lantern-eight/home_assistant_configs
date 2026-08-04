@@ -180,6 +180,23 @@
 {%- if user == '<entity_31>' -%}<entity_31>{%- else -%}<entity_32>{%- endif -%}
 {%- endmacro -%}
 
+{#- deferred_background_outline(value) — card_mod style string for
+    background picker tiles (solid colors, background images). Constructs
+    a deferred Jinja template that resolves the user at render time and
+    highlights the tile when its value matches the user's background.
+    Called from auto-entities filter templates where `user` isn't
+    available yet — the deferred string imports resolve_user itself. -#}
+{%- macro deferred_background_outline(value) -%}
+{%- set jinja_open = '{%' -%}
+{%- set jinja_close = '%}' -%}
+{%- set var_open = '{{' -%}
+{%- set var_close = '}}' -%}
+{{- jinja_open }} from 'general_home_theme.jinja' import theme_value, resolve_user {{ jinja_close -}}
+{{- jinja_open }} set pri = theme_value(user, 'primary') {{ jinja_close -}}
+{{- jinja_open }} set u = resolve_user(user) {{ jinja_close -}}
+ha-card { border-radius: 12px !important; {{ jinja_open }} if is_state('input_text.theme_background_' ~ u, '{{ value }}') {{ jinja_close }} border: 2px solid {{ var_open }} pri {{ var_close }} !important; {{ jinja_open }} endif {{ jinja_close }} }
+{%- endmacro -%}
+
 {#-
   theme_css(user, kind) — the card_mod style body for one card.
   kind: 'card'   full themed surface (background, border, shadow, blur)
