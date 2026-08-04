@@ -1923,9 +1923,8 @@ views:
                     'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
                     'tap_action': {
                       'action': 'call-service',
-                      'service': 'input_text.set_value',
+                      'service': 'script.theme_set_background',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_31>',
                         'value': hex
                       }
                     },
@@ -1978,9 +1977,8 @@ views:
                     'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
                     'tap_action': {
                       'action': 'call-service',
-                      'service': 'input_text.set_value',
+                      'service': 'script.theme_set_background',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_32>',
                         'value': hex
                       }
                     },
