@@ -172,6 +172,14 @@
   }
 } -%}
 
+{#- resolve_user(user) — canonical username suffix for helper entity IDs.
+    card_mod injects `user` as the HA display name; this maps it to the
+    suffix used by all theme helpers. Unknown users fall back to
+    <entity_32> (shared-device / guest behavior). -#}
+{%- macro resolve_user(user) -%}
+{%- if user == '<entity_31>' -%}<entity_31>{%- else -%}<entity_32>{%- endif -%}
+{%- endmacro -%}
+
 {#-
   theme_css(user, kind) — the card_mod style body for one card.
   kind: 'card'   full themed surface (background, border, shadow, blur)
@@ -180,7 +188,7 @@
         'chrome' primary-tinted surface (nav bar and friends), 40% blur
 -#}
 {%- macro theme_css(user, kind) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- set style = states('input_select.theme_style_' ~ u) -%}
 {%- set pal = states('input_select.theme_palette_' ~ u) -%}
 {%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
@@ -282,7 +290,7 @@ ha-card::before {
   level, not inside `$:`, because ha-card IS the host element.
 -#}
 {%- macro active_outline(user, helper, option) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- if is_state('input_select.' ~ helper ~ '_' ~ u, option) %}
 ha-card {
   outline: 2px solid var(--primary-color) !important;
@@ -300,7 +308,7 @@ ha-card {
     any other value — exact match against the background state
 -#}
 {%- macro background_outline(user, match) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- set bg = states('input_text.theme_background_' ~ u) -%}
 {%- set active = (match == 'auto' and bg in ['auto', 'unknown', 'unavailable', '']) or
                  (match == 'custom' and bg.startswith('#')) or
@@ -318,7 +326,7 @@ ha-card {
   the lovelace background plus the Glow style's radial orbs.
 -#}
 {%- macro view_background_css(user) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- set style = states('input_select.theme_style_' ~ u) -%}
 {%- set pal = states('input_select.theme_palette_' ~ u) -%}
 {%- set bg = states('input_text.theme_background_' ~ u) -%}
@@ -399,7 +407,7 @@ ha-card::after {
   and text color overrides. For System mode, wraps in @media blocks.
 -#}
 {%- macro style_tile_outer(user, style_name) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
 {%- set is_selected = is_state('input_select.theme_style_' ~ u, style_name) -%}
@@ -440,7 +448,7 @@ ha-card {
   and the nested mushroom-state-info$ selector.
 -#}
 {%- macro style_tile_shadow(user, style_name) -%}
-{%- set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' -%}
+{%- set u = resolve_user(user) -%}
 {%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
 {%- for m in modes %}

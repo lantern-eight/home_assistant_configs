@@ -1859,9 +1859,9 @@ views:
                   },
                   'card_mod': {
                     'style':
-                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
+                      JO ~ " from 'general_home_theme.jinja' import theme_value, resolve_user " ~ JC ~
                       JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
-                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
+                      JO ~ " set u = resolve_user(user) " ~ JC ~
                       "ha-card { border-radius: 12px !important; " ~
                       JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ hex ~ "') " ~ JC ~
                       " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
@@ -2097,9 +2097,9 @@ views:
                   },
                   'card_mod': {
                     'style':
-                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
+                      JO ~ " from 'general_home_theme.jinja' import theme_value, resolve_user " ~ JC ~
                       JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
-                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
+                      JO ~ " set u = resolve_user(user) " ~ JC ~
                       "ha-card { border-radius: 12px !important; " ~
                       JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ f_escaped ~ "') " ~ JC ~
                       " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
