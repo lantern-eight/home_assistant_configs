@@ -215,9 +215,21 @@ script:
         selector:
           text:
     sequence:
-    - variables:
+    - &resolve_username
+      variables:
         username: >-
-          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+          {% set user_map = {'f47...c86': '<entity_31>', '760...94c': '<entity_32>'} %}
+          {{ user_map.get(context.user_id, '') }}
+    - &unknown_caller_guard
+      if:
+      - condition: template
+        value_template: "{{ username == '' }}"
+      then:
+      - service: system_log.write
+        data:
+          message: "Theme script called by unknown user_id: {{ context.user_id }}"
+          level: warning
+      - stop: "Unknown caller"
     - service: input_select.select_option
       target:
         entity_id: "input_select.{{ helper }}_{{ username }}"
@@ -232,9 +244,8 @@ script:
         selector:
           text:
     sequence:
-    - variables:
-        username: >-
-          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+    - *resolve_username
+    - *unknown_caller_guard
     - service: input_text.set_value
       target:
         entity_id: "input_text.theme_background_{{ username }}"
@@ -249,9 +260,8 @@ script:
         selector:
           text:
     sequence:
-    - variables:
-        username: >-
-          {% if context.user_id == 'f47...c86' %}<entity_31>{% else %}<entity_32>{% endif %}
+    - *resolve_username
+    - *unknown_caller_guard
     - service: input_number.set_value
       target:
         entity_id: "input_number.{{ helper }}_{{ username }}"
