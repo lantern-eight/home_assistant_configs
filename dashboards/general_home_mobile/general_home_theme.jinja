@@ -192,9 +192,9 @@
 {%- set var_open = '{{' -%}
 {%- set var_close = '}}' -%}
 {{- jinja_open }} from 'general_home_theme.jinja' import theme_value, resolve_user {{ jinja_close -}}
-{{- jinja_open }} set pri = theme_value(user, 'primary') {{ jinja_close -}}
-{{- jinja_open }} set u = resolve_user(user) {{ jinja_close -}}
-ha-card { border-radius: 12px !important; {{ jinja_open }} if is_state('input_text.theme_background_' ~ u, '{{ value }}') {{ jinja_close }} border: 2px solid {{ var_open }} pri {{ var_close }} !important; {{ jinja_open }} endif {{ jinja_close }} }
+{{- jinja_open }} set primary = theme_value(user, 'primary') {{ jinja_close -}}
+{{- jinja_open }} set username = resolve_user(user) {{ jinja_close -}}
+ha-card { border-radius: 12px !important; {{ jinja_open }} if is_state('input_text.theme_background_' ~ username, '{{ value }}') {{ jinja_close }} border: 2px solid {{ var_open }} primary {{ var_close }} !important; {{ jinja_open }} endif {{ jinja_close }} }
 {%- endmacro -%}
 
 {#-
@@ -205,15 +205,15 @@ ha-card { border-radius: 12px !important; {{ jinja_open }} if is_state('input_te
         'chrome' primary-tinted surface (nav bar and friends), 40% blur
 -#}
 {%- macro theme_css(user, kind) -%}
-{%- set u = resolve_user(user) -%}
-{%- set style = states('input_select.theme_style_' ~ u) -%}
-{%- set pal = states('input_select.theme_palette_' ~ u) -%}
-{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set username = resolve_user(user) -%}
+{%- set style = states('input_select.theme_style_' ~ username) -%}
+{%- set pal = states('input_select.theme_palette_' ~ username) -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ username) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['dark', 'light'] -%}
-{%- set opacity_override = states('input_number.theme_card_opacity_' ~ u) | float(-1) -%}
-{%- set blur_override = states('input_number.theme_card_blur_' ~ u) | float(-1) -%}
+{%- set opacity_override = states('input_number.theme_card_opacity_' ~ username) | float(-1) -%}
+{%- set blur_override = states('input_number.theme_card_blur_' ~ username) | float(-1) -%}
 {%- set colors = palette_colors.get(pal, palette_colors['Indigo']) -%}
-{%- set severity_mode = states('input_select.theme_severity_colors_' ~ u) -%}
+{%- set severity_mode = states('input_select.theme_severity_colors_' ~ username) -%}
 {#- Resolve severity colors: "Standard" uses fixed universal values so
     severity meaning is visually consistent across all palettes. "Match
     Palette" uses the palette's own severity tints for visual cohesion.
@@ -307,8 +307,8 @@ ha-card::before {
   level, not inside `$:`, because ha-card IS the host element.
 -#}
 {%- macro active_outline(user, helper, option) -%}
-{%- set u = resolve_user(user) -%}
-{%- if is_state('input_select.' ~ helper ~ '_' ~ u, option) %}
+{%- set username = resolve_user(user) -%}
+{%- if is_state('input_select.' ~ helper ~ '_' ~ username, option) %}
 ha-card {
   outline: 2px solid var(--primary-color) !important;
   outline-offset: -2px;
@@ -325,8 +325,8 @@ ha-card {
     any other value — exact match against the background state
 -#}
 {%- macro background_outline(user, match) -%}
-{%- set u = resolve_user(user) -%}
-{%- set bg = states('input_text.theme_background_' ~ u) -%}
+{%- set username = resolve_user(user) -%}
+{%- set bg = states('input_text.theme_background_' ~ username) -%}
 {%- set active = (match == 'auto' and bg in ['auto', 'unknown', 'unavailable', '']) or
                  (match == 'custom' and bg.startswith('#')) or
                  (match != 'auto' and match != 'custom' and bg == match) -%}
@@ -343,11 +343,11 @@ ha-card {
   the lovelace background plus the Glow style's radial orbs.
 -#}
 {%- macro view_background_css(user) -%}
-{%- set u = resolve_user(user) -%}
-{%- set style = states('input_select.theme_style_' ~ u) -%}
-{%- set pal = states('input_select.theme_palette_' ~ u) -%}
-{%- set bg = states('input_text.theme_background_' ~ u) -%}
-{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set username = resolve_user(user) -%}
+{%- set style = states('input_select.theme_style_' ~ username) -%}
+{%- set pal = states('input_select.theme_palette_' ~ username) -%}
+{%- set bg = states('input_text.theme_background_' ~ username) -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ username) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['dark', 'light'] -%}
 {%- set glow_active = style == 'Glow' and bg in ['unknown', 'unavailable', 'auto', ''] -%}
 {%- for m in modes %}
@@ -401,19 +401,19 @@ ha-card::after {
   displays the dark-mode default.
 -#}
 {%- macro theme_value(account, prop) -%}
-{%- set u = resolve_user(account) -%}
-{%- set style = states('input_select.theme_style_' ~ u) -%}
+{%- set username = resolve_user(account) -%}
+{%- set style = states('input_select.theme_style_' ~ username) -%}
 {%- if prop == 'account' -%}
-{{- u -}}
+{{- username -}}
 {%- elif prop == 'primary' -%}
-{{- palette_colors.get(states('input_select.theme_palette_' ~ u), palette_colors['Indigo']).primary -}}
+{{- palette_colors.get(states('input_select.theme_palette_' ~ username), palette_colors['Indigo']).primary -}}
 {%- elif prop == 'card_opacity' -%}
-{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ username) | lower -%}
 {%- set m = mode_pref if mode_pref in ['light', 'dark'] else 'dark' -%}
-{%- set override = states('input_number.theme_card_opacity_' ~ u) | float(-1) -%}
+{%- set override = states('input_number.theme_card_opacity_' ~ username) | float(-1) -%}
 {{- (style_by_mode[m].opacity_default.get(style, 95) if override < 0 else override) | int -}}
 {%- elif prop == 'card_blur' -%}
-{%- set override = states('input_number.theme_card_blur_' ~ u) | float(-1) -%}
+{%- set override = states('input_number.theme_card_blur_' ~ username) | float(-1) -%}
 {{- (style_blur.get(style, 0) if override < 0 else override) | int -}}
 {%- endif -%}
 {%- endmacro -%}
@@ -424,15 +424,15 @@ ha-card::after {
   and text color overrides. For System mode, wraps in @media blocks.
 -#}
 {%- macro style_tile_outer(user, style_name) -%}
-{%- set u = resolve_user(user) -%}
-{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set username = resolve_user(user) -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ username) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
-{%- set is_selected = is_state('input_select.theme_style_' ~ u, style_name) -%}
+{%- set is_selected = is_state('input_select.theme_style_' ~ username, style_name) -%}
 {%- if style_name == 'Neon' %}
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 {%- endif %}
 {%- for m in modes %}
-{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
+{%- set preview = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
 @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
@@ -443,15 +443,15 @@ ha-card {
   box-shadow: 0 0 8px rgba(0,229,255,0.3) !important;
 {%- endif %}
 {%- endif %}
-  background: {{ p.bg }} !important;
-{%- if p.get('blur') %}
-  backdrop-filter: blur({{ p.blur }}px);
+  background: {{ preview.bg }} !important;
+{%- if preview.get('blur') %}
+  backdrop-filter: blur({{ preview.blur }}px);
 {%- endif %}
 {%- if style_name == 'Neon' %}
   border-radius: 4px !important;
 {%- endif %}
-  --primary-text-color: {{ p.text }};
-  --card-primary-color: {{ p.text }};
+  --primary-text-color: {{ preview.text }};
+  --card-primary-color: {{ preview.text }};
 }
 {%- if modes | length > 1 %}
 }
@@ -465,18 +465,18 @@ ha-card {
   and the nested mushroom-state-info$ selector.
 -#}
 {%- macro style_tile_shadow(user, style_name) -%}
-{%- set u = resolve_user(user) -%}
-{%- set mode_pref = states('input_select.theme_mode_' ~ u) | lower -%}
+{%- set username = resolve_user(user) -%}
+{%- set mode_pref = states('input_select.theme_mode_' ~ username) | lower -%}
 {%- set modes = [mode_pref] if mode_pref in ['light', 'dark'] else ['light', 'dark'] -%}
 {%- for m in modes %}
-{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
+{%- set preview = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
 @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
 :host {
-  --card-primary-color: {{ p.text }} !important;
-  --card-secondary-color: {{ p.sec }} !important;
-  --icon-color: {{ p.get('icon', p.text) }} !important;
+  --card-primary-color: {{ preview.text }} !important;
+  --card-secondary-color: {{ preview.sec }} !important;
+  --icon-color: {{ preview.get('icon', preview.text) }} !important;
 {%- if style_name == 'Neon' %}
   font-family: 'Share Tech Mono', monospace !important;
 {%- endif %}
@@ -487,12 +487,12 @@ ha-card {
 {%- endfor %}
 mushroom-state-info$: |
 {%- for m in modes %}
-{%- set p = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
+{%- set preview = style_tile_preview.get(m, style_tile_preview.light).get(style_name, style_tile_preview[m].Clean) %}
 {%- if modes | length > 1 %}
   @media (prefers-color-scheme: {{ m }}) {
 {%- endif %}
   .primary {
-    color: {{ p.text }} !important;
+    color: {{ preview.text }} !important;
 {%- if style_name == 'Neon' %}
     font-family: 'Share Tech Mono', monospace !important;
 {%- endif %}
