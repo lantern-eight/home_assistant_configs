@@ -254,22 +254,6 @@ script:
       data:
         value: "{{ value }}"
 
-  theme_reset_customization:
-    mode: parallel
-    description: "Reset a per-user theme input_number to its default (-1)"
-    fields:
-      helper:
-        description: "Helper name without username suffix (e.g., theme_card_opacity)"
-        selector:
-          text:
-    sequence:
-    - *resolve_username
-    - *unknown_caller_guard
-    - service: input_number.set_value
-      target:
-        entity_id: "input_number.{{ helper }}_{{ username }}"
-      data:
-        value: -1
 
 # --- Automations ---
 
