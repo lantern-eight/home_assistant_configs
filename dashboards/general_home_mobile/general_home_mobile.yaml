@@ -204,6 +204,7 @@ shell_command:
 
 script:
   theme_select:
+    mode: parallel
     description: "Set a per-user theme input_select by resolving the calling user"
     fields:
       helper:
@@ -237,6 +238,7 @@ script:
         option: "{{ option }}"
 
   theme_set_background:
+    mode: parallel
     description: "Set the per-user theme background"
     fields:
       value:
@@ -253,6 +255,7 @@ script:
         value: "{{ value }}"
 
   theme_reset_customization:
+    mode: parallel
     description: "Reset a per-user theme input_number to its default (-1)"
     fields:
       helper:
