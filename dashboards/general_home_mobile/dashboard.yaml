@@ -304,6 +304,26 @@ views:
         name: "<entity_4>'s Door Open"
     - type: conditional
       conditions:
+      - condition: state
+        entity: binary_sensor.basement_area_basement_door_door
+        state: 'on'
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: binary_sensor.basement_area_basement_door_door
+        name: "Basement Door Open"
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.garage_house_garage_door_door
+        state: 'on'
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: binary_sensor.garage_house_garage_door_door
+        name: "Garage Door Open"
+    - type: conditional
+      conditions:
       - condition: numeric_state
         entity: sensor.soil_moisture_sensor_moisture
         below: input_number.soil_moisture_minimum
@@ -331,6 +351,66 @@ views:
           [[[
             const b = Math.round(parseFloat(entity.state));
             return `Soil Sensor Battery ${b}%`;
+          ]]]
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.<entity_3>_s_door_battery
+        below: 11
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.<entity_3>_s_door_battery
+        icon: mdi:battery-low
+        name: |
+          [[[
+            const b = Math.round(parseFloat(entity.state));
+            return `<entity_3>'s Door Battery ${b}%`;
+          ]]]
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.<entity_4>s_door_battery
+        below: 11
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.<entity_4>s_door_battery
+        icon: mdi:battery-low
+        name: |
+          [[[
+            const b = Math.round(parseFloat(entity.state));
+            return `<entity_4>'s Door Battery ${b}%`;
+          ]]]
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.basement_area_basement_door_battery
+        below: 11
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.basement_area_basement_door_battery
+        icon: mdi:battery-low
+        name: |
+          [[[
+            const b = Math.round(parseFloat(entity.state));
+            return `Basement Door Battery ${b}%`;
+          ]]]
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.garage_house_garage_door_battery
+        below: 11
+      card:
+        type: custom:button-card
+        template: door_chip
+        entity: sensor.garage_house_garage_door_battery
+        icon: mdi:battery-low
+        name: |
+          [[[
+            const b = Math.round(parseFloat(entity.state));
+            return `Garage Door Battery ${b}%`;
           ]]]
     - type: conditional
       conditions:
@@ -579,9 +659,9 @@ views:
         entity: sensor.dashboard_conditional_visible
         state_not: '0'
       - condition: state
-        entity: schedule.cond_bedtime_doors
+        entity: binary_sensor.house_armed_card_visible
         state: 'on'
-      card: &cond_card_bedtime_doors
+      card: &cond_card_house_armed
         type: custom:stack-in-card
         mode: vertical
         card_mod:
@@ -594,13 +674,26 @@ views:
               }
         cards:
         - type: custom:mushroom-title-card
-          title: Bedtime Doors
-          subtitle: Monitoring active
-          icon: mdi:door-open
+          title: House Security
+          icon: mdi:shield-home
           card_mod:
             style: *theme_exempt_style
         - type: entities
           entities:
+          - entity: input_boolean.house_armed
+            name: Arm House
+            icon: mdi:shield-lock
+            secondary_info: last-changed
+          - type: divider
+          - entity: binary_sensor.basement_area_basement_door_door
+            name: Basement Door
+            icon: mdi:door
+            secondary_info: last-changed
+          - entity: binary_sensor.garage_house_garage_door_door
+            name: Garage Door
+            icon: mdi:door
+            secondary_info: last-changed
+          - type: divider
           - entity: binary_sensor.<entity_3>s_door_door
             name: <entity_3>'s Door
             icon: mdi:door
@@ -1371,6 +1464,20 @@ views:
       card_mod:
         style: *theme_card_style
       entities:
+      - entity: input_boolean.house_armed
+        name: House Armed
+        icon: mdi:shield-lock
+        secondary_info: last-changed
+      - type: divider
+      - entity: binary_sensor.basement_area_basement_door_door
+        name: Basement Door
+        icon: mdi:door
+        secondary_info: last-changed
+      - entity: binary_sensor.garage_house_garage_door_door
+        name: Garage Door
+        icon: mdi:door
+        secondary_info: last-changed
+      - type: divider
       - entity: binary_sensor.<entity_3>s_door_door
         name: <entity_3>'s Door
         icon: mdi:door
@@ -1410,7 +1517,7 @@ views:
   - type: grid
     column_span: 1
     cards:
-    - *cond_card_bedtime_doors
+    - *cond_card_house_armed
     - *cond_card_uv_index
     - *cond_card_soil_moisture
   - type: grid
