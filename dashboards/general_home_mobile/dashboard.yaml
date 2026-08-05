@@ -1834,10 +1834,7 @@ views:
         card_param: cards
         filter:
           template: |
-            {% set JO = '{%' %}
-            {% set JC = '%}' %}
-            {% set VO = '{{' %}
-            {% set VC = '}}' %}
+            {% from 'general_home_theme.jinja' import deferred_background_outline %}
             {% set colors = [
               '#0d1117', '#1a1a2e', '#1b2838', '#2d1b3d',
               '#f5f5f5', '#e8edf2', '#fef7ed', '#e8f5e9'
@@ -1858,15 +1855,7 @@ views:
                     }
                   },
                   'card_mod': {
-                    'style':
-                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
-                      JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
-                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
-                      "ha-card { border-radius: 12px !important; " ~
-                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ hex ~ "') " ~ JC ~
-                      " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
-                      JO ~ " endif " ~ JC ~
-                      " }"
+                    'style': deferred_background_outline(hex)
                   }
                 }
               ] %}
@@ -1923,9 +1912,8 @@ views:
                     'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
                     'tap_action': {
                       'action': 'call-service',
-                      'service': 'input_text.set_value',
+                      'service': 'script.theme_set_background',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_31>',
                         'value': hex
                       }
                     },
@@ -1978,9 +1966,8 @@ views:
                     'image': "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1 1%27%3E%3Crect fill=%27" ~ enc ~ "%27 width=%271%27 height=%271%27/%3E%3C/svg%3E",
                     'tap_action': {
                       'action': 'call-service',
-                      'service': 'input_text.set_value',
+                      'service': 'script.theme_set_background',
                       'service_data': {
-                        'entity_id': 'input_text.theme_background_<entity_32>',
                         'value': hex
                       }
                     },
@@ -2075,14 +2062,12 @@ views:
         card_param: cards
         filter:
           template: |
-            {% set JO = '{%' %}
-            {% set JC = '%}' %}
-            {% set VO = '{{' %}
-            {% set VC = '}}' %}
+            {% from 'general_home_theme.jinja' import deferred_background_outline %}
             {% set files = state_attr('sensor.theme_backgrounds', 'file_list') or [] %}
             {% set ns = namespace(cards=[]) %}
 
             {% for f in files %}
+              {% set f_escaped = f | replace("'", "\\'") %}
               {% set ns.cards = ns.cards + [
                 {
                   'type': 'picture',
@@ -2095,15 +2080,7 @@ views:
                     }
                   },
                   'card_mod': {
-                    'style':
-                      JO ~ " from 'general_home_theme.jinja' import theme_value " ~ JC ~
-                      JO ~ " set pri = theme_value(user, 'primary') " ~ JC ~
-                      JO ~ " set u = '<entity_31>' if user == '<entity_31>' else '<entity_32>' " ~ JC ~
-                      "ha-card { border-radius: 12px !important; " ~
-                      JO ~ " if is_state('input_text.theme_background_' ~ u, '" ~ f ~ "') " ~ JC ~
-                      " border: 2px solid " ~ VO ~ " pri " ~ VC ~ " !important; " ~
-                      JO ~ " endif " ~ JC ~
-                      " }"
+                    'style': deferred_background_outline(f_escaped)
                   }
                 }
               ] %}

@@ -235,8 +235,8 @@ Then reload the page.
    that resolve `context.user_id` at runtime to target the correct
    per-user helper. Selection outlines use card_mod Jinja (which does
    get `user`). Sections that need `more-info` with a static entity
-   (Opacity/Blur sliders, Custom color card) still use per-user
-   `condition: user` blocks.
+   (Opacity/Blur sliders, Custom color card, Palette shades) still use
+   per-user `condition: user` blocks.
 
 4. **Don't remove or reorder the background overlay card.** It must be the
    first card in each view's first section. It uses `position: fixed` with
