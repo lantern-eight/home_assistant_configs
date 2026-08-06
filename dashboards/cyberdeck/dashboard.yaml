@@ -821,7 +821,7 @@ views:
                     .state__uom { color: var(--cyberdeck-text-dim) !important; font-size: 9px !important; }
 
           # ══════════════════════════════════════════════════════
-          #  PRINT UNITS — order by `current_status` (reachable first)
+          #  PRINT UNITS — order by sort key (printing first)
           # ══════════════════════════════════════════════════════
           - type: custom:auto-entities
             card:
@@ -829,10 +829,10 @@ views:
             card_param: cards
             sort:
               method: state
-              ignore_case: true
+              numeric: true
             filter:
               include:
-                - entity_id: sensor.<entity_23>_current_status
+                - entity_id: sensor.<entity_23>_print_sort_key
                   options:
                     type: custom:stack-in-card
                     card_mod:
@@ -1141,7 +1141,7 @@ views:
                         variables:
                           entity_prefix: <entity_23>
                           spoolman_prefix: <entity_20>
-                - entity_id: sensor.<entity_22>_current_status
+                - entity_id: sensor.<entity_22>_print_sort_key
                   options:
                     type: custom:stack-in-card
                     card_mod:

@@ -26,6 +26,26 @@ template:
              | reject('in', ['unknown','unavailable'])
              | list | count }}
 
+      # Numeric sort keys for auto-entities card ordering
+      # (0 = actively working, 1 = idle/done, 2 = offline)
+      - name: "<entity_23> Print Sort Key"
+        unique_id: <entity_23>_print_sort_key
+        state: >
+          {% set s = states(
+             'sensor.<entity_23>_current_status') %}
+          {% if s in ['printing','paused'] %}0
+          {% elif s in ['unknown','unavailable'] %}2
+          {% else %}1{% endif %}
+
+      - name: "<entity_22> Print Sort Key"
+        unique_id: <entity_22>_print_sort_key
+        state: >
+          {% set s = states(
+             'sensor.<entity_22>_current_status') %}
+          {% if s in ['printing','paused'] %}0
+          {% elif s in ['unknown','unavailable'] %}2
+          {% else %}1{% endif %}
+
       - name: "<entity_21> A1 Spoolman Grams"
         unique_id: <entity_21>_a1_spoolman_grams
         unit_of_measurement: "g"
