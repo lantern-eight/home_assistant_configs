@@ -70,7 +70,7 @@ kiosk_mode:
   hide_header: true
   hide_sidebar: true
 button_card_templates:
-  door_chip:
+  promoted_chip:
     icon: mdi:door-open
     show_state: false
     show_icon: true
@@ -289,7 +289,7 @@ views:
         state: 'on'
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: binary_sensor.<entity_3>s_door_door
         name: "<entity_3>'s Door Open"
     - type: conditional
@@ -299,7 +299,7 @@ views:
         state: 'on'
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: binary_sensor.<entity_4>s_door_door
         name: "<entity_4>'s Door Open"
     - type: conditional
@@ -309,7 +309,7 @@ views:
         state: 'on'
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: binary_sensor.basement_area_basement_door_door
         name: "Basement Door Open"
     - type: conditional
@@ -319,7 +319,7 @@ views:
         state: 'on'
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: binary_sensor.garage_house_garage_door_door
         name: "Garage Door Open"
     - type: conditional
@@ -329,7 +329,7 @@ views:
         below: input_number.soil_moisture_minimum
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.soil_moisture_sensor_moisture
         icon: mdi:water-percent
         name: |
@@ -344,7 +344,7 @@ views:
         below: 11
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.soil_moisture_sensor_battery
         icon: mdi:battery-low
         name: |
@@ -359,7 +359,7 @@ views:
         below: 11
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.<entity_3>_s_door_battery
         icon: mdi:battery-low
         name: |
@@ -374,7 +374,7 @@ views:
         below: 11
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.<entity_4>s_door_battery
         icon: mdi:battery-low
         name: |
@@ -389,7 +389,7 @@ views:
         below: 11
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.basement_area_basement_door_battery
         icon: mdi:battery-low
         name: |
@@ -404,7 +404,7 @@ views:
         below: 11
       card:
         type: custom:button-card
-        template: door_chip
+        template: promoted_chip
         entity: sensor.garage_house_garage_door_battery
         icon: mdi:battery-low
         name: |
