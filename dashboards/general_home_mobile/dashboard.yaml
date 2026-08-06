@@ -282,10 +282,14 @@ views:
       title: Home
       card_mod:
         style: *theme_exempt_style
+    # Only promote during the set window
     - type: conditional
       conditions:
       - condition: state
         entity: binary_sensor.<entity_3>s_door_door
+        state: 'on'
+      - condition: state
+        entity: schedule.cond_bedtime_doors
         state: 'on'
       card:
         type: custom:button-card
@@ -296,6 +300,9 @@ views:
       conditions:
       - condition: state
         entity: binary_sensor.<entity_4>s_door_door
+        state: 'on'
+      - condition: state
+        entity: schedule.cond_bedtime_doors
         state: 'on'
       card:
         type: custom:button-card

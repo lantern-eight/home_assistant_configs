@@ -241,37 +241,47 @@
         notification_items: >
           {% set ns = namespace(items=[]) %}
 
-          {# --- Doors: loop generates one notification item per door --- #}
+          {# --- Doors: loop generates one notification item per door.
+               promote_anytime: true = chip appears whenever open;
+               false = chip only appears during the specified window --- #}
+          {% set night_time_window =
+            is_state('schedule.cond_bedtime_doors', 'on') %}
           {% set door_configs = [
             {
               'entity': 'binary_sensor.<entity_3>s_door_door',
               'id': 'door_<entity_3>',
               'label': "<entity_3>'s Door",
-              'sort_key': '0_door_<entity_3>'
+              'sort_key': '0_door_<entity_3>',
+              'promote_anytime': false
             },
             {
               'entity': 'binary_sensor.<entity_4>s_door_door',
               'id': 'door_<entity_4>',
               'label': "<entity_4>'s Door",
-              'sort_key': '0_door_<entity_4>'
+              'sort_key': '0_door_<entity_4>',
+              'promote_anytime': false
             },
             {
               'entity':
                 'binary_sensor.basement_area_basement_door_door',
               'id': 'door_basement',
               'label': 'Basement Door',
-              'sort_key': '0_door_basement'
+              'sort_key': '0_door_basement',
+              'promote_anytime': true
             },
             {
               'entity':
                 'binary_sensor.garage_house_garage_door_door',
               'id': 'door_garage',
               'label': 'Garage Door',
-              'sort_key': '0_door_garage'
+              'sort_key': '0_door_garage',
+              'promote_anytime': true
             }
           ] %}
           {% for door in door_configs %}
             {% set is_open = is_state(door.entity, 'on') %}
+            {% set should_promote = is_open and
+              (door.promote_anytime or night_time_window) %}
             {% set ns.items = ns.items + [
               {
                 'id': door.id,
@@ -281,7 +291,7 @@
                 'icon': 'mdi:door-open'
                    if is_open else 'mdi:door-closed',
                 'severity': 'red' if is_open else 'green',
-                'promoted': is_open,
+                'promoted': should_promote,
                 'sort_key': door.sort_key
               }
             ] %}
