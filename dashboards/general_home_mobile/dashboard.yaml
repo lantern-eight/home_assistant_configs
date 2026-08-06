@@ -684,26 +684,40 @@ views:
             name: Arm House
             icon: mdi:shield-lock
             secondary_info: last-changed
-          - type: divider
+          - type: section
+            label: Alerts when armed
           - entity: binary_sensor.basement_area_basement_door_door
             name: Basement Door
             icon: mdi:door
             secondary_info: last-changed
+            state_color: true
           - entity: binary_sensor.garage_house_garage_door_door
             name: Garage Door
             icon: mdi:door
             secondary_info: last-changed
-          - type: divider
+            state_color: true
+          - type: section
+            label: Monitor only
           - entity: binary_sensor.<entity_3>s_door_door
             name: <entity_3>'s Door
             icon: mdi:door
             secondary_info: last-changed
+            state_color: true
           - entity: binary_sensor.<entity_4>s_door_door
             name: <entity_4>'s Door
             icon: mdi:door
             secondary_info: last-changed
+            state_color: true
           card_mod:
-            style: *theme_card_style
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css %}
+              {{ theme_css(user, 'card') }}
+              :host {
+                --state-binary_sensor-active-color:
+                  var(--error-color);
+                --state-binary_sensor-inactive-color:
+                  var(--success-color);
+              }
     - type: conditional
       conditions:
       - condition: state
