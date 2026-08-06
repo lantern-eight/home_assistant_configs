@@ -941,6 +941,13 @@ views:
               color: var(--success-color)
           card_mod:
             style: *theme_card_style
+        - type: entities
+          entities:
+            - entity: input_number.soil_moisture_minimum
+              name: Alert Threshold
+              icon: mdi:water-alert
+          card_mod:
+            style: *theme_card_style
   - type: grid
     column_span: 1
     cards:
