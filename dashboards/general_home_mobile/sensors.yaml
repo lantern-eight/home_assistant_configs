@@ -280,18 +280,18 @@
           ] %}
           {% for door in door_configs %}
             {% set is_open = is_state(door.entity, 'on') %}
-            {% set should_promote = is_open and
+            {% set should_show = is_open and
               (door.promote_anytime or night_time_window) %}
             {% set ns.items = ns.items + [
               {
                 'id': door.id,
-                'active': is_open,
+                'active': should_show,
                 'label': door.label
                    ~ (' Open' if is_open else ''),
                 'icon': 'mdi:door-open'
                    if is_open else 'mdi:door-closed',
                 'severity': 'red' if is_open else 'green',
-                'promoted': should_promote,
+                'promoted': should_show,
                 'sort_key': door.sort_key
               }
             ] %}
