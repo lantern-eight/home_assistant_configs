@@ -225,14 +225,14 @@ button_card_templates:
           let level = variables.initial_level || 0;
           for (const t of thresholds) {
             if (Array.isArray(t)) {
-              if (val < t[0] || val > t[1]) level++;
+              if (val > t[0] || val < t[1]) level++;
             } else {
               if (val > t) level++;
             }
           }
-          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722','#9C27B0'];
           const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
-          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(5)}${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
         ]]]
       value: |
         [[[
@@ -1005,7 +1005,7 @@ views:
           entity: sensor.basement_humidity
           name: Humidity
           variables:
-            thresholds: [[30, 60], [25, 65], [20, 70], [15, 80]]
+            thresholds: [[0, 12], 40, 50, 60, 65]
             initial_level: 1
             unit_label: '%'
         - type: custom:button-card
@@ -1013,7 +1013,7 @@ views:
           entity: sensor.basement_carbon_dioxide
           name: CO₂
           variables:
-            thresholds: [400, 600, 800, 1000, 1500]
+            thresholds: [400, 600, 800, 1000, 1500, 2500]
             decimals: 1
             unit_label: ppm
         - type: custom:button-card
@@ -1021,7 +1021,7 @@ views:
           entity: sensor.basement_volatile_organic_compounds_parts
           name: Chemicals
           variables:
-            thresholds: [65, 150, 250, 500, 1000]
+            thresholds: [65, 150, 250, 500, 1000, 2000]
             decimals: 1
             unit_label: ppb
         - type: custom:button-card
@@ -1029,7 +1029,7 @@ views:
           entity: sensor.basement_pm2_5
           name: PM2.5
           variables:
-            thresholds: [12, 25, 35, 55]
+            thresholds: [12, 25, 35, 55, 150]
             initial_level: 1
             decimals: 1
             unit_label: µg/m³
@@ -1038,14 +1038,14 @@ views:
           entity: sensor.basement_radon
           name: Radon
           variables:
-            thresholds: [0, 50, 100, 150, 200]
+            thresholds: [0, 50, 100, 150, 200, 300]
             unit_label: Bq/m³
         - type: custom:button-card
           template: air_dot_tile
           entity: sensor.<entity_13>_air_quality_index
           name: Outdoor AQI
           variables:
-            thresholds: [0, 50, 100, 150, 200]
+            thresholds: [0, 50, 100, 150, 200, 300]
             unit_label: AQI
   - type: grid
     column_span: 1
