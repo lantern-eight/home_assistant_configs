@@ -550,7 +550,7 @@ views:
       cards:
       - type: custom:weather-forecast-card
         entity: weather.forecast_home
-        default_forecast: hourly
+        default_forecast: daily
         current:
           temperature_entity: sensor.<entity_10>_temperature
           temperature_precision: 0
