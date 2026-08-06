@@ -28,6 +28,8 @@
       event: start
     - platform: state
       entity_id:
+        - input_boolean.house_armed
+        - binary_sensor.house_armed_card_visible
         - schedule.cond_bedtime_doors
         - schedule.cond_uv_index
         - sensor.<entity_10>_uv_index
@@ -46,9 +48,13 @@
         {% set max_visible = 5 %}
         {% set cards = [
           {
-            'id': 'bedtime_doors',
-            'active': is_state('schedule.cond_bedtime_doors', 'on'),
-            'priority': 10 if (now().hour >= 22 or now().hour < 5) else 30
+            'id': 'house_armed',
+            'active': is_state(
+               'binary_sensor.house_armed_card_visible', 'on'),
+            'priority': 5
+               if is_state('input_boolean.house_armed', 'on')
+               else (10 if (now().hour >= 22 or now().hour < 5)
+               else 30)
           },
           {
             'id': 'uv_index',
@@ -174,6 +180,15 @@
       entity_id:
         - binary_sensor.<entity_3>s_door_door
         - binary_sensor.<entity_4>s_door_door
+        - binary_sensor.basement_area_basement_door_door
+        - binary_sensor.garage_house_garage_door_door
+    # Door batteries
+    - platform: state
+      entity_id:
+        - sensor.<entity_3>_s_door_battery
+        - sensor.<entity_4>s_door_battery
+        - sensor.basement_area_basement_door_battery
+        - sensor.garage_house_garage_door_battery
     # Vacuums
     - platform: state
       entity_id:
@@ -226,31 +241,51 @@
         notification_items: >
           {% set ns = namespace(items=[]) %}
 
-          {% set door_<entity_3> = is_state('binary_sensor.<entity_3>s_door_door', 'on') %}
-          {% set ns.items = ns.items + [
+          {# --- Doors: loop generates one notification item per door --- #}
+          {% set door_configs = [
             {
+              'entity': 'binary_sensor.<entity_3>s_door_door',
               'id': 'door_<entity_3>',
-              'active': door_<entity_3>,
-              'label': "<entity_3>'s Door" ~ (' Open' if door_<entity_3> else ''),
-              'icon': 'mdi:door-open' if door_<entity_3> else 'mdi:door-closed',
-              'severity': 'red' if door_<entity_3> else 'green',
-              'promoted': door_<entity_3>,
+              'label': "<entity_3>'s Door",
               'sort_key': '0_door_<entity_3>'
-            }
-          ] %}
-
-          {% set door_<entity_4> = is_state('binary_sensor.<entity_4>s_door_door', 'on') %}
-          {% set ns.items = ns.items + [
+            },
             {
+              'entity': 'binary_sensor.<entity_4>s_door_door',
               'id': 'door_<entity_4>',
-              'active': door_<entity_4>,
-              'label': "<entity_4>'s Door" ~ (' Open' if door_<entity_4> else ''),
-              'icon': 'mdi:door-open' if door_<entity_4> else 'mdi:door-closed',
-              'severity': 'red' if door_<entity_4> else 'green',
-              'promoted': door_<entity_4>,
+              'label': "<entity_4>'s Door",
               'sort_key': '0_door_<entity_4>'
+            },
+            {
+              'entity':
+                'binary_sensor.basement_area_basement_door_door',
+              'id': 'door_basement',
+              'label': 'Basement Door',
+              'sort_key': '0_door_basement'
+            },
+            {
+              'entity':
+                'binary_sensor.garage_house_garage_door_door',
+              'id': 'door_garage',
+              'label': 'Garage Door',
+              'sort_key': '0_door_garage'
             }
           ] %}
+          {% for door in door_configs %}
+            {% set is_open = is_state(door.entity, 'on') %}
+            {% set ns.items = ns.items + [
+              {
+                'id': door.id,
+                'active': is_open,
+                'label': door.label
+                   ~ (' Open' if is_open else ''),
+                'icon': 'mdi:door-open'
+                   if is_open else 'mdi:door-closed',
+                'severity': 'red' if is_open else 'green',
+                'promoted': is_open,
+                'sort_key': door.sort_key
+              }
+            ] %}
+          {% endfor %}
 
           {% set nws_alerts = state_attr(
              'sensor.house_nws_alerts_<entity_24>_nws_alerts_alerts', 'Alerts') %}
@@ -374,21 +409,59 @@
             }
           ] %}
 
-          {% set soil_battery = states('sensor.soil_moisture_sensor_battery')
-             | float(-1) %}
-          {% set soil_battery_low = soil_battery >= 0 and soil_battery <= 10 %}
-          {% set ns.items = ns.items + [
+          {# --- Batteries: loop for all battery-monitored devices --- #}
+          {% set battery_configs = [
             {
+              'entity': 'sensor.<entity_3>_s_door_battery',
+              'id': 'battery_<entity_3>_door',
+              'label': "<entity_3>'s Door Battery",
+              'sort_key': '0_battery_<entity_3>_door'
+            },
+            {
+              'entity':
+                'sensor.<entity_4>s_door_battery',
+              'id': 'battery_<entity_4>_door',
+              'label': "<entity_4>'s Door Battery",
+              'sort_key': '0_battery_<entity_4>_door'
+            },
+            {
+              'entity':
+                'sensor.basement_area_basement_door_battery',
+              'id': 'battery_basement_door',
+              'label': 'Basement Door Battery',
+              'sort_key': '0_battery_basement_door'
+            },
+            {
+              'entity':
+                'sensor.garage_house_garage_door_battery',
+              'id': 'battery_garage_door',
+              'label': 'Garage Door Battery',
+              'sort_key': '0_battery_garage_door'
+            },
+            {
+              'entity': 'sensor.soil_moisture_sensor_battery',
               'id': 'soil_battery',
-              'active': soil_battery_low,
-              'label': 'Soil Sensor Battery: '
-                 ~ (soil_battery | round(0) | int) ~ '%',
-              'icon': 'mdi:battery-low',
-              'severity': 'red' if soil_battery_low else 'green',
-              'promoted': soil_battery_low,
+              'label': 'Soil Sensor Battery',
               'sort_key': '0_soil_battery'
             }
           ] %}
+          {% for battery in battery_configs %}
+            {% set level = states(battery.entity)
+               | float(-1) %}
+            {% set is_low = level >= 0 and level <= 10 %}
+            {% set ns.items = ns.items + [
+              {
+                'id': battery.id,
+                'active': is_low,
+                'label': battery.label ~ ': '
+                   ~ (level | round(0) | int) ~ '%',
+                'icon': 'mdi:battery-low',
+                'severity': 'red' if is_low else 'green',
+                'promoted': is_low,
+                'sort_key': battery.sort_key
+              }
+            ] %}
+          {% endfor %}
 
           {% if is_state('binary_sensor.<entity_34>_cleaning', 'on') %}
             {% set prog = states('sensor.<entity_34>_cleaning_progress')
@@ -577,3 +650,25 @@
       attributes:
         items: >
           {{ notification_items }}
+
+# =============================================================================
+# House Armed Card Visibility
+# =============================================================================
+# True when the house is armed OR during the bedtime window, so the
+# arming card shows in both situations. Used as the gate condition for
+# the conditional card in dashboard.yaml.
+
+- trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.house_armed
+        - schedule.cond_bedtime_doors
+    - platform: homeassistant
+      event: start
+  binary_sensor:
+    - name: "House Armed Card Visible"
+      unique_id: house_armed_card_visible
+      icon: mdi:shield-home
+      state: >
+        {{ is_state('input_boolean.house_armed', 'on')
+           or is_state('schedule.cond_bedtime_doors', 'on') }}

@@ -104,6 +104,18 @@ thermal_comfort:
 # Configurable soil moisture threshold. Editable from the HA UI so different
 # plants can have different minimums without touching code.
 
+# =============================================================================
+# House Security
+# =============================================================================
+# Manual arm/disarm toggle for nighttime door monitoring. When armed,
+# opening an armed door sends a critical phone alert that bypasses
+# silent mode.
+
+input_boolean:
+  house_armed:
+    name: "House Armed"
+    icon: mdi:shield-lock
+
 input_number:
   soil_moisture_minimum:
     name: "Soil Moisture Minimum"
@@ -551,6 +563,98 @@ automation:
       - action: notify.boss_phones
         data:
           message: "🪴 Soil moisture is {{ moisture }}% (threshold: {{ threshold }}%)"
+
+  # --------------------------------------------------------------------------
+  # Basement door open too long
+  # --------------------------------------------------------------------------
+  # Alerts phones when the basement door stays open for over 60 seconds.
+  # Fires once per opening — the `for:` duration resets if the door
+  # closes before 60s, so it only fires on genuinely forgotten doors.
+
+  - id: basement_door_open_too_long
+    alias: "Basement Door Open Too Long"
+    mode: single
+    triggers:
+      - entity_id: binary_sensor.basement_area_basement_door_door
+        to: "on"
+        for:
+          seconds: 60
+        trigger: state
+    actions:
+      - action: notify.boss_phones
+        data:
+          message: >
+            Basement door has been open for over a minute
+
+  # --------------------------------------------------------------------------
+  # Armed door opens
+  # --------------------------------------------------------------------------
+  # Sends a critical (audible, bypass-silent-mode) phone alert when an
+  # armed door opens while the house is armed. Uses only a subset of
+  # doors to alert on.
+
+  - id: armed_door_opens
+    alias: "Armed Door Opens"
+    mode: parallel
+    triggers:
+      - entity_id: &armed_doors
+          - binary_sensor.basement_area_basement_door_door
+          - binary_sensor.garage_house_garage_door_door
+        from: "off"
+        to: "on"
+        trigger: state
+    conditions:
+      - condition: state
+        entity_id: input_boolean.house_armed
+        state: "on"
+    actions:
+      - variables:
+          door_name: >
+            {% set names = {
+              'binary_sensor.basement_area_basement_door_door':
+                'Basement Door',
+              'binary_sensor.garage_house_garage_door_door':
+                'Garage Door'
+            } %}
+            {{ names.get(trigger.entity_id, 'Unknown Door') }}
+      - action: notify.boss_phones
+        data:
+          title: "House Security Alert"
+          message: >
+            {{ now().strftime('%-I:%M %p') }} {{ door_name }}
+            opened while house is armed
+          data:
+            # iOS: critical alert bypasses silent mode + DND
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+            # Android: alarm-priority channel
+            ttl: 0
+            priority: high
+            channel: alarm_stream
+
+  # --------------------------------------------------------------------------
+  # House auto-disarm
+  # --------------------------------------------------------------------------
+  # Turns off the house armed toggle at 5 AM daily so it doesn't stay
+  # armed into the morning when everyone is up and moving around.
+
+  - id: house_auto_disarm
+    alias: "House Auto-Disarm"
+    mode: single
+    triggers:
+      - trigger: time
+        at: "05:00:00"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.house_armed
+        state: "on"
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.house_armed
 
 # =============================================================================
 # Scripts
