@@ -931,27 +931,35 @@ views:
           icon: mdi:flower
           card_mod:
             style: *theme_exempt_style
-        - type: gauge
-          entity: sensor.soil_moisture_sensor_moisture
-          name: Moisture
-          unit: "%"
-          min: 0
-          max: 100
-          needle: true
-          segments:
-            - from: 0
-              color: var(--error-color)
-            - from: 20
-              color: var(--warning-color)
-            - from: 40
-              color: var(--success-color)
-          card_mod:
-            style: *theme_card_transparent
+        - type: custom:config-template-card
+          entities:
+            - input_number.soil_moisture_minimum
+            - input_number.soil_moisture_healthy
+          card:
+            type: gauge
+            entity: sensor.soil_moisture_sensor_moisture
+            name: Moisture
+            unit: "%"
+            min: 0
+            max: 100
+            needle: true
+            segments:
+              - from: 0
+                color: var(--error-color)
+              - from: ${parseFloat(states['input_number.soil_moisture_minimum'].state)}
+                color: var(--warning-color)
+              - from: ${parseFloat(states['input_number.soil_moisture_healthy'].state)}
+                color: var(--success-color)
+            card_mod:
+              style: *theme_card_transparent
         - type: entities
           entities:
             - entity: input_number.soil_moisture_minimum
               name: Alert Threshold
               icon: mdi:water-alert
+            - entity: input_number.soil_moisture_healthy
+              name: Healthy Threshold
+              icon: mdi:water-check
           card_mod:
             style: *theme_card_transparent
   - type: grid

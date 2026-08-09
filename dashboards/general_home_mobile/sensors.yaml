@@ -230,6 +230,7 @@
         - sensor.soil_moisture_sensor_moisture
         - sensor.soil_moisture_sensor_battery
         - input_number.soil_moisture_minimum
+        - input_number.soil_moisture_healthy
     # Lawn rain
     - platform: state
       entity_id: sensor.lawn_rain_weekly
@@ -405,7 +406,11 @@
              | float(-1) %}
           {% set soil_threshold = states('input_number.soil_moisture_minimum')
              | float(25) %}
+          {% set soil_healthy = states('input_number.soil_moisture_healthy')
+             | float(40) %}
           {% set soil_low = soil_moisture >= 0 and soil_moisture <= soil_threshold %}
+          {% set soil_warning = soil_moisture > soil_threshold
+             and soil_moisture < soil_healthy %}
           {% set soil_label = 'Soil Moisture: ' ~ (soil_moisture | round(0) | int)
              ~ '% (min ' ~ (soil_threshold | round(0) | int) ~ '%)' %}
           {% set ns.items = ns.items + [
@@ -414,7 +419,8 @@
               'active': soil_low,
               'label': soil_label,
               'icon': 'mdi:water-percent',
-              'severity': 'red' if soil_low else 'green',
+              'severity': 'red' if soil_low
+                else 'yellow' if soil_warning else 'green',
               'promoted': soil_low,
               'sort_key': '0_soil_moisture'
             }

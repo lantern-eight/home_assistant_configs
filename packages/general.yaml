@@ -93,6 +93,13 @@ input_number:
     step: 1
     unit_of_measurement: "%"
     icon: mdi:flower
+  soil_moisture_healthy:
+    name: "Soil Moisture Healthy"
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:flower
 
 utility_meter:
   lawn_rain_weekly:
