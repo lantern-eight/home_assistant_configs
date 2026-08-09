@@ -304,6 +304,7 @@
               'EHW': 'mdi:thermometer-alert',
               'HTA': 'mdi:thermometer-alert',
               'XHW': 'mdi:thermometer-alert',
+              'XHA': 'mdi:thermometer-alert',
               'TOR': 'mdi:weather-tornado',
               'TOA': 'mdi:weather-tornado',
               'FFW': 'mdi:home-flood',
