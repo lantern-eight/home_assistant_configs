@@ -34,6 +34,12 @@ x-theme-card-style: &theme_card_style |
 x-theme-exempt-style: &theme_exempt_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'exempt') }}
+x-theme-exempt-sub-style: &theme_exempt_sub_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  :host {
+    --subtitle-font-size: 14px;
+  }
 x-theme-card-transparent: &theme_card_transparent |
   ha-card {
     background: transparent !important;
@@ -2439,6 +2445,12 @@ views:
       icon: mdi:robot-outline
       card_mod:
         style: *theme_exempt_style
+
+    - type: custom:mushroom-title-card
+      title: Security
+      icon: mdi:shield-lock
+      card_mod:
+        style: *theme_exempt_style
     - type: custom:auto-entities
       card:
         type: entities
@@ -2450,6 +2462,114 @@ views:
       filter:
         include:
         - domain: automation
+          label: automation-security
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: Routine
+      icon: mdi:clock-outline
+      card_mod:
+        style: *theme_exempt_style
+
+    - type: custom:mushroom-title-card
+      title: ''
+      subtitle: Morning
+      icon: mdi:weather-sunny
+      card_mod:
+        style: *theme_exempt_sub_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-routine-morning
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: ''
+      subtitle: Bedtime
+      icon: mdi:weather-night
+      card_mod:
+        style: *theme_exempt_sub_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-routine-bedtime
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: System
+      icon: mdi:cog
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-system
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: 3D Printing
+      icon: mdi:printer-3d
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-3d-printing
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: Other
+      icon: mdi:dots-horizontal
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+        exclude:
+        - label: automation-security
+        - label: automation-routine
+        - label: automation-system
+        - label: automation-3d-printing
       show_empty: false
   - type: grid
     column_span: 1
