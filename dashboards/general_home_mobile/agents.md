@@ -76,7 +76,7 @@ name-derived entity ID. Don't assume the unique_id matches.
 | `general_home_theme.jinja` | Theme macro library: every palette/style value + the CSS-emitting macros (deployed to `custom_templates/`) |
 | `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
-| `registry_metadata.yaml` | Category and label definitions for helpers (applied via sync script `-c`) |
+| `registry_metadata.yaml` | Category and label definitions for helpers and automations (applied via sync script `-c`) |
 | `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`) |
 | `ha_config_additions.yaml` | Remaining HA config that can't go in a package (dashboard registration, secrets, frontend module) |
 | `README.md` | Full public-facing documentation |
@@ -87,7 +87,7 @@ directory — they live in repo-root `packages/` and are synced to HA's
 
 ## YAML Anchor System
 
-Six anchors defined at the top of `dashboard.yaml` control card theming:
+Seven anchors defined at the top of `dashboard.yaml` control card theming:
 
 | Anchor | Purpose |
 |--------|---------|
@@ -95,6 +95,7 @@ Six anchors defined at the top of `dashboard.yaml` control card theming:
 | `&theme_chip_style` | Theme chrome without background/border — for severity-colored chips |
 | `&theme_chrome_style` | Restrained treatment — use on navbar, popup shells |
 | `&theme_exempt_style` | Strips all styling — use on headings, chips, titles |
+| `&theme_exempt_sub_style` | Same as exempt but with smaller font — use on sub-section headings |
 | `&theme_card_transparent` | Transparent, no border — use on wrapper cards |
 | `&theme_bg_card` | Background overlay — must be first card in every view |
 

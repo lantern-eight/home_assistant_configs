@@ -34,6 +34,12 @@ x-theme-card-style: &theme_card_style |
 x-theme-exempt-style: &theme_exempt_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'exempt') }}
+x-theme-exempt-sub-style: &theme_exempt_sub_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  :host {
+    --subtitle-font-size: 14px;
+  }
 x-theme-card-transparent: &theme_card_transparent |
   ha-card {
     background: transparent !important;
@@ -225,14 +231,14 @@ button_card_templates:
           let level = variables.initial_level || 0;
           for (const t of thresholds) {
             if (Array.isArray(t)) {
-              if (val < t[0] || val > t[1]) level++;
+              if (val > t[0] || val < t[1]) level++;
             } else {
               if (val > t) level++;
             }
           }
-          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722'];
+          const colors = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#FF5722','#9C27B0'];
           const d = (i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i < level ? colors[i] : '#555'}"></div>`;
-          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${d(5)}${d(4)}${d(3)}${d(2)}${d(1)}${d(0)}</div>`;
         ]]]
       value: |
         [[[
@@ -282,10 +288,14 @@ views:
       title: Home
       card_mod:
         style: *theme_exempt_style
+    # Only promote during the set window
     - type: conditional
       conditions:
       - condition: state
         entity: binary_sensor.<entity_3>s_door_door
+        state: 'on'
+      - condition: state
+        entity: schedule.cond_bedtime_doors
         state: 'on'
       card:
         type: custom:button-card
@@ -296,6 +306,9 @@ views:
       conditions:
       - condition: state
         entity: binary_sensor.<entity_4>s_door_door
+        state: 'on'
+      - condition: state
+        entity: schedule.cond_bedtime_doors
         state: 'on'
       card:
         type: custom:button-card
@@ -543,7 +556,7 @@ views:
       cards:
       - type: custom:weather-forecast-card
         entity: weather.forecast_home
-        default_forecast: hourly
+        default_forecast: daily
         current:
           temperature_entity: sensor.<entity_10>_temperature
           temperature_precision: 0
@@ -933,7 +946,14 @@ views:
             - from: 40
               color: var(--success-color)
           card_mod:
-            style: *theme_card_style
+            style: *theme_card_transparent
+        - type: entities
+          entities:
+            - entity: input_number.soil_moisture_minimum
+              name: Alert Threshold
+              icon: mdi:water-alert
+          card_mod:
+            style: *theme_card_transparent
   - type: grid
     column_span: 1
     cards:
@@ -998,7 +1018,7 @@ views:
           entity: sensor.basement_humidity
           name: Humidity
           variables:
-            thresholds: [[30, 60], [25, 65], [20, 70], [15, 80]]
+            thresholds: [[0, 12], 40, 50, 60, 65]
             initial_level: 1
             unit_label: '%'
         - type: custom:button-card
@@ -1006,7 +1026,7 @@ views:
           entity: sensor.basement_carbon_dioxide
           name: CO₂
           variables:
-            thresholds: [400, 600, 800, 1000, 1500]
+            thresholds: [400, 600, 800, 1000, 1500, 2500]
             decimals: 1
             unit_label: ppm
         - type: custom:button-card
@@ -1014,7 +1034,7 @@ views:
           entity: sensor.basement_volatile_organic_compounds_parts
           name: Chemicals
           variables:
-            thresholds: [65, 150, 250, 500, 1000]
+            thresholds: [65, 150, 250, 500, 1000, 2000]
             decimals: 1
             unit_label: ppb
         - type: custom:button-card
@@ -1022,7 +1042,7 @@ views:
           entity: sensor.basement_pm2_5
           name: PM2.5
           variables:
-            thresholds: [12, 25, 35, 55]
+            thresholds: [12, 25, 35, 55, 150]
             initial_level: 1
             decimals: 1
             unit_label: µg/m³
@@ -1031,14 +1051,14 @@ views:
           entity: sensor.basement_radon
           name: Radon
           variables:
-            thresholds: [0, 50, 100, 150, 200]
+            thresholds: [0, 50, 100, 150, 200, 300]
             unit_label: Bq/m³
         - type: custom:button-card
           template: air_dot_tile
           entity: sensor.<entity_13>_air_quality_index
           name: Outdoor AQI
           variables:
-            thresholds: [0, 50, 100, 150, 200]
+            thresholds: [0, 50, 100, 150, 200, 300]
             unit_label: AQI
   - type: grid
     column_span: 1
@@ -2425,6 +2445,12 @@ views:
       icon: mdi:robot-outline
       card_mod:
         style: *theme_exempt_style
+
+    - type: custom:mushroom-title-card
+      title: Security
+      icon: mdi:shield-lock
+      card_mod:
+        style: *theme_exempt_style
     - type: custom:auto-entities
       card:
         type: entities
@@ -2436,6 +2462,114 @@ views:
       filter:
         include:
         - domain: automation
+          label: automation-security
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: Routine
+      icon: mdi:clock-outline
+      card_mod:
+        style: *theme_exempt_style
+
+    - type: custom:mushroom-title-card
+      title: ''
+      subtitle: Morning
+      icon: mdi:weather-sunny
+      card_mod:
+        style: *theme_exempt_sub_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-routine-morning
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: ''
+      subtitle: Bedtime
+      icon: mdi:weather-night
+      card_mod:
+        style: *theme_exempt_sub_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-routine-bedtime
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: System
+      icon: mdi:cog
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-system
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: 3D Printing
+      icon: mdi:printer-3d
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+          label: automation-3d-printing
+      show_empty: false
+
+    - type: custom:mushroom-title-card
+      title: Other
+      icon: mdi:dots-horizontal
+      card_mod:
+        style: *theme_exempt_style
+    - type: custom:auto-entities
+      card:
+        type: entities
+        card_mod:
+          style: *theme_card_style
+      sort:
+        method: friendly_name
+        ignore_case: true
+      filter:
+        include:
+        - domain: automation
+        exclude:
+        - label: automation-security
+        - label: automation-routine
+        - label: automation-system
+        - label: automation-3d-printing
       show_empty: false
   - type: grid
     column_span: 1
