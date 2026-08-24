@@ -46,6 +46,17 @@ x-theme-card-transparent: &theme_card_transparent |
     border: none !important;
     box-shadow: none !important;
   }
+# button-card draws its own border/background through `styles: card:`, which
+# lands as inline style. An `!important` rule beats inline, so the exempt
+# anchor would erase it — this strips only the themed shadow/blur and leaves
+# the button's own surface alone. Palette variables inherit from the parent
+# card, so they don't need redeclaring here.
+x-theme-button-style: &theme_button_style |
+  ha-card {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 x-theme-chip-style: &theme_chip_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'chip') }}
@@ -268,6 +279,895 @@ button_card_templates:
         - margin-top: 2px
         unit:
         - margin-top: 0px
+  # ------------- Vacuum Components -------------
+  # Every instance passes vacuum name, palette color vacuum is themed with,
+  # and second stop of its gradient. Alpha variants use color-mix so the
+  # design's rgba() tints stay theme-aware instead of hardcoding a palette.
+
+  # Foundation for every vacuum card. Three things:
+  #
+  #  - `label`: The vacuum's display name, capitalised from the entity name.
+  #  - `room_list`: The parse of a stored comma-separated id list. This mirrors
+  #      the writer, so reader and writer agree on what the value means.
+  #  - button-card theme exemption.
+  #
+  # button-card resolves variables lazily through a memoising proxy, so a
+  # variable can read another and nothing is evaluated unless it is used.
+  # Reading `states` inside one still registers the entity for updates.
+  vacuum_base:
+    variables:
+      vac: ''
+      label: |
+        [[[
+          return variables.vac.charAt(0).toUpperCase() + variables.vac.slice(1);
+        ]]]
+      # Which list `room_list` reads: the user's selection, or the snapshot taken
+      # when the running sequence started.
+      room_list_source: selected_rooms
+      # `entity` is one of the parameters button-card injects into a JS
+      # template. A local var of that name is a redeclaration and the whole
+      # template fails to compile. Same for: states, user, hass, variables,
+      # html and helpers.
+      room_list: |
+        [[[
+          const source =
+            states[`input_text.${variables.vac}_${variables.room_list_source}`];
+          return (source?.state || '').split(',')
+            .map((id) => id.trim()).filter((id) => /^[0-9]+$/.test(id));
+        ]]]
+    card_mod:
+      style: *theme_button_style
+
+  # Room chip. Icon doubles as the selection indicator: a check in the vacuum
+  # color when selected, the room's own icon when not.
+  vacuum_room_chip:
+    template: vacuum_base
+    show_state: false
+    show_icon: true
+    show_name: true
+    layout: icon_name
+    variables:
+      room_id: ''
+      color: var(--primary-color)
+      color_end: var(--warning-color)
+      selected: |
+        [[[ return variables.room_list.includes(variables.room_id); ]]]
+      room: |
+        [[[
+          const config = states[`sensor.${variables.vac}_room_config`];
+          const rooms = config?.attributes?.rooms || [];
+          return rooms.find((entry) => entry.id === variables.room_id) || {};
+        ]]]
+    icon: |
+      [[[
+        return variables.selected
+          ? 'mdi:check' : (variables.room.icon || 'mdi:floor-plan');
+      ]]]
+    name: "[[[ return variables.room.name || `Room ${variables.room_id}` ]]]"
+    tap_action:
+      action: call-service
+      service: script.vacuum_toggle_room
+      service_data:
+        vacuum_name: "[[[ return variables.vac ]]]"
+        room_id: "[[[ return variables.room_id ]]]"
+    styles:
+      card:
+      - padding: 8px 13px
+      - border-radius: 10px
+      # Anchors the gradient ring drawn by extra_styles below.
+      - position: relative
+      - transition: all 0.15s ease
+      - background: |
+          [[[
+            if (!variables.selected)
+              return 'color-mix(in srgb, var(--primary-text-color) 4%, transparent)';
+            return `linear-gradient(135deg,
+              color-mix(in srgb, ${variables.color} 16%, transparent),
+              color-mix(in srgb, ${variables.color_end} 16%, transparent))`;
+          ]]]
+      - border: |
+          [[[
+            return variables.selected ? '1px solid transparent'
+              : '1px solid color-mix(in srgb, var(--primary-text-color) 9%, transparent)';
+          ]]]
+      icon:
+      - width: 14px
+      - --mdc-icon-size: 14px
+      - color: |
+          [[[
+            return variables.selected
+              ? variables.color : 'var(--secondary-text-color)';
+          ]]]
+      name:
+      - font-size: 13px
+      - white-space: nowrap
+      # Room names come from the 3rd party vacuum app.
+      - text-transform: capitalize
+      - color: |
+          [[[
+            return variables.selected
+              ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
+          ]]]
+      grid:
+      - grid-template-areas: '"i n"'
+      - grid-template-columns: min-content max-content
+      # One row only. button-card keeps its default three-row track list even
+      # when state and label are hidden, and the two empty tracks still take
+      # their share of `gap` — which lands as dead space under the label and
+      # pushes it off center.
+      - grid-template-rows: 1fr
+      - justify-content: center
+      - align-items: center
+      - gap: 6px
+    # A gradient can't be used as a `border` color, so the selected chip
+    # paints one into a ::before and masks the middle out, leaving a 1px
+    # ring. Same two-tone as the start button, so a picked room reads as
+    # already belonging to that vacuum's run.
+    extra_styles: |
+      [[[
+        if (!variables.selected) return '';
+        return `
+          ha-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            /* Matches the card's own radius. Stated outright rather than
+               inherited, so the ring is never drawn square in the window
+               before the card's inline radius lands. */
+            border-radius: 10px;
+            padding: 1px;
+            background: linear-gradient(135deg,
+              ${variables.color}, ${variables.color_end});
+            -webkit-mask: linear-gradient(#000 0 0) content-box,
+                          linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box,
+                  linear-gradient(#000 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+          }`;
+      ]]]
+
+  # One segment of the per-vacuum Passes control.
+  vacuum_pass_segment:
+    template: vacuum_base
+    show_state: false
+    show_icon: false
+    show_name: true
+    variables:
+      passes: 1
+      color: var(--primary-color)
+      selected: |
+        [[[
+          return parseFloat(
+            states[`input_number.${variables.vac}_passes`]?.state
+          ) === variables.passes;
+        ]]]
+    name: "[[[ return `${variables.passes}×` ]]]"
+    tap_action:
+      action: call-service
+      service: input_number.set_value
+      service_data:
+        entity_id: "[[[ return `input_number.${variables.vac}_passes` ]]]"
+        value: "[[[ return variables.passes ]]]"
+    styles:
+      card:
+      - padding: 6px 14px
+      - border-radius: 7px
+      - border: none
+      - transition: all 0.15s ease
+      - background: |
+          [[[
+            return variables.selected
+              ? `color-mix(in srgb, ${variables.color} 18%, transparent)`
+              : 'transparent';
+          ]]]
+      name:
+      - font-size: 12px
+      - white-space: nowrap
+      - font-weight: "[[[ return variables.selected ? '600' : '500' ]]]"
+      - color: |
+          [[[
+            return variables.selected
+              ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
+          ]]]
+
+  # Preset chip — sets the whole room selection at once. Highlights when the
+  # current selection already matches the preset.
+  vacuum_preset_chip:
+    template: vacuum_base
+    show_state: false
+    show_icon: false
+    show_name: true
+    variables:
+      # Either a literal comma-separated id list, or list resolved from
+      # room_config. Sensor so no segment id is restated outside
+      # packages/vacuum_rooms.jinja.
+      rooms: ''
+      color: var(--primary-color)
+      room_ids: |
+        [[[
+          const keyword = variables.rooms === 'all' || variables.rooms === 'common';
+          if (!keyword) return variables.rooms;
+          const config = states[`sensor.${variables.vac}_room_config`];
+          const rooms = config?.attributes?.rooms || [];
+          return rooms
+            .filter((room) => variables.rooms === 'all' || room.common)
+            .map((room) => room.id).join(',');
+        ]]]
+      selected: |
+        [[[
+          const wanted = variables.room_ids.split(',').filter(Boolean).sort().join(',');
+          // Copied before sorting: room_list is memoised and shared with
+          // every other card on this vacuum, so sorting it in place would
+          // reorder what they read.
+          const current = [...variables.room_list].sort().join(',');
+          return !!wanted && current === wanted;
+        ]]]
+    tap_action:
+      # A preset that resolves to nothing must not fire. vacuum_set_rooms
+      # parses an empty string as an empty list, and since that never equals
+      # a non-empty selection it takes the "set" branch and writes the
+      # selection away — so tapping "All Rooms" would clear the selection
+      # instead of filling it. Both keyword presets read room_config, which
+      # is absent for a moment at startup, during the first frames of a card
+      # render, and after a macro edit without a homeassistant.reload_custom_templates.
+      action: "[[[ return variables.room_ids ? 'call-service' : 'none' ]]]"
+      service: script.vacuum_set_rooms
+      service_data:
+        vacuum_name: "[[[ return variables.vac ]]]"
+        room_ids: "[[[ return variables.room_ids ]]]"
+    # Deliberately flatter than a selected room chip: the presets are a way
+    # in, the rooms are the actual selection, and only one of them should be
+    # highlighted at a time.
+    styles:
+      card:
+      - padding: 8px 12px
+      - border-radius: 10px
+      - transition: all 0.15s ease
+      - background: |
+          [[[
+            return variables.selected
+              ? `color-mix(in srgb, ${variables.color} 10%, transparent)`
+              : 'color-mix(in srgb, var(--primary-text-color) 4%, transparent)';
+          ]]]
+      - border: |
+          [[[
+            return variables.selected
+              ? `1px solid color-mix(in srgb, ${variables.color} 20%, transparent)`
+              : '1px solid color-mix(in srgb, var(--primary-text-color) 8%, transparent)';
+          ]]]
+      name:
+      - font-size: 12px
+      - font-weight: 500
+      - white-space: nowrap
+      - color: |
+          [[[
+            return variables.selected
+              ? variables.color : 'var(--secondary-text-color)';
+          ]]]
+
+  # Gradient start button. Dims to a flat disabled fill when no rooms are selected.
+  # `color` carries the vacuum's identity and `color_end` the second stop, so
+  # both buttons are two-tone and still read as different machines.
+  vacuum_start_button:
+    template: vacuum_base
+    show_state: false
+    show_icon: true
+    show_name: true
+    layout: icon_name
+    icon: mdi:play
+    variables:
+      color: var(--primary-color)
+      color_end: var(--warning-color)
+      count: "[[[ return variables.room_list.length ]]]"
+    name: |
+      [[[
+        const count = variables.count;
+        if (!count) return `Select rooms for ${variables.label}`;
+        return `Start ${variables.label} · ${count} room${count > 1 ? 's' : ''}`;
+      ]]]
+    tap_action:
+      # With nothing selected the button only *looks* disabled — tapping it
+      # would still confirm and then hit the script's own room-count condition,
+      # which fails silently. button-card resolves `action` as a template and
+      # short-circuits on `none` before it reads `confirmation`, so this
+      # suppresses the unneeded dialog as well as the call.
+      action: |
+        [[[ return variables.count ? 'call-service' : 'none' ]]]
+      service: script.vacuum_clean_rooms_sequence
+      service_data:
+        vacuum_entity: "[[[ return `vacuum.${variables.vac}` ]]]"
+      confirmation:
+        text: "[[[ return `Start room-by-room cleaning with ${variables.label}?` ]]]"
+    styles:
+      card:
+      - padding: 14px
+      - border: none
+      - border-radius: 13px
+      - transition: all 0.15s ease
+      - background: |
+          [[[
+            if (!variables.count)
+              return 'color-mix(in srgb, var(--primary-text-color) 6%, transparent)';
+            return `linear-gradient(135deg, ${variables.color}, ${variables.color_end})`;
+          ]]]
+      icon:
+      - width: 16px
+      - --mdc-icon-size: 16px
+      - color: |
+          [[[
+            return variables.count
+              ? 'var(--text-primary-color, #fff)' : 'var(--secondary-text-color)';
+          ]]]
+      name:
+      - font-size: 16px
+      - font-weight: 600
+      - color: |
+          [[[
+            return variables.count
+              ? 'var(--text-primary-color, #fff)' : 'var(--secondary-text-color)';
+          ]]]
+      grid:
+      - grid-template-areas: '"i n"'
+      - grid-template-columns: min-content max-content
+      # See vacuum_room_chip — collapses button-card's unused state/label rows.
+      - grid-template-rows: 1fr
+      - justify-content: center
+      - align-items: center
+      - gap: 8px
+
+  # Skip / Stop. `tone` is the accent, stop passes the error color.
+  vacuum_control_button:
+    template: vacuum_base
+    show_state: false
+    show_icon: true
+    show_name: true
+    layout: icon_name
+    variables:
+      tone: ''
+    styles:
+      card:
+      - padding: 11px
+      - border-radius: 12px
+      - background: |
+          [[[
+            return variables.tone
+              ? `color-mix(in srgb, ${variables.tone} 8%, transparent)`
+              : 'color-mix(in srgb, var(--primary-text-color) 5%, transparent)';
+          ]]]
+      - border: |
+          [[[
+            return variables.tone
+              ? `1px solid color-mix(in srgb, ${variables.tone} 15%, transparent)`
+              : '1px solid transparent';
+          ]]]
+      icon:
+      - width: 15px
+      - --mdc-icon-size: 15px
+      - color: "[[[ return variables.tone || 'var(--secondary-text-color)' ]]]"
+      name:
+      - font-size: 15px
+      - font-weight: 500
+      - color: "[[[ return variables.tone || 'var(--secondary-text-color)' ]]]"
+      grid:
+      - grid-template-areas: '"i n"'
+      - grid-template-columns: min-content max-content
+      # See vacuum_room_chip — collapses button-card's unused state/label rows.
+      - grid-template-rows: 1fr
+      - justify-content: center
+      - align-items: center
+      - gap: 6px
+
+  # The header both card modes draw: a 40px avatar slot, the vacuum's name and
+  # floor, a status line, and an optional block pinned to the right.
+  vacuum_identity:
+    template: vacuum_base
+    show_state: false
+    show_icon: false
+    show_name: false
+    variables:
+      floor: ''
+      # The color the status line and the avatar are drawn in. Not always the
+      # vacuum's identity color: a running sequence uses the working color
+      # instead, so the card reads as "busy".
+      accent: var(--primary-color)
+      # Markup for the inside of the 40px avatar slot. The slot is
+      # position:relative, so either mode can fill it with absolutely
+      # positioned children.
+      avatar: ''
+      status_line: ''
+      # The live mode's status line is the thing being read during a run, so
+      # it sits a step above the idle card's dock/battery line.
+      status_size: 12px
+      # Optional markup pinned to the right of the row.
+      trailing: ''
+      header: |
+        [[[
+          return `
+            <div style="display:flex;align-items:center;gap:12px;width:100%">
+              <div style="width:40px;height:40px;position:relative;flex-shrink:0"
+                   >${variables.avatar}</div>
+              <div style="flex:1;min-width:0;text-align:left">
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span style="font-size:16px;font-weight:600;
+                               color:var(--primary-text-color)"
+                        >${variables.label}</span>
+                  <span style="font-size:12px;color:var(--secondary-text-color)"
+                        >${variables.floor}</span>
+                </div>
+                <div style="font-size:${variables.status_size};
+                            color:${variables.accent};margin-top:2px"
+                     >${variables.status_line}</div>
+              </div>
+              ${variables.trailing}
+            </div>`;
+        ]]]
+    tap_action:
+      action: more-info
+      entity: "[[[ return `vacuum.${variables.vac}` ]]]"
+    styles:
+      card:
+      - padding: 16px 18px 12px
+      - background: none
+      - border: none
+      grid:
+      - grid-template-areas: '"body"'
+
+  # Idle header: avatar, name, floor, dock/battery line.
+  vacuum_idle_header:
+    template: vacuum_identity
+    variables:
+      avatar: |
+        [[[
+          const tint = `color-mix(in srgb, ${variables.accent} 10%, transparent)`;
+          return `
+            <div style="position:absolute;inset:0;border-radius:50%;display:flex;
+                        align-items:center;justify-content:center;background:${tint}">
+              <ha-icon icon="phu:<entity_42>"
+                       style="--mdc-icon-size:20px;color:${variables.accent}"></ha-icon>
+            </div>`;
+        ]]]
+      # Either half can be missing: the status sensor is briefly `unknown` at
+      # startup, and both go `unavailable` when the vacuum drops off the
+      # network. Joining only the parts that resolved keeps this from
+      # rendering as a stray separator (" · 100%") or a bare unit ("–%").
+      status_line: |
+        [[[
+          const unset = (value) =>
+            !value || value === 'unknown' || value === 'unavailable';
+          const statusState = states[`sensor.${variables.vac}_status`]?.state;
+          const batteryState = states[`sensor.${variables.vac}_battery`]?.state;
+          const status = unset(statusState) ? ''
+            : statusState.replace(/_/g, ' ').replace(/^./, (ch) => ch.toUpperCase());
+          const battery = unset(batteryState) ? '' : `${batteryState}%`;
+          return [status, battery].filter(Boolean).join(' · ') || 'Unavailable';
+        ]]]
+    custom_fields:
+      body: "[[[ return variables.header ]]]"
+
+  # Live queue body: progress ring, room queue, overall bar, dock line. The
+  # header row is vacuum_identity's, filled in with the ring, the working
+  # color and this run's status line.
+  vacuum_live_body:
+    template: vacuum_identity
+    variables:
+      # The live card renders the snapshot taken when the run started rather
+      # than the selection helper, so editing the selection mid-run does not
+      # reorder the queue being worked through.
+      room_list_source: sequence_queue
+      accent: var(--warning-color)
+      status_size: 13px
+      index: |
+        [[[
+          return parseInt(
+            states[`input_number.${variables.vac}_sequence_index`]?.state) || 0;
+        ]]]
+      room_percent: |
+        [[[
+          return parseInt(
+            states[`sensor.${variables.vac}_cleaning_progress`]?.state) || 0;
+        ]]]
+      # The queue's segment ids mapped to display labels. Two things below
+      # need them — the status line names the current room, the chip row
+      # names all of them — so they are resolved here once instead of each
+      # doing its own lookup.
+      queue_labels: |
+        [[[
+          const config = states[`sensor.${variables.vac}_room_config`];
+          const rooms = config?.attributes?.rooms || [];
+          return variables.room_list.map((id) => {
+            const room = rooms.find((entry) => entry.id === id);
+            return room ? (room.short || room.name) : `Room ${id}`;
+          });
+        ]]]
+      # Completed rooms plus however far the current one has got. Clamped at
+      # both ends: index is 0 for the moment before the first room is
+      # published, which makes this negative. A negative width or dasharray
+      # is an invalid declaration, the browser drops it and both the bar and
+      # the ring would render complete.
+      overall: |
+        [[[
+          const total = variables.room_list.length;
+          if (!total) return 0;
+          const done = (variables.index - 1) + variables.room_percent / 100;
+          return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+        ]]]
+      status_line: |
+        [[[
+          // Three entities describe what the vacuum is doing and they
+          // disagree, so each question goes to whichever one answers it: Is it
+          // cleaning? Is it emptying?
+          //
+          // binary_sensor.<vac>_cleaning answers neither — it turns on about
+          // half a minute after a room really starts, so anything keyed off
+          // it will be late since the vacuum is already out on the floor.
+          //
+          // Is it cleaning? vacuum.<vac>, which flips the moment the job
+          // starts. Is it emptying? sensor.<vac>_status lists this directly.
+          const statusRaw = states[`sensor.${variables.vac}_status`]?.state || '';
+          // index is still 0 for the moment between the run being flagged and
+          // the first room being published, so key the status off whether a
+          // room resolved rather than off `cleaning` — otherwise that window
+          // renders as "Cleaning  · 0%" with an empty room name.
+          const labels = variables.queue_labels;
+          const current = variables.index > 0 && variables.index <= labels.length
+            ? labels[variables.index - 1] : '';
+          if (!current) return 'Starting…';
+          if (states[`vacuum.${variables.vac}`]?.state === 'cleaning')
+            return `Cleaning ${current} · ${variables.room_percent}%`;
+          if (statusRaw === 'emptying_the_bin') return 'Emptying bin';
+          return statusRaw.replace(/_/g, ' ')
+            .replace(/^./, (ch) => ch.toUpperCase()) || 'Working';
+        ]]]
+      avatar: |
+        [[[
+          const circumference = 2 * Math.PI * 17;
+          const dash = (variables.overall / 100) * circumference;
+          const drawn = dash.toFixed(1);
+          const gap = (circumference - dash).toFixed(1);
+          const track = `color-mix(in srgb, ${variables.accent} 15%, transparent)`;
+          return `
+            <svg width="40" height="40" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="17" fill="none" stroke="${track}"
+                      stroke-width="3.5"/>
+              <circle cx="20" cy="20" r="17" fill="none"
+                      stroke="${variables.accent}" stroke-width="3.5"
+                      stroke-linecap="round" transform="rotate(-90 20 20)"
+                      stroke-dasharray="${drawn} ${gap}"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;
+                        align-items:center;justify-content:center">
+              <ha-icon icon="phu:<entity_42>"
+                       style="--mdc-icon-size:18px;color:${variables.accent}"></ha-icon>
+            </div>`;
+        ]]]
+      trailing: |
+        [[[
+          const accent = variables.accent;
+          const passes = parseInt(
+            states[`input_number.${variables.vac}_passes`]?.state) || 1;
+          return `
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+              <div style="padding:4px 9px;border-radius:6px;font-size:11px;
+                          font-weight:600;color:${accent};
+                          background:color-mix(in srgb, ${accent} 12%, transparent)"
+                   >${passes}×</div>
+              <div style="font-size:22px;font-weight:700;color:${accent};line-height:1"
+                   >${variables.index}<span style="font-size:13px;font-weight:400;
+                                          color:var(--secondary-text-color)"
+                         >/${variables.room_list.length}</span></div>
+            </div>`;
+        ]]]
+    custom_fields:
+      body: |
+        [[[
+          const accent = variables.accent;
+          const green = 'var(--success-color)';
+          const index = variables.index;
+
+          const chips = variables.queue_labels.map((label, position) => {
+            const number = position + 1;
+            const base = 'padding:5px 10px;border-radius:8px;font-size:12px;'
+                       + 'white-space:nowrap;text-transform:capitalize;';
+            if (number < index) return `<span style="${base}background:color-mix(in srgb, ${green} 10%, transparent);color:color-mix(in srgb, ${green} 65%, var(--card-background-color));text-decoration:line-through">${label}</span>`;
+            if (number === index) return `<span style="${base}background:color-mix(in srgb, ${accent} 15%, transparent);border:1px solid color-mix(in srgb, ${accent} 25%, transparent);color:${accent};font-weight:600">${label}</span>`;
+            return `<span style="${base}background:color-mix(in srgb, var(--primary-text-color) 4%, transparent);color:var(--secondary-text-color)">${label}</span>`;
+          }).join('');
+
+          // Shown only while the device actually reports emptying_the_bin.
+          const emptying =
+            states[`sensor.${variables.vac}_status`]?.state === 'emptying_the_bin';
+          const dockLine = emptying
+            ? `<div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                 <ha-icon icon="mdi:tray-arrow-down"
+                          style="--mdc-icon-size:12px;color:var(--secondary-text-color)"></ha-icon>
+                 <span style="font-size:11px;color:var(--secondary-text-color)"
+                       >Emptying bin between rooms</span>
+               </div>`
+            : '';
+
+          // Dropped rather than rendered as "Battery –%" when the sensor is unknown.
+          // The header's own status line already reports that the vacuum is
+          // unreachable.
+          const batteryState = states[`sensor.${variables.vac}_battery`]?.state;
+          const batteryLine = !batteryState || batteryState === 'unknown'
+            || batteryState === 'unavailable' ? ''
+            : `<div style="font-size:11px;color:var(--secondary-text-color);
+                           margin-top:8px">Battery ${batteryState}%</div>`;
+
+          return `
+            <div style="width:100%;text-align:left">
+              ${variables.header}
+
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px"
+                   >${chips}</div>
+
+              <div style="height:4px;border-radius:2px;margin-top:14px;overflow:hidden;
+                          background:color-mix(in srgb, var(--primary-text-color) 7%, transparent)">
+                <div style="height:100%;width:${variables.overall}%;border-radius:2px;
+                            background:linear-gradient(90deg, ${accent},
+                                       color-mix(in srgb, ${accent} 60%, #ffffff))"></div>
+              </div>
+
+              ${dockLine}
+              ${batteryLine}
+            </div>`;
+        ]]]
+
+# Both vacuum cards are the same body with four variables: which vacuum,
+# its floor label, and the two stops of its identity gradient. It is defined
+# once here and instantiated twice under `views:`.
+#
+# streamline substitutes by string-replacing `[[name]]` over the JSON of this
+# block, building one regex per declared variable — so button-card's own
+# `[[[ ... ]]]` templates are never touched, and a variable reaches anywhere a
+# string does, including inside the auto-entities Jinja below. Values are
+# quoted wherever a bare `[[` would otherwise read as a YAML flow sequence.
+#
+# No `default:` block on purpose: an unset variable would render as a literal
+# `[[vac]]` in an entity id and fails visibly, rather than quietly drawing the
+# other vacuum's card.
+streamline_templates:
+  vacuum_card:
+    card:
+      type: custom:stack-in-card
+      mode: vertical
+      # stack-in-card merges children by walking every descendant ha-card
+      # 500ms after render and writing borderRadius:0 / background:
+      # transparent / boxShadow:none straight onto their inline style —
+      # which beats everything button-card sets. Without these 'keeps' the
+      # chips lose their radius and the start button loses its gradient
+      # until something forces a re-render. The children here are all
+      # button-cards that style themselves, so there is no chrome to strip.
+      keep:
+        border_radius: true
+        background: true
+        box_shadow: true
+      # The plain card treatment: it carries the palette variables every
+      # chip below reads, and leaves radius, surface opacity and blur to
+      # the user's style.
+      card_mod:
+        style:
+          .: *theme_card_style
+          hui-vertical-stack-card$: |
+            #root > * { margin: 0 !important; }
+      cards:
+
+      # ---- live queue mode ----
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: 'input_boolean.[[vac]]_sequence_running'
+          state: 'on'
+        card:
+          type: vertical-stack
+          cards:
+          - type: custom:button-card
+            template: vacuum_live_body
+            variables:
+              vac: '[[vac]]'
+              floor: '[[floor]]'
+          - type: grid
+            columns: 2
+            square: false
+            card_mod:
+              style:
+                # `#root` is in the grid card's own shadow root, so it is
+                # reached through `.`. A `hui-grid-card$` key looks for a
+                # grid card nested inside this one and matches nothing.
+                .: |
+                  #root { gap: 8px !important; padding: 6px 18px 16px !important; }
+            cards:
+            - type: custom:button-card
+              template: vacuum_control_button
+              icon: mdi:skip-next
+              name: Skip
+              tap_action:
+                action: call-service
+                service: script.vacuum_skip_room
+                service_data:
+                  vacuum_entity: 'vacuum.[[vac]]'
+                confirmation:
+                  text: Skip this room and move on to the next one?
+            - type: custom:button-card
+              template: vacuum_control_button
+              icon: mdi:stop
+              name: Stop
+              variables:
+                tone: var(--error-color)
+              tap_action:
+                action: call-service
+                service: script.vacuum_stop_sequence
+                service_data:
+                  vacuum_entity: 'vacuum.[[vac]]'
+                confirmation:
+                  text: Stop this sequence and return to dock?
+
+      # ---- selection mode ----
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: 'input_boolean.[[vac]]_sequence_running'
+          state: 'off'
+        card:
+          type: vertical-stack
+          cards:
+          - type: custom:button-card
+            template: vacuum_idle_header
+            variables:
+              vac: '[[vac]]'
+              floor: '[[floor]]'
+              accent: '[[color]]'
+
+          # Passes: label + segmented control, sized to content
+          - type: grid
+            columns: 2
+            square: false
+            card_mod:
+              style:
+                .: |
+                  #root {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 0 18px 12px !important;
+                  }
+                  #root > * { width: auto !important; flex: 0 0 auto !important; }
+            cards:
+            - type: custom:button-card
+              show_icon: false
+              show_state: false
+              name: Passes
+              tap_action:
+                action: none
+              styles:
+                card:
+                - padding: 0
+                - background: none
+                - border: none
+                name:
+                - font-size: 12px
+                - white-space: nowrap
+                - color: var(--secondary-text-color)
+              card_mod:
+                style: *theme_button_style
+            - type: grid
+              columns: 2
+              square: false
+              card_mod:
+                style:
+                  .: |
+                    #root {
+                      display: flex !important;
+                      gap: 0 !important;
+                      padding: 2px !important;
+                      border-radius: 8px;
+                      background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+                    }
+                    #root > * { width: auto !important; flex: 0 0 auto !important; }
+              cards:
+              - type: custom:button-card
+                template: vacuum_pass_segment
+                variables:
+                  vac: '[[vac]]'
+                  passes: 1
+                  color: '[[color]]'
+              - type: custom:button-card
+                template: vacuum_pass_segment
+                variables:
+                  vac: '[[vac]]'
+                  passes: 2
+                  color: '[[color]]'
+
+          # Presets
+          - type: grid
+            columns: 2
+            square: false
+            card_mod:
+              style:
+                .: |
+                  #root {
+                    display: flex !important;
+                    gap: 6px !important;
+                    padding: 0 18px 12px !important;
+                  }
+                  #root > * { width: auto !important; flex: 0 0 auto !important; }
+            cards:
+            # Both presets name a keyword rather than a list of ids: the chip
+            # resolves them from sensor.[[vac]]_room_config, so which rooms
+            # in a category is decided in packages/vacuum_rooms.jinja next to
+            # the rooms themselves, not restated here.
+            - type: custom:button-card
+              template: vacuum_preset_chip
+              name: Common Areas
+              variables:
+                vac: '[[vac]]'
+                rooms: common
+                color: '[[color]]'
+            - type: custom:button-card
+              template: vacuum_preset_chip
+              name: All Rooms
+              variables:
+                vac: '[[vac]]'
+                rooms: all
+                color: '[[color]]'
+
+          # Room chips, generated from sensor.[[vac]]_room_config so segment
+          # ids live in packages/vacuum_rooms.jinja and nowhere else —
+          # adding a room to that macro makes a chip appear here with
+          # nothing to edit. flex-wrap so chips size to their labels.
+          # `columns` only describes the frame before card_mod's CSS
+          # lands.
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 3
+              square: false
+              card_mod:
+                style:
+                  .: |
+                    #root {
+                      display: flex !important;
+                      flex-wrap: wrap !important;
+                      gap: 7px !important;
+                      padding: 0 18px 14px !important;
+                    }
+                    #root > * { width: auto !important; flex: 0 0 auto !important; }
+            card_param: cards
+            filter:
+              template: |
+                {% set ns = namespace(cards=[]) %}
+                {% for room in state_attr('sensor.[[vac]]_room_config', 'rooms') or [] %}
+                  {% set ns.cards = ns.cards + [
+                    {
+                      'type': 'custom:button-card',
+                      'template': 'vacuum_room_chip',
+                      'variables': {
+                        'vac': '[[vac]]',
+                        'room_id': room.id,
+                        'color': '[[color]]',
+                        'color_end': '[[color_end]]'
+                      }
+                    }
+                  ] %}
+                {% endfor %}
+                {{ ns.cards }}
+
+          - type: grid
+            columns: 1
+            square: false
+            card_mod:
+              style:
+                .: |
+                  #root { padding: 0 18px 16px !important; }
+            cards:
+            - type: custom:button-card
+              template: vacuum_start_button
+              variables:
+                vac: '[[vac]]'
+                color: '[[color]]'
+                color_end: '[[color_end]]'
 views:
 - title: Home
   path: home
@@ -907,6 +1807,58 @@ views:
               }
     - type: conditional
       conditions:
+      # Specified window, or any time HA is driving a clean.
+      - condition: or
+        conditions:
+        - condition: state
+          entity: schedule.cond_vacuum_rooms
+          state: 'on'
+        - condition: state
+          entity: input_boolean.<entity_34>_sequence_running
+          state: 'on'
+        - condition: state
+          entity: input_boolean.<entity_35>_sequence_running
+          state: 'on'
+      card: &cond_card_vacuum
+        type: grid
+        columns: 1
+        square: false
+        card_mod:
+          style: *theme_card_transparent
+        cards:
+        - type: custom:mushroom-title-card
+          title: Vacuums
+          tap_action:
+            action: navigate
+            navigation_path: /general-home/vacuums
+          card_mod:
+            style: *theme_exempt_style
+        # One card body, two vacuums. It lives in `streamline_templates`.
+        # Everything that differs between the two is here.
+        #
+        # `color_end` is stated per vacuum rather than derived from `color`.
+        # It has to contrast with it, and several palettes define --accent-color
+        # close to --primary-color, which makes the gradient close to a flat fill.
+        # Pairing them here makes it so if there's any changes, then the contrast
+        # color is right next to it and can be adjusted with it if needed.
+        - &vacuum_card_main
+          type: custom:streamline-card
+          template: vacuum_card
+          variables:
+            vac: <entity_34>
+            floor: Main Floor
+            color: var(--primary-color)
+            color_end: var(--warning-color)
+        - &vacuum_card_upstairs
+          type: custom:streamline-card
+          template: vacuum_card
+          variables:
+            vac: <entity_35>
+            floor: Upstairs
+            color: var(--success-color)
+            color_end: var(--primary-color)
+    - type: conditional
+      conditions:
       - condition: state
         entity: sensor.soil_moisture_sensor_moisture
         state_not: unavailable
@@ -1355,6 +2307,16 @@ views:
           card_mod:
             style: *theme_card_style
         - type: custom:mushroom-template-card
+          primary: Vacuums
+          secondary: Room-by-room cleaning
+          icon: phu:<entity_42>
+          icon_color: teal
+          tap_action:
+            action: navigate
+            navigation_path: /general-home/vacuums
+          card_mod:
+            style: *theme_card_style
+        - type: custom:mushroom-template-card
           primary: Automations
           secondary: Enable or disable automations
           icon: mdi:robot-outline
@@ -1561,7 +2523,48 @@ views:
     cards:
     - *cond_card_house_armed
     - *cond_card_uv_index
+    - *cond_card_vacuum
     - *cond_card_soil_moisture
+  - type: grid
+    column_span: 1
+    cards:
+    - *navbar
+- title: Vacuums
+  path: vacuums
+  icon: phu:<entity_42>
+  subview: true
+  back_path: /general-home/home
+  type: sections
+  max_columns: 1
+  card_mod:
+    style: ''
+  sections:
+  - type: grid
+    column_span: 1
+    cards:
+    - *id001
+  - *popups
+  - type: grid
+    column_span: 1
+    cards:
+    # Composed rather than aliasing *cond_card_vacuum. That anchor's heading
+    # navigates to this page, so on this page it would push a duplicate
+    # history entry and break the first Back press. Same two cards, inert
+    # heading.
+    - type: grid
+      columns: 1
+      square: false
+      card_mod:
+        style: *theme_card_transparent
+      cards:
+      - type: custom:mushroom-title-card
+        title: Vacuums
+        tap_action:
+          action: none
+        card_mod:
+          style: *theme_exempt_style
+      - *vacuum_card_main
+      - *vacuum_card_upstairs
   - type: grid
     column_span: 1
     cards:

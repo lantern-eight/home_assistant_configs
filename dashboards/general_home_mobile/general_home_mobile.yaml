@@ -43,6 +43,18 @@ schedule:
     friday: *uv_index_active_window
     saturday: *uv_index_active_window
     sunday: *uv_index_active_window
+  cond_vacuum_rooms:
+    name: "Conditional: Vacuum Rooms"
+    icon: mdi:robot-vacuum
+    monday: &vacuum_rooms_active_window
+      - from: "18:00:00"
+        to: "23:00:00"
+    tuesday: *vacuum_rooms_active_window
+    wednesday: *vacuum_rooms_active_window
+    thursday: *vacuum_rooms_active_window
+    friday: *vacuum_rooms_active_window
+    saturday: *vacuum_rooms_active_window
+    sunday: *vacuum_rooms_active_window
 
 # --- Notification state ---
 

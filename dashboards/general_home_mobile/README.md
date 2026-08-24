@@ -60,8 +60,10 @@ card_mod)
   - [Why Card-Level, Not View-Level](#why-card-level-not-view-level)
   - [Macro Library, Not Sensors](#macro-library-not-sensors)
   - [YAML Anchors and Card Tiering](#yaml-anchors-and-card-tiering)
+  - [Parameterised Card Bodies](#parameterised-card-bodies-streamline_templates)
+  - [Shared Card Logic](#shared-card-logic-button_card_templates)
   - [Background Overlay Card](#background-overlay-card)
-  - [Popup History Fix](#popup-history-fix-back-button-behavior)
+  - [Popup History](#popup-history-back-button-behavior)
   - [Script-Routed Picker Tiles](#script-routed-picker-tiles)
 - [Deployment](#deployment)
 - [Gotchas](#gotchas)
@@ -71,7 +73,7 @@ card_mod)
 
 ## Views and Navigation
 
-The dashboard has 6 views. The bottom navbar (Material Design 3 style via
+The dashboard has 7 views. The bottom navbar (Material Design 3 style via
 `navbar-card`) shows 5 tabs: Home, Rooms, Climate, Security, and More. Rooms
 and More open as bubble-card popups rather than navigating to separate views.
 
@@ -81,6 +83,7 @@ and More open as bubble-card popups rather than navigating to separate views.
 | **Climate** | `/general-home/climate` | Subview | Navbar tab |
 | **Security** | `/general-home/security` | Subview | Navbar tab |
 | **Conditionals** | `/general-home/conditionals` | Subview | More popup |
+| **Vacuums** | `/general-home/vacuums` | Subview | Vacuums card heading |
 | **Appearance** | `/general-home/appearance` | Subview | More popup |
 | **Automations** | `/general-home/automations` | Subview | More popup |
 
@@ -112,12 +115,13 @@ Install all of these via HACS before setting up the dashboard:
 | **bubble-card** | Popup cards for Rooms and More |
 | **mushroom** | Template cards, entity cards, chips, title cards |
 | **stack-in-card** | Card grouping with unified styling |
-| **mini-graph-card** | Sparkline graphs (humidity) |
+| **mini-graph-card** | Sparkline graphs |
 | **apexcharts-card** | UV index chart |
 | **clock-weather-card** | Combined clock/weather display |
 | **calendar-card-pro** | Calendar view |
 | **navbar-card** | Bottom navigation bar |
-| **auto-entities** | Dynamic card generation (background picker) |
+| **auto-entities** | Dynamic card generation|
+| **streamline-card** | Parameterised card bodies |
 | **material-you-utilities** | Material You theme support |
 | **kiosk-mode** | Hide HA header and sidebar |
 
@@ -146,16 +150,14 @@ lovelace:
 Install all cards listed in [Required HACS Integrations](#required-hacs-integrations).
 Most install via HACS as Lovelace resources. Restart HA after installing.
 
-### 3. card_mod Load Order Fix and Popup History Fix
+### 3. card_mod Load Order and Popup History
 
-**card_mod load order is critical.** Without loading it early, card_mod will
-intermittently fail to style cards (the calendar, navbar, and background card
-are especially affected).
+**card_mod load order:** Without loading it early, card_mod will intermittently
+fail to style cards.
 
 The popup history fix module prevents bubble-card popups from reopening when
-using the system back button (intentional design decision). See
-[Popup History Fix](#popup-history-fix-back-button-behavior) in Architecture
-for details.
+using the system back button. See [Popup History](#popup-history-back-button-behavior)
+in Architecture for details.
 
 Add to `configuration.yaml`:
 
@@ -573,7 +575,7 @@ Why this shape:
 
 ### YAML Anchors and Card Tiering
 
-Not every card gets the full theme treatment. The dashboard defines five YAML
+Not every card gets the full theme treatment. The dashboard defines eight YAML
 anchors at the top of `dashboard.yaml`:
 
 | Anchor | Tier | Purpose | Used on |
@@ -582,6 +584,8 @@ anchors at the top of `dashboard.yaml`:
 | `&theme_chip_style` | Tier 1.5 | Theme chrome without background/border — for severity-colored chips | Promoted notification chips |
 | `&theme_chrome_style` | Tier 2 | Restrained treatment — tinted background, reduced blur (40% of content) | Navbar, bubble-card popup shells |
 | `&theme_exempt_style` | Tier 3 | Strips all styling — transparent background, no border/shadow | Headings, chips, title cards, glance cards |
+| `&theme_exempt_sub_style` | Tier 3 | Same as exempt, smaller font | Sub-section headings |
+| `&theme_button_style` | Tier 3 | Strips only the themed shadow/blur, leaving the card's own surface | `button-card`, which draws its background inline |
 | `&theme_card_transparent` | — | Transparent background, no border | Wrapper cards (stack-in-card used for grouping) |
 | `&theme_bg_card` | — | Background overlay card definition | First card of each view |
 
@@ -594,6 +598,23 @@ reference.
 cards, or `*theme_exempt_style` if it should be transparent (headings,
 decorative elements). If it's inside a themed `stack-in-card`, it may not need
 its own `card_mod` at all.
+
+### Parameterised Card Bodies (`streamline_templates`)
+
+YAML anchors reuse a card *verbatim*. When two cards are the same shape but
+differ in a few values, they go in the `streamline_templates:` block at the top
+level of `dashboard.yaml` instead, and the views instantiate them.
+
+`streamline-card` renders the child card straight into its own shadow root and
+adds no `ha-card` of its own, so theming, `stack-in-card` merging and card_mod
+selectors behave exactly as they do without it.
+
+### Shared Card Logic (`button_card_templates`)
+
+`streamline_templates` reuses a whole card body. `button_card_templates` is the
+other half: entries there can themselves name a `template:`, and button-card
+resolves the chain recursively and deep-merges it, so several cards can share
+logic without sharing a shape.
 
 ### Background Overlay Card
 
@@ -609,10 +630,10 @@ view's first section. Its `card_mod` makes it:
 The card's `ha-card` becomes a full-viewport layer that paints the palette
 background color and (for the Glow style) the radial-gradient blob overlay.
 
-There is one `*theme_bg_card` per view (6 total). They must remain as the
+There is one `*theme_bg_card` per view (7 total). They must remain as the
 first card in each view.
 
-### Popup History Fix (Back Button Behavior)
+### Popup History (Back Button Behavior)
 
 The Rooms and More buttons in the bottom navbar open bubble-card popups
 triggered by URL hashes (`#rooms`, `#more`). This creates a browser history
@@ -626,11 +647,11 @@ pressing back while the popup is open closes it, but the popup always opens
 when the URL hash matches — that's its core mechanism. The hash in the
 browser history is the root cause.
 
-**Fix:** A small JavaScript module (`popup_history_fix.js`) intercepts
-`history.pushState`. When a navigation happens while the current URL has a
-popup hash (any non-empty `location.hash`), the module calls `replaceState`
-to strip the hash from the current history entry before the new page is
-pushed. The history becomes `home` → `appearance` (the hash entry is
+**How it's handled:** A small JavaScript module (`popup_history_fix.js`)
+intercepts `history.pushState`. When a navigation happens while the current
+URL has a popup hash (any non-empty `location.hash`), the module calls
+`replaceState` to strip the hash from the current history entry before the new
+page is pushed. The history becomes `home` → `appearance` (the hash entry is
 overwritten), so system back goes to a clean URL with no popup.
 
 The module is loaded via `frontend.extra_module_url` in `configuration.yaml`
@@ -639,7 +660,7 @@ hash-based popups automatically. If HA's frontend ever migrates from `history.pu
 to the Navigation API, this module would silently stop working (but not
 break anything) and would need to be updated.
 
-**Alternatives considered:**
+**Alternatives considered at the time:**
 - `back_open: false` on bubble-card — tested, did not prevent hash-triggered
   opening
 - Converting popups to subviews — would fix history naturally but loses the
@@ -819,6 +840,16 @@ in the `palette_by_mode` table in `general_home_theme.jinja`.
 Use the WebSocket `lovelace/config` call with `force: true` to reload YAML
 dashboards. Use `POST /api/config/core/check_config` to validate config.
 
+### Custom Icons Are Frontend-Only
+
+`custom-brand-icons` registers as **`phu:`**. Because it loads as a Lovelace
+resource, a `phu:` icon only resolves where the frontend itself draws it.
+Safe: card `icon:` keys, view icons, `<ha-icon>` inside a button-card JS template,
+and icon strings in a sensor attribute that only a card ever reads.
+Not safe: an entity's registry icon (helpers and template sensors in `packages/`),
+`notify` payloads, and companion-app widgets or watch complications, which draw
+from a bundled MDI set. Those render blank and must stay on `mdi:`.
+
 ---
 
 ## File Inventory
@@ -827,7 +858,7 @@ dashboards. Use `POST /api/config/core/check_config` to validate config.
 
 | File | Purpose |
 |------|---------|
-| `dashboard.yaml` | All views, theme YAML anchors, and card definitions |
+| `dashboard.yaml` | All views, theme YAML anchors, `button_card_templates`, `streamline_templates`, and card definitions |
 | `general_home_theme.jinja` | Theme macro library — every palette/style value plus the CSS-emitting macros (deployed to `custom_templates/`) |
 | `sensors.yaml` | Non-theme template sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
