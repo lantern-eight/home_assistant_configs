@@ -77,7 +77,7 @@ name-derived entity ID. Don't assume the unique_id matches.
 | `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions for helpers and automations (applied via sync script `-c`) |
-| `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`) |
+| `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`). Editing it is not enough to ship a change — bump the `?v=` on its `configuration.yaml` entry, or browsers keep the copy they cached for 31 days |
 | `ha_config_additions.yaml` | Remaining HA config that can't go in a package (dashboard registration, secrets, frontend module) |
 | `README.md` | Full public-facing documentation |
 

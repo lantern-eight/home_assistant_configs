@@ -166,7 +166,7 @@ frontend:
   themes: !include_dir_merge_named themes
   extra_module_url:
     - /hacsfiles/lovelace-card-mod/card-mod.js
-    - /local/popup_history_fix.js
+    - /local/popup_history_fix.js?v=2
 ```
 
 card_mod is loaded during frontend bootstrap, before any cards render. Without
@@ -175,6 +175,13 @@ any card class that instantiates before card_mod patches it will be permanently
 unstyled for that page load.
 
 **Requires an HA restart** (frontend config is read at startup only).
+
+**Bump `?v=` whenever `popup_history_fix.js` changes.** HA serves `/local/`
+with `Cache-Control: public, max-age=2678400`, 31 days, and no revalidation
+in between. So a browser that has loaded the dashboard once keeps running a cached
+copy for the max-age window. Deploying an edit won't update; the query string makes
+a browser re-fetch. The HACS-served card-mod URL needs no such treatment — HACS
+versions its own path.
 
 ### 4. Theme Helpers
 

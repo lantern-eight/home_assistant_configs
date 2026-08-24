@@ -1,3 +1,14 @@
+// Deployed to www/popup_history_fix.js and loaded by configuration.yaml's
+// `frontend: extra_module_url:`.
+//
+// HA serves /local/ with `Cache-Control: public, max-age=2678400` — 31 days — and
+// extra_module_url names this file with no version string, so a browser that has
+// loaded the page once, keeps running its cached copy for a month, and never
+// revalidates.
+//
+// In /local/popup_history_fix.js, bump the `?v=` on the entry in configuration.yaml
+// for any change. This query string makes a browser re-fetch.
+//
 // When navigating away from a bubble-card popup (hash-based), rewrite the
 // current history entry to strip the popup hash. Without this, browser/system
 // back lands on the hash URL and reopens the popup.
@@ -17,7 +28,10 @@ history.pushState = function (state, title, url) {
   let retries = 0;
   function collapseNotificationTray() {
     const ha = document.querySelector("home-assistant");
-    if (!ha || !ha.hass || !ha.hass.user) {
+    // Test every property this function goes on to dereference, `states` and
+    // `user` are populated independently. There is a window where `hass` exists
+    // with `states` still null.
+    if (!ha || !ha.hass || !ha.hass.states || !ha.hass.user) {
       if (retries++ < 20) setTimeout(collapseNotificationTray, 250);
       return;
     }
