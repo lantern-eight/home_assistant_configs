@@ -2,14 +2,16 @@
 
 Three categories:
 1. FILE_MAP existence: every source path in the sync scripts' FILE_MAPs exists.
-2. PII scan: no unredacted UUIDs or 32-char hex IDs in tracked YAML/jinja.
+2. PII scan: no unredacted IDs or names in tracked/staged YAML/jinja/md.
 3. Doc/map agreement: agents.md deploy tables match the FILE_MAPs.
 """
 
 import re
 import subprocess
 
-from utils import REPO_ROOT
+import yaml
+
+from utils import CONFIG_PATH, REPO_ROOT
 
 import ha_sync
 
@@ -55,10 +57,13 @@ class TestFileMapExistence:
 # ── 2. PII scan ────────────────────────────────────────────────────────────
 
 
-def _git_tracked_files(*extensions):
-  """Return git-tracked files matching the given extensions."""
+def _git_visible_files(*extensions):
+  """Return tracked and untracked (non-ignored) files matching extensions."""
   globs = [f'*.{ext.lstrip(".")}' for ext in extensions]
-  args = ['git', 'ls-files', '--']
+  args = [
+    'git', 'ls-files',
+    '--cached', '--others', '--exclude-standard', '--',
+  ]
   args.extend(globs)
   result = subprocess.run(
     args, capture_output=True, text=True, cwd=str(REPO_ROOT),
@@ -66,19 +71,50 @@ def _git_tracked_files(*extensions):
   return [line for line in result.stdout.splitlines() if line]
 
 
-class TestNoPiiInTrackedFiles:
-  """No unredacted UUIDs or 32-char hex IDs in tracked YAML/jinja files."""
+def _redact_entities():
+  """Load redact_entities from config.yaml, or [] if absent."""
+  if not CONFIG_PATH.exists():
+    return []
+  with open(CONFIG_PATH) as f:
+    raw = yaml.safe_load(f) or {}
+  return raw.get('redact_entities', [])
 
-  def test_no_raw_ids_in_yaml(self):
+
+_SCAN_EXTENSIONS = ('.yaml', '.jinja', '.md')
+
+
+class TestNoPiiInTrackedFiles:
+  """No unredacted IDs or names in tracked/staged files."""
+
+  def test_no_raw_ids(self):
     violations = []
-    for rel_path in _git_tracked_files('.yaml', '.jinja'):
+    for rel_path in _git_visible_files(*_SCAN_EXTENSIONS):
       path = REPO_ROOT / rel_path
       content = path.read_text(encoding='utf-8', errors='replace')
       for lineno, line in enumerate(content.splitlines(), 1):
         for match in _ID_PATTERN.finditer(line):
           violations.append(f"{rel_path}:{lineno}: {match.group(1)}")
     assert not violations, (
-      f"Unredacted IDs found in tracked files:\n" + "\n".join(violations)
+      "Unredacted IDs found in tracked files:\n" + "\n".join(violations)
+    )
+
+  def test_no_raw_names(self):
+    names = _redact_entities()
+    if not names:
+      return
+    pattern = re.compile(
+      '|'.join(re.escape(n) for n in names), re.IGNORECASE,
+    )
+    violations = []
+    for rel_path in _git_visible_files(*_SCAN_EXTENSIONS):
+      path = REPO_ROOT / rel_path
+      content = path.read_text(encoding='utf-8', errors='replace')
+      for lineno, line in enumerate(content.splitlines(), 1):
+        for match in pattern.finditer(line):
+          violations.append(f"{rel_path}:{lineno}: {match.group()}")
+    assert not violations, (
+      "Unredacted names found in tracked files:\n"
+      + "\n".join(violations)
     )
 
 
