@@ -1115,25 +1115,22 @@ streamline_templates:
 
           # Room chips, generated from sensor.[[vac]]_room_config so segment
           # ids live in packages/vacuum_rooms.jinja and nowhere else —
-          # adding a room to that macro makes a chip appear here with
-          # nothing to edit. flex-wrap so chips size to their labels.
-          # `columns` only describes the frame before card_mod's CSS
-          # lands.
+          # adding a room to that macro makes a chip appear here.
           - type: custom:auto-entities
+            card_mod:
+              style:
+                hui-grid-card$: |
+                  #root {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 7px !important;
+                    padding: 0 18px 14px !important;
+                  }
+                  #root > * { width: auto !important; flex: 0 0 auto !important; }
             card:
               type: grid
               columns: 3
               square: false
-              card_mod:
-                style:
-                  .: |
-                    #root {
-                      display: flex !important;
-                      flex-wrap: wrap !important;
-                      gap: 7px !important;
-                      padding: 0 18px 14px !important;
-                    }
-                    #root > * { width: auto !important; flex: 0 0 auto !important; }
             card_param: cards
             filter:
               template: |
