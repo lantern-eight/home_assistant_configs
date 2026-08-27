@@ -17,6 +17,26 @@
 # sensors below. Adding, renaming or renumbering a room only needs to update
 # that macro. Room chips are generated from the sensor by auto-entities, and
 # groups resolve their ids from it as well.
+#
+# Interactions:
+#
+#   Event                          | Behavior
+#   -------------------------------|------------------------------------------
+#   Room finishes normally         | Settle, empty bin, advance index.
+#   Battery return mid-room        | Don't interfere, let firmware.
+#                                  | auto-resume. If not, send resume or start.
+#   Multiple battery returns,      | Inner while retries each time.
+#     same room                    |
+#   Skip during cleaning           | Skip flag + return_to_base. Post-dock
+#     (battery OK)                 | reads flag and advances.
+#   Skip during cleaning           | Skip flag overrides battery-return
+#     (battery low)                | check, advances instead of retrying.
+#   Skip during charge wait        | Skip flag breaks charge wait, advances.
+#   Stop during any phase          | Running flag off. Cancel guard stops
+#                                  | the script.
+#   HA restart during run          | Running flag resets (initial: false).
+#                                  | Script instance stops. Dashboard shows
+#                                  | idle.
 # =============================================================================
 
 # =============================================================================
