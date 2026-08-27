@@ -100,6 +100,16 @@ input_boolean:
     name: "<entity_35> Sequence Running"
     initial: false
     icon: mdi:robot-vacuum
+  # Skip flag: set by vacuum_skip_room, read by the main sequence loop.
+  # Coordinates skip with battery-return charging.
+  <entity_34>_skip_requested:
+    name: "<entity_34> Skip Requested"
+    initial: false
+    icon: mdi:skip-next
+  <entity_35>_skip_requested:
+    name: "<entity_35> Skip Requested"
+    initial: false
+    icon: mdi:skip-next
 
 # =============================================================================
 # Room Config
@@ -177,6 +187,7 @@ script:
           passes_entity: "input_number.{{ vacuum_name }}_passes"
           battery_entity: "sensor.{{ vacuum_name }}_battery"
           cleaning_entity: "binary_sensor.{{ vacuum_name }}_cleaning"
+          skip_entity: "input_boolean.{{ vacuum_name }}_skip_requested"
           mop_intensity_entity: "select.{{ vacuum_name }}_mop_intensity"
           # Unlike every entity above, 'cleaning_mode_entity' cannot be built by
           # concatenation. It gets prefixed with the room the dock is in:
@@ -219,6 +230,9 @@ script:
           - action: input_boolean.turn_on
             target:
               entity_id: "{{ running_entity }}"
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ skip_entity }}"
           - action: input_text.set_value
             target:
               entity_id: "{{ queue_entity }}"
@@ -228,7 +242,7 @@ script:
             target:
               entity_id: "{{ index_entity }}"
             data:
-              value: 0
+              value: 1
 
       # Force vacuum-only. Without this the vacuum runs whatever mode is
       # saved on the device. These persist on the device, so they are set once.
@@ -263,18 +277,16 @@ script:
           option: 'off'
 
       - repeat:
-          for_each: "{{ room_ids }}"
-          sequence:
-            # Abort if this vacuum's sequence was cancelled.
-            # - Must be `condition: template`. The script is generic for any
-            #   vacuum, so the selector variable 'running_entity' is built from
-            #   'vacuum_name' at runtime — and a state condition cannot take a
-            #   template in entity_id at all. HA validates that field as a literal
-            #   domain.object_id at config load, so with the literal string:
-            #   `{{ running_entity }}` the parser fails on the braces.
-            # - A config that fails schema validation isn't partially loaded with
-            #   a broken step — HA drops the whole script, so
-            #   script.vacuum_clean_rooms_sequence simply won't exist.
+          # Outer while: one iteration per room. Inner while: retries the
+          # current room on battery return. Index is advanced only on
+          # completion (or skip).
+          while:
+            # Must be `condition: template`, not `condition: state`. The script
+            # is generic for any vacuum, so 'running_entity' is built from
+            # 'vacuum_name' at runtime — a state condition cannot take a
+            # template in entity_id. HA validates that field as a literal
+            # domain.object_id at config load; `{{ running_entity }}` fails the
+            # parser and HA drops the entire script.
             - condition: template
               # running_entity: "input_boolean.{{ vacuum_name }}_sequence_running"
               # For a single vacuum, note what this cannot check: sequence_running
@@ -288,175 +300,249 @@ script:
               # Nothing at this line can tell them apart. What prevents simultaneous
               # runs is every pause in the loop is interruptible, so a cancelled
               # run is stopped by *cancel_guard before it reaches here again.
-              value_template: "{{ is_state(running_entity, 'on') }}"
+              value_template: >
+                {{ states(index_entity) | int(0) <= (room_ids | length)
+                   and is_state(running_entity, 'on') }}
+          sequence:
+            - variables:
+                current_index: "{{ states(index_entity) | int(1) }}"
+                current_room: >
+                  {{ room_ids[states(index_entity) | int(1) - 1]
+                     | default('') }}
 
-            # Publish which room we're on (1-based)
-            - action: input_number.set_value
+            - action: input_boolean.turn_off
               target:
-                entity_id: "{{ index_entity }}"
-              data:
-                value: "{{ repeat.index }}"
+                entity_id: "{{ skip_entity }}"
 
-            # Battery policy: Break to charge below lower battery % threshold,
-            #  resume at upper battery % threshold.
-            # - Window the wait to reach the upper threshold, and resume (if
-            #   the run is not canceled). This avoid various state reporting
-            #   issues across HA, networks, the device itself, that all can
-            #   cause it to stall here, waiting indefinetly and blocking new
-            #   'Start' commands. The timeout guarantees the run always reaches
-            #   cleanup.
-            - if:
-                - condition: template
-                  value_template: >
-                    {{ states(battery_entity) | int(100) < 25 }}
-              then:
-                - action: vacuum.return_to_base
-                  continue_on_error: true
-                  target:
-                    entity_id: "{{ vacuum_entity }}"
-                - wait_template: >
-                    {{ states(battery_entity) | int(0) >= 80
-                       or not is_state(running_entity, 'on') }}
-                  timeout: "03:00:00"
-                - &cancel_guard
-                  if:
-                    - condition: template
-                      value_template: >
-                        {{ not is_state(running_entity, 'on') }}
-                  then:
-                    - stop: Sequence cancelled
+            # Inner while: each iteration is one attempt at the current
+            # room. On low battery return the index stays put and the inner
+            # loop retries. On room completion (or skip) the index is
+            # incremented and the inner loop exits.
+            - repeat:
+                while:
+                  - condition: template
+                    value_template: >
+                      {{ states(index_entity) | int(0) == current_index
+                         and is_state(running_entity, 'on') }}
+                sequence:
+                  # --- Charge if battery is low ---
+                  # Don't send any commands while docked because we're using both HA
+                  # and the device firmware. The device firmware is still running a job
+                  # and should auto-resume the job when charged, which we want to use.
+                  # Sending any command will make the device firmware cancel the current
+                  # job.
+                  #
+                  # The timeout covers various state reporting issues across HA,
+                  # networks, and the device itself that can cause the wait to stall
+                  # indefinitely, blocking new 'Start' commands. The timeout
+                  # guarantees the run always reaches cleanup.
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ states(battery_entity) | int(100) < 25 }}
+                    then:
+                      - wait_template: >
+                          {{ states(battery_entity) | int(0) >= 90
+                             or not is_state(vacuum_entity, 'docked')
+                             or not is_state(running_entity, 'on')
+                             or is_state(skip_entity, 'on') }}
+                        timeout: "03:00:00"
+                      - &cancel_guard
+                        if:
+                          - condition: template
+                            value_template: >
+                              {{ not is_state(running_entity, 'on') }}
+                        then:
+                          - stop: Sequence cancelled
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ is_state(skip_entity, 'on') }}
+                        then:
+                          - action: input_boolean.turn_off
+                            target:
+                              entity_id: "{{ skip_entity }}"
+                          - action: input_number.set_value
+                            target:
+                              entity_id: "{{ index_entity }}"
+                            data:
+                              value: "{{ current_index + 1 }}"
 
-            # Suction strength set on every room. The device resets suction
-            # to a default the moment a job ends, and the sequencing that
-            # we are running means that every room from the point of view of
-            # the device is a full job.
-            #
-            # continue_on_error here and others below: an action that
-            # raises will abort the whole script, and the only place the running
-            # flag is cleared is the cleanup after the loop. A vacuum that
-            # drops off the network mid-run would otherwise leave the flag on
-            # for good and the card would be frozen in live mode. Every later
-            # 'Start' rejected. Letting the run continue means letting the
-            # configured waits time out, and the script still reaches its cleanup.
-            - action: vacuum.set_fan_speed
-              continue_on_error: true
-              target:
-                entity_id: "{{ vacuum_entity }}"
-              data:
-                fan_speed: <entity_46>
+                  # Guard: exit iteration if skip advanced the index
+                  - condition: template
+                    value_template: >
+                      {{ states(index_entity) | int(0) == current_index
+                         and is_state(running_entity, 'on') }}
 
-            # Clean this room
-            - action: vacuum.send_command
-              continue_on_error: true
-              target:
-                entity_id: "{{ vacuum_entity }}"
-              data:
-                command: app_segment_clean
-                params:
-                  - segments:
-                      - "{{ repeat.item | int }}"
-                    repeat: "{{ passes }}"
+                  # --- Start cleaning ---
+                  # Start cleaning unless it's already cleaning, like from an
+                  # auto-resume after charging.
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ not is_state(vacuum_entity, 'cleaning') }}
+                    then:
+                      # Suction strength set on every room. From the firmware point of
+                      # view, each room is a new job and it uses default settings.
+                      #
+                      # continue_on_error here and elsewhere: an action that raises
+                      # aborts the whole script, and the running flag is only cleared
+                      # in cleanup after the loop. A vacuum that drops off the network
+                      # mid-run would leave the flag on permanently and the card frozen
+                      # in live mode, every later 'Start' rejected. Letting the run
+                      # continue means the configured waits time out and the script
+                      # still reaches cleanup.
+                      - action: vacuum.set_fan_speed
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ vacuum_entity }}"
+                        data:
+                          fan_speed: <entity_46>
 
-            # Wait for vacuum to leave the dock and start cleaning. Every wait
-            # in this loop also breaks on the running flag going off, so a Stop
-            # lands within a second instead of after the current room. Without
-            # that, Stop would let this run finish the room, empty the bin, and
-            # only then, notice — long enough for the card to fall back to
-            # selection mode and a second run to be started on top of it.
-            - wait_template: >
-                {{ is_state(cleaning_entity, 'on')
-                   or not is_state(running_entity, 'on') }}
-              timeout: "00:02:00"
-            - *cancel_guard
+                      # Try resume_segment_clean first. After a low battery
+                      # return this allows it to resume the room from where
+                      # it left off. When first starting after a battry charge,
+                      # since there was no mid-point to resume from, there is
+                      # nothing to resume, so the command is a no-op and after
+                      # a timeout, if it hasn't started, send an app_segment_clean
+                      # which starts a new clean job for the room.
+                      - action: vacuum.send_command
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ vacuum_entity }}"
+                        data:
+                          command: resume_segment_clean
+                      # Every wait in this loop also breaks on the running flag
+                      # going off, so a Stop lands within a second instead of
+                      # after the current room finishes.
+                      - wait_template: >
+                          {{ is_state(vacuum_entity, 'cleaning')
+                             or not is_state(running_entity, 'on') }}
+                        timeout: "00:00:30"
+                      - *cancel_guard
 
-            # The guard here exists because docked is ambiguous. It means both
-            # "hasn't started yet" and "has finished" — and the script has to
-            # tell those apart.
-            #
-            # The wait above, gives the vacuum time to actually leave the dock
-            # and start the segment. 'wait.completed' comes back false only if
-            # that timed out. It can't mean "canceled" here, because a cancelation
-            # satisfies the template's second clause, which makes completed true —
-            # and *cancel_guard, would already have stopped the script. So by
-            # here, not wait.completed unambiguously means the leave dock timeout
-            # passed and it never started.
-            #
-            # When the vacuum does start:
-            # 1. wait for is_state(vacuum_entity, 'docked') ← "the room is finished"
-            # 2. settle
-            # 3. app_start_collect_dust
-            # 4. wait
-            #
-            # If the vacuum never started, it never left the dock. So 'docked' is
-            # already true, and step 1 returns instantly — not because the room
-            # finished, but because it never began. The script reads that as
-            # "room complete," waits, and fires a dust-collection cycle to empty
-            # a bin that just collected nothing. And it compounds. The loop
-            # advances to the next segment, which also fails to start, which also
-            # "completes" instantly, and also empties. A vacuum that's stuck,
-            # offline, or refusing its segments would produce a rapid burst of
-            # dock cycles — one per remaining room — while cleaning nothing.
-            #
-            # So the branch logs a warning naming the vacuum and the segment,
-            # and skips the entire dock-return-and-empty block for that iteration.
-            # 'repeat' moves to the next room.
-            #
-            # Why skip rather than abort: one segment failing to start — a stale
-            # id after a map change, or the device rejecting it — shouldn't take
-            # out the rooms after it. Log it, keep going.
-            - if:
-                - condition: template
-                  value_template: "{{ not wait.completed }}"
-              then:
-                - action: system_log.write
-                  data:
-                    message: >
-                      Vacuum {{ vacuum_entity }} did not start cleaning
-                      {{ repeat.item }} within 2 minutes — skipping.
-                    level: warning
-                    logger: vacuum_clean_rooms_sequence
-              else:
-                # Wait for cleaning to finish and vacuum to return to dock.
-                # Keys off the 'vacuum_entity' rather than sensor.<vac>_status
-                # because that sensor has many states and it can be many of them
-                # at any point, so the vacuum entity collapses all of them to
-                # `docked`.
-                - wait_template: >
-                    {{ is_state(vacuum_entity, 'docked')
-                       or not is_state(running_entity, 'on') }}
-                  timeout: "02:00:00"
-                - *cancel_guard
+                      # If resume didn't start cleaning, start fresh.
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ not is_state(vacuum_entity, 'cleaning') }}
+                        then:
+                          - action: vacuum.send_command
+                            continue_on_error: true
+                            target:
+                              entity_id: "{{ vacuum_entity }}"
+                            data:
+                              command: app_segment_clean
+                              params:
+                                - segments:
+                                    - "{{ current_room | int }}"
+                                  repeat: "{{ passes }}"
+                          - wait_template: >
+                              {{ is_state(vacuum_entity, 'cleaning')
+                                 or not is_state(running_entity, 'on') }}
+                            timeout: "00:02:00"
+                          - *cancel_guard
+                          # wait.completed is false only on timeout here
+                          # — a cancel satisfies the running-flag clause
+                          # (completed = true) and *cancel_guard already
+                          # stopped the script. So not-completed
+                          # unambiguously means the vacuum never started.
+                          #
+                          # Skip rather than abort: one segment failing
+                          # (stale id after a map change, device rejecting
+                          # it) shouldn't take out the rooms after it.
+                          - if:
+                              - condition: template
+                                value_template: "{{ not wait.completed }}"
+                            then:
+                              - action: system_log.write
+                                data:
+                                  message: >
+                                    Vacuum {{ vacuum_entity }} did not
+                                    start cleaning {{ current_room }} within
+                                    2 minutes. Skipping that room and moving
+                                    to the next one.
+                                  level: warning
+                                  logger: vacuum_clean_rooms_sequence
+                              - action: input_number.set_value
+                                target:
+                                  entity_id: "{{ index_entity }}"
+                                data:
+                                  value: "{{ current_index + 1 }}"
 
-                # Settle on the dock before triggering the empty. A wait
-                # rather than a `delay`, to prevent two simultaneous runs.
-                # That can happen because a delay cannot be cut short:
-                # Stop clears the flag immediately, but this run would not
-                # notice for the full 15 seconds — long enough for the UI card to
-                # return to selection mode and a user starts a second run
-                # that gets started on top of this one. See the top-of-loop comments
-                # around script.vacuum_clean_rooms_sequence.sequence.repeat.sequence.condidtion.value_template
-                # in this file for more context.
-                #
-                # Waiting on the flag ends the pause the instant Stop lands,
-                # and *cancel_guard below stops the run before the window can
-                # open.
-                - wait_template: &cancel_wait >
-                    {{ not is_state(running_entity, 'on') }}
-                  timeout: "00:00:15"
-                - *cancel_guard
+                  # Guard: exit iteration if start-failure advanced index
+                  - condition: template
+                    value_template: >
+                      {{ states(index_entity) | int(0) == current_index
+                         and is_state(running_entity, 'on') }}
 
-                # Empty the dustbin
-                - action: vacuum.send_command
-                  continue_on_error: true
-                  target:
-                    entity_id: "{{ vacuum_entity }}"
-                  data:
-                    command: app_start_collect_dust
+                  # --- Wait for vacuum to dock ---
+                  # Keys off vacuum_entity rather than sensor.<vac>_status
+                  # because that sensor has many transient states; the
+                  # vacuum entity collapses all of them to 'docked'.
+                  - wait_template: >
+                      {{ is_state(vacuum_entity, 'docked')
+                         or not is_state(running_entity, 'on') }}
+                    timeout: "02:00:00"
+                  - *cancel_guard
 
-                # Emptying reports no state of its own, so this is timed.
-                - wait_template: *cancel_wait
-                  timeout: "00:01:30"
-                - *cancel_guard
+                  # --- Post-dock decision ---
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ states(battery_entity) | int(100) < 25
+                             and not is_state(skip_entity, 'on') }}
+                    then:
+                      # Battery return — don't advance, don't empty,
+                      # don't send commands. Inner while retries.
+                      - action: system_log.write
+                        data:
+                          message: >
+                            Vacuum {{ vacuum_entity }} returned to dock
+                            with low battery ({{ states(battery_entity) }}%) during
+                            {{ current_room }}. Will recharge to 90% and resume.
+                          level: info
+                          logger: vacuum_clean_rooms_sequence
+                    else:
+                      # Room done (or skip requested). Advance.
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ is_state(skip_entity, 'on') }}
+                        then:
+                          - action: input_boolean.turn_off
+                            target:
+                              entity_id: "{{ skip_entity }}"
+
+                      # Settle on the dock before triggering the empty. A
+                      # wait_template rather than a delay: a delay cannot be
+                      # cut short, so Stop would not be noticed for the full
+                      # 15 seconds — long enough for the card to return to
+                      # selection mode and a user to start a second run on
+                      # top of this one. Waiting on the flag ends the pause
+                      # the instant Stop lands.
+                      - wait_template: &cancel_wait >
+                          {{ not is_state(running_entity, 'on') }}
+                        timeout: "00:00:15"
+                      - *cancel_guard
+
+                      # Empty the dustbin
+                      - action: vacuum.send_command
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ vacuum_entity }}"
+                        data:
+                          command: app_start_collect_dust
+                      # Emptying reports no state of its own, so this is timed.
+                      - wait_template: *cancel_wait
+                        timeout: "00:01:30"
+                      - *cancel_guard
+
+                      - action: input_number.set_value
+                        target:
+                          entity_id: "{{ index_entity }}"
+                        data:
+                          value: "{{ current_index + 1 }}"
 
       # Sequence complete. The selection is cleared here and deliberately not
       # in vacuum_stop_sequence: finishing a run means those rooms are done,
@@ -466,19 +552,23 @@ script:
           entity_id: "{{ rooms_entity }}"
         data:
           value: ""
-      # Expects running_entity, queue_entity and index_entity variables defined
-      # in the current scope.
+      # Expects running_entity, skip_entity, queue_entity and index_entity
+      # variables defined in the current scope.
+      #
+      # The queue and index describe a run in progress, so they should not
+      # out live one. Nothing renders them while the flag is off — the card
+      # is gated on the flag — but they stay visible in the entity list and
+      # history. A stopped or failed sequence partway retains in-progress
+      # values which reads as a sequence still going. That case arrives
+      # through 'vacuum_stop_sequence', which aliases this anchor.
       - &end_sequence
         parallel:
           - action: input_boolean.turn_off
             target:
               entity_id: "{{ running_entity }}"
-          # The queue and index describe a run in progress, so they should not
-          # outlive one. Nothing renders them while the flag is off — the card
-          # is gated on the flag — but they stay visible in the entity list and
-          # history. A stopped or failed sequence partway retains in progress
-          # values which reads as a sequence still going. That case arrives
-          # through 'vacuum_stop_sequence', which aliases this anchor.
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ skip_entity }}"
           - action: input_text.set_value
             target:
               entity_id: "{{ queue_entity }}"
@@ -493,9 +583,9 @@ script:
   # --------------------------------------------------------------------------
   # Skip the room currently being cleaned
   # --------------------------------------------------------------------------
-  # Just sends the vacuum home. The sequence is already waiting for it to
-  # dock, so that wait completes, the bin empties, and the loop moves to the
-  # next room on its own — no skip flag to track or reset.
+  # Sets a skip flag so the main loop knows this dock event is a skip, not
+  # a battery return, then sends the vacuum home. The main loop's post-dock
+  # decision reads the flag to advance rather than retry.
 
   vacuum_skip_room:
     alias: "Vacuum Skip Room"
@@ -512,10 +602,14 @@ script:
       - variables:
           vacuum_name: "{{ vacuum_entity.split('.')[1] }}"
           running_entity: "input_boolean.{{ vacuum_name }}_sequence_running"
+          skip_entity: "input_boolean.{{ vacuum_name }}_skip_requested"
       # 'condition: template', not 'condition: state' — see the note in
       # vacuum_clean_rooms_sequence.
       - condition: template
         value_template: "{{ is_state(running_entity, 'on') }}"
+      - action: input_boolean.turn_on
+        target:
+          entity_id: "{{ skip_entity }}"
       - action: vacuum.return_to_base
         target:
           entity_id: "{{ vacuum_entity }}"
@@ -539,6 +633,7 @@ script:
       - variables:
           vacuum_name: "{{ vacuum_entity.split('.')[1] }}"
           running_entity: "input_boolean.{{ vacuum_name }}_sequence_running"
+          skip_entity: "input_boolean.{{ vacuum_name }}_skip_requested"
           queue_entity: "input_text.{{ vacuum_name }}_sequence_queue"
           index_entity: "input_number.{{ vacuum_name }}_sequence_index"
       # Same teardown as a completed run, minus clearing the selection.
