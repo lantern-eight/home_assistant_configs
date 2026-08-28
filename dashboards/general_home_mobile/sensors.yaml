@@ -70,14 +70,20 @@
             'active': is_state('schedule.cond_vacuum_<entity_34>', 'on')
                       or is_state(
                         'input_boolean.<entity_34>_sequence_running', 'on'),
-            'priority': 25
+            'priority': 14
+               if is_state(
+                 'input_boolean.<entity_34>_sequence_running', 'on')
+               else 25
           },
           {
             'id': 'vacuum_<entity_35>',
             'active': is_state('schedule.cond_vacuum_<entity_35>', 'on')
                       or is_state(
                         'input_boolean.<entity_35>_sequence_running', 'on'),
-            'priority': 25
+            'priority': 14
+               if is_state(
+                 'input_boolean.<entity_35>_sequence_running', 'on')
+               else 25
           }
         ] %}
         {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
