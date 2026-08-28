@@ -472,6 +472,54 @@ button_card_templates:
               ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
           ]]]
 
+  # One segment of the per-vacuum Empty Mode control.
+  vacuum_empty_mode_segment:
+    template: vacuum_base
+    show_state: false
+    show_icon: false
+    show_name: true
+    variables:
+      # 'each_room' or 'end_only'
+      mode: each_room
+      color: var(--primary-color)
+      selected: |
+        [[[
+          const between = states[`input_boolean.${variables.vac}_empty_between_rooms`]?.state === 'on';
+          return variables.mode === 'each_room' ? between : !between;
+        ]]]
+    name: |
+      [[[
+        return variables.mode === 'each_room' ? 'Each Room' : 'End Only';
+      ]]]
+    tap_action:
+      action: call-service
+      service: |
+        [[[ return variables.mode === 'each_room'
+          ? 'input_boolean.turn_on' : 'input_boolean.turn_off' ]]]
+      service_data:
+        entity_id: "[[[ return `input_boolean.${variables.vac}_empty_between_rooms` ]]]"
+    styles:
+      card:
+      - padding: 6px 14px
+      - border-radius: 7px
+      - border: none
+      - transition: all 0.15s ease
+      - background: |
+          [[[
+            return variables.selected
+              ? `color-mix(in srgb, ${variables.color} 18%, transparent)`
+              : 'transparent';
+          ]]]
+      name:
+      - font-size: 12px
+      - white-space: nowrap
+      - font-weight: "[[[ return variables.selected ? '600' : '500' ]]]"
+      - color: |
+          [[[
+            return variables.selected
+              ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
+          ]]]
+
   # Preset chip — sets the whole room selection at once. Highlights when the
   # current selection already matches the preset.
   vacuum_preset_chip:
@@ -1156,6 +1204,66 @@ streamline_templates:
                 variables:
                   vac: '[[vac]]'
                   passes: 2
+                  color: '[[color]]'
+
+          # Empty mode: label + segmented control
+          - type: grid
+            columns: 2
+            square: false
+            card_mod:
+              style:
+                .: |
+                  #root {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 0 18px 12px !important;
+                  }
+                  #root > * { width: auto !important; flex: 0 0 auto !important; }
+            cards:
+            - type: custom:button-card
+              show_icon: false
+              show_state: false
+              name: Empty
+              tap_action:
+                action: none
+              styles:
+                card:
+                - padding: 0
+                - background: none
+                - border: none
+                name:
+                - font-size: 12px
+                - white-space: nowrap
+                - color: var(--secondary-text-color)
+              card_mod:
+                style: *theme_button_style
+            - type: grid
+              columns: 2
+              square: false
+              card_mod:
+                style:
+                  .: |
+                    #root {
+                      display: flex !important;
+                      gap: 0 !important;
+                      padding: 2px !important;
+                      border-radius: 8px;
+                      background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+                    }
+                    #root > * { width: auto !important; flex: 0 0 auto !important; }
+              cards:
+              - type: custom:button-card
+                template: vacuum_empty_mode_segment
+                variables:
+                  vac: '[[vac]]'
+                  mode: each_room
+                  color: '[[color]]'
+              - type: custom:button-card
+                template: vacuum_empty_mode_segment
+                variables:
+                  vac: '[[vac]]'
+                  mode: end_only
                   color: '[[color]]'
 
           # Presets

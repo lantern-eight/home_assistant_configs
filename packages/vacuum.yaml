@@ -22,7 +22,10 @@
 #
 #   Event                          | Behavior
 #   -------------------------------|------------------------------------------
-#   Room finishes normally         | Settle, empty bin, advance index.
+#   Room finishes normally         | Settle, conditionally empty bin
+#                                  | (per empty_between_rooms), advance.
+#                                  | If emptying at end only, one empty
+#                                  | fires after the last room.
 #   Battery return mid-room        | Don't interfere, let firmware.
 #                                  | auto-resume. If not, send resume or start.
 #   Multiple battery returns,      | Inner while retries each time.
@@ -171,6 +174,14 @@ input_boolean:
     name: "<entity_35> Resume Requested"
     initial: false
     icon: mdi:play
+  # Empty mode: on = empty the dustbin after each room (default),
+  # off = run all rooms then empty once at the end.
+  <entity_34>_empty_between_rooms:
+    name: "<entity_34> Empty Between Rooms"
+    icon: mdi:delete-empty
+  <entity_35>_empty_between_rooms:
+    name: "<entity_35> Empty Between Rooms"
+    icon: mdi:delete-empty
 
 # =============================================================================
 # Room Config
@@ -215,7 +226,8 @@ script:
   # --------------------------------------------------------------------------
   # Room-by-room vacuum sequence
   # --------------------------------------------------------------------------
-  # Cleans each room and empties dustbin between rooms.
+  # Cleans each room. Empties dustbin between rooms or once at the end,
+  # controlled by input_boolean.<vac>_empty_between_rooms.
 
   vacuum_clean_rooms_sequence:
     alias: "Vacuum Clean Rooms Sequence"
@@ -256,6 +268,7 @@ script:
           # Breaks the charge wait early when the user wants the vacuum
           # back out before reaching the upper charge threshold.
           resume_entity: "input_boolean.{{ vacuum_name }}_resume_requested"
+          empty_between_entity: "input_boolean.{{ vacuum_name }}_empty_between_rooms"
           mop_intensity_entity: "select.{{ vacuum_name }}_mop_intensity"
           # Unlike every entity above, 'cleaning_mode_entity' cannot be built by
           # concatenation. It gets prefixed with the room the dock is in:
@@ -625,17 +638,23 @@ script:
                         timeout: "00:00:15"
                       - *cancel_guard
 
-                      # Empty the dustbin
-                      - action: vacuum.send_command
-                        continue_on_error: true
-                        target:
-                          entity_id: "{{ vacuum_entity }}"
-                        data:
-                          command: app_start_collect_dust
-                      # Emptying reports no state of its own, so this is timed.
-                      - wait_template: *cancel_wait
-                        timeout: "00:01:30"
-                      - *cancel_guard
+                      # Empty the dustbin between rooms when enabled.
+                      # When off, all rooms run back-to-back and the bin
+                      # empties once after the last room.
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ is_state(empty_between_entity, 'on') }}
+                        then:
+                          - action: vacuum.send_command
+                            continue_on_error: true
+                            target:
+                              entity_id: "{{ vacuum_entity }}"
+                            data:
+                              command: app_start_collect_dust
+                          - wait_template: *cancel_wait
+                            timeout: "00:01:30"
+                          - *cancel_guard
 
                       - action: input_number.set_value
                         target:
@@ -643,8 +662,29 @@ script:
                         data:
                           value: "{{ current_index + 1 }}"
 
-      # Sequence complete. The selection is cleared here and deliberately not
-      # in vacuum_stop_sequence: finishing a run means those rooms are done,
+      # Sequence complete. Empty once at the end if inter-room emptying was off.
+      # The vacuum is already docked from the last room.
+      - if:
+          - condition: template
+            value_template: >
+              {{ not is_state(empty_between_entity, 'on')
+                 and is_state(running_entity, 'on') }}
+        then:
+          - wait_template: *cancel_wait
+            timeout: "00:00:15"
+          - *cancel_guard
+          - action: vacuum.send_command
+            continue_on_error: true
+            target:
+              entity_id: "{{ vacuum_entity }}"
+            data:
+              command: app_start_collect_dust
+          - wait_template: *cancel_wait
+            timeout: "00:01:30"
+          - *cancel_guard
+
+      # The selection is cleared here and deliberately not in
+      # vacuum_stop_sequence: finishing a run means those rooms are done,
       # whereas stopping one may mean wanting to start it again.
       - action: input_text.set_value
         target:
