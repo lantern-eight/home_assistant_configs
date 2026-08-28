@@ -578,8 +578,6 @@ button_card_templates:
       service: script.vacuum_clean_rooms_sequence
       service_data:
         vacuum_entity: "[[[ return `vacuum.${variables.vac}` ]]]"
-      confirmation:
-        text: "[[[ return `Start room-by-room cleaning with ${variables.label}?` ]]]"
     styles:
       card:
       - padding: 14px
@@ -795,17 +793,25 @@ button_card_templates:
         ]]]
       status_line: |
         [[[
-          // Three entities describe what the vacuum is doing and they
-          // disagree, so each question goes to whichever one answers it: Is it
-          // cleaning? Is it emptying?
+          // Status line priority:
+          //   1. Paused (optimistic flag)      → "Paused · {room}"
+          //   2. Cleaning (vacuum entity)      → "Cleaning {room} · {pct}%"
+          //   3. Emptying bin (status sensor)   → "Emptying bin"
+          //   4. Docked + firmware active job   → "Charging · will resume {room}"
+          //   5. Docked, no firmware job        → "Charging between rooms"
+          //   6. Fallback                       → formatted status sensor
           //
-          // binary_sensor.<vac>_cleaning answers neither — it turns on about
-          // half a minute after a room really starts, so anything keyed off
-          // it will be late since the vacuum is already out on the floor.
-          //
-          // Is it cleaning? vacuum.<vac>, which flips the moment the job
-          // starts. Is it emptying? sensor.<vac>_status lists this directly.
+          // Three entities describe what the vacuum is doing and they report
+          // differently at different times:
+          //   vacuum.<vac>        — flips to 'cleaning' the moment the job starts.
+          //   sensor.<vac>_status — reports transient states like emptying.
+          //   binary_sensor.<vac>_cleaning — turns on ~30s after a room really
+          //     starts, stays on during mid-room battery returns, off between rooms.
+          //     Used here to distinguish between charging between rooms and charging
+          //     mid-room but will continue.
           const statusRaw = states[`sensor.${variables.vac}_status`]?.state || '';
+          const paused = states[`input_boolean.${variables.vac}_sequence_paused`]?.state === 'on';
+          const vacState = states[`vacuum.${variables.vac}`]?.state;
           // index is still 0 for the moment between the run being flagged and
           // the first room being published, so key the status off whether a
           // room resolved rather than off `cleaning` — otherwise that window
@@ -814,9 +820,17 @@ button_card_templates:
           const current = variables.index > 0 && variables.index <= labels.length
             ? labels[variables.index - 1] : '';
           if (!current) return 'Starting…';
-          if (states[`vacuum.${variables.vac}`]?.state === 'cleaning')
+          if (paused) return `Paused · ${current}`;
+          if (vacState === 'cleaning')
             return `Cleaning ${current} · ${variables.room_percent}%`;
           if (statusRaw === 'emptying_the_bin') return 'Emptying bin';
+          // Distinguish mid-room battery return (firmware has an active job,
+          // binary_sensor stays on) from between-room charging (no active job).
+          if (vacState === 'docked') {
+            const firmwareJob = states[`binary_sensor.${variables.vac}_cleaning`]?.state === 'on';
+            if (firmwareJob) return `Charging · will resume ${current}`;
+            return 'Charging between rooms';
+          }
           return statusRaw.replace(/_/g, ' ')
             .replace(/^./, (ch) => ch.toUpperCase()) || 'Working';
         ]]]
@@ -875,7 +889,7 @@ button_card_templates:
             return `<span style="${base}background:color-mix(in srgb, var(--primary-text-color) 4%, transparent);color:var(--secondary-text-color)">${label}</span>`;
           }).join('');
 
-          // Shown only while the device actually reports emptying_the_bin.
+          // Context lines below the progress bar — emptying, charging, or battery.
           const emptying =
             states[`sensor.${variables.vac}_status`]?.state === 'emptying_the_bin';
           const dockLine = emptying
@@ -887,14 +901,25 @@ button_card_templates:
                </div>`
             : '';
 
-          // Dropped rather than rendered as "Battery –%" when the sensor is unknown.
-          // The header's own status line already reports that the vacuum is
-          // unreachable.
+          // Battery line — when docked and charging during a run, show
+          // "Battery X% — charging" to give context for the Continue button.
+          // When not docked (cleaning, paused), show plain "Battery X%".
+          // Dropped rather than rendered as "Battery –%" when the sensor
+          // is unknown.
           const batteryState = states[`sensor.${variables.vac}_battery`]?.state;
-          const batteryLine = !batteryState || batteryState === 'unknown'
-            || batteryState === 'unavailable' ? ''
-            : `<div style="font-size:11px;color:var(--secondary-text-color);
-                           margin-top:8px">Battery ${batteryState}%</div>`;
+          const batteryValid = batteryState && batteryState !== 'unknown'
+            && batteryState !== 'unavailable';
+          const isDocked = states[`vacuum.${variables.vac}`]?.state === 'docked';
+          const batteryLine = !batteryValid ? ''
+            : isDocked && !emptying
+              ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+                   <ha-icon icon="mdi:battery-charging"
+                            style="--mdc-icon-size:12px;color:var(--secondary-text-color)"></ha-icon>
+                   <span style="font-size:11px;color:var(--secondary-text-color)"
+                         >Battery ${batteryState}% — charging</span>
+                 </div>`
+              : `<div style="font-size:11px;color:var(--secondary-text-color);
+                             margin-top:8px">Battery ${batteryState}%</div>`;
 
           return `
             <div style="width:100%;text-align:left">
@@ -969,7 +994,7 @@ streamline_templates:
               vac: '[[vac]]'
               floor: '[[floor]]'
           - type: grid
-            columns: 2
+            columns: 3
             square: false
             card_mod:
               style:
@@ -979,6 +1004,63 @@ streamline_templates:
                 .: |
                   #root { gap: 8px !important; padding: 6px 18px 16px !important; }
             cards:
+            # Pause / Continue — adapts icon, label and tone to vacuum state.
+            #
+            #   State                | Icon  | Label    | Tap
+            #   ---------------------|-------|----------|---------------------------
+            #   Cleaning             | pause | Pause    | Pause the vacuum in place
+            #   Paused               | play  | Continue | Resume cleaning
+            #   Docked + low battery | play  | Continue | Break charge wait early
+            #   Transitional         | pause | Pause    | Disabled (gray, no-op)
+            - type: custom:button-card
+              template: vacuum_control_button
+              variables:
+                # vac must be set here because JS templates ([[[...]]]) cannot
+                # use streamline's [[vac]] substitution — streamline skips
+                # triple-bracket blocks. This line IS substituted (plain YAML),
+                # making variables.vac available to the JS templates below.
+                vac: '[[vac]]'
+                # Determine the button's mode from vacuum state. Computed once
+                # so icon, name, tone and tap_action can branch without
+                # repeating entity lookups.
+                #
+                #   'pause'         — cleaning, pauses
+                #   'continue'      — paused mid-floor, resumes
+                #   'continue_dock' — docked + low battery, sends back out
+                #   'inactive'      — transitional (emptying, settling), gray
+                pause_mode: |
+                  [[[
+                    const paused = states[`input_boolean.${variables.vac}_sequence_paused`]?.state === 'on';
+                    const vacState = states[`vacuum.${variables.vac}`]?.state;
+                    const batteryLow = parseInt(states[`sensor.${variables.vac}_battery`]?.state) < 25;
+                    if (paused) return 'continue';
+                    if (vacState === 'cleaning') return 'pause';
+                    if (vacState === 'docked' && batteryLow) return 'continue_dock';
+                    return 'inactive';
+                  ]]]
+                tone: |
+                  [[[
+                    return variables.pause_mode !== 'inactive'
+                      ? 'var(--warning-color)' : '';
+                  ]]]
+              icon: |
+                [[[
+                  return variables.pause_mode === 'continue'
+                    || variables.pause_mode === 'continue_dock'
+                    ? 'mdi:play' : 'mdi:pause';
+                ]]]
+              name: |
+                [[[
+                  return variables.pause_mode === 'continue'
+                    || variables.pause_mode === 'continue_dock'
+                    ? 'Continue' : 'Pause';
+                ]]]
+              tap_action:
+                action: |
+                  [[[ return variables.pause_mode !== 'inactive' ? 'call-service' : 'none' ]]]
+                service: script.vacuum_pause_resume
+                service_data:
+                  vacuum_entity: 'vacuum.[[vac]]'
             - type: custom:button-card
               template: vacuum_control_button
               icon: mdi:skip-next
@@ -988,8 +1070,6 @@ streamline_templates:
                 service: script.vacuum_skip_room
                 service_data:
                   vacuum_entity: 'vacuum.[[vac]]'
-                confirmation:
-                  text: Skip this room and move on to the next one?
             - type: custom:button-card
               template: vacuum_control_button
               icon: mdi:stop
@@ -1001,8 +1081,6 @@ streamline_templates:
                 service: script.vacuum_stop_sequence
                 service_data:
                   vacuum_entity: 'vacuum.[[vac]]'
-                confirmation:
-                  text: Stop this sequence and return to dock?
 
       # ---- selection mode ----
       - type: conditional
