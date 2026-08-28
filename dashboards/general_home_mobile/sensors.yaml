@@ -32,7 +32,8 @@
         - binary_sensor.house_armed_card_visible
         - schedule.cond_bedtime_doors
         - schedule.cond_uv_index
-        - schedule.cond_vacuum_rooms
+        - schedule.cond_vacuum_<entity_34>
+        - schedule.cond_vacuum_<entity_35>
         - input_boolean.<entity_34>_sequence_running
         - input_boolean.<entity_35>_sequence_running
         - sensor.<entity_10>_uv_index
@@ -65,10 +66,17 @@
             'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
           },
           {
-            'id': 'vacuum_rooms',
-            'active': is_state('schedule.cond_vacuum_rooms', 'on')
-                      or is_state('input_boolean.<entity_34>_sequence_running', 'on')
-                      or is_state('input_boolean.<entity_35>_sequence_running', 'on'),
+            'id': 'vacuum_<entity_34>',
+            'active': is_state('schedule.cond_vacuum_<entity_34>', 'on')
+                      or is_state(
+                        'input_boolean.<entity_34>_sequence_running', 'on'),
+            'priority': 25
+          },
+          {
+            'id': 'vacuum_<entity_35>',
+            'active': is_state('schedule.cond_vacuum_<entity_35>', 'on')
+                      or is_state(
+                        'input_boolean.<entity_35>_sequence_running', 'on'),
             'priority': 25
           }
         ] %}
