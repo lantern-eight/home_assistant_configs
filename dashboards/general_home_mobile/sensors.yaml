@@ -444,7 +444,7 @@
               'label': soil_label,
               'icon': 'mdi:water-percent',
               'severity': 'red' if soil_low
-                else 'yellow' if soil_warning else 'green',
+                else 'amber' if soil_warning else 'green',
               'promoted': soil_low,
               'sort_key': '0_soil_moisture'
             }
