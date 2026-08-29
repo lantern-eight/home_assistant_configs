@@ -1080,7 +1080,8 @@ streamline_templates:
                   [[[
                     const paused = states[`input_boolean.${variables.vac}_sequence_paused`]?.state === 'on';
                     const vacState = states[`vacuum.${variables.vac}`]?.state;
-                    const batteryLow = parseInt(states[`sensor.${variables.vac}_battery`]?.state) < 25;
+                    // If NaN from unavailable sensor, default 0.
+                    const batteryLow = (parseInt(states[`sensor.${variables.vac}_battery`]?.state) || 0) < 25;
                     if (paused) return 'continue';
                     if (vacState === 'cleaning') return 'pause';
                     if (vacState === 'docked' && batteryLow) return 'continue_dock';
