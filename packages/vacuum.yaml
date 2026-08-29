@@ -57,6 +57,10 @@
 #                                  | recharge as normal.
 #   HA restart while paused        | Same as any mid-run restart: flags reset,
 #                                  | script dies, vacuum stays where it is.
+#   Mop after vacuum enabled       | After all rooms done, charges to upper
+#                                  | charge threshold, presses firmware mop
+#                                  | button, waits for completion. Cancel via
+#                                  | stop flag.
 # =============================================================================
 
 # =============================================================================
@@ -182,6 +186,13 @@ input_boolean:
   <entity_35>_empty_between_rooms:
     name: "<entity_35> Empty Between Rooms"
     icon: mdi:delete-empty
+  # Mop after vacuum: when on, the sequence charges then triggers the
+  # firmware's custom, user set, routine, after vacuuming finishes.
+  # Resets on restart: it's a per-run intent, not a lasting preference.
+  <entity_34>_mop_after_vacuum:
+    name: "<entity_34> Mop After Vacuum"
+    initial: false
+    icon: mdi:water
 
 # =============================================================================
 # Room Config
@@ -283,6 +294,11 @@ script:
           cleaning_mode_entity: >
             {{ states.select | map(attribute='entity_id')
                | select('search', vacuum_name ~ '_cleaning_mode$')
+               | first | default('') }}
+          mop_after_entity: "input_boolean.{{ vacuum_name }}_mop_after_vacuum"
+          mop_button_entity: >
+            {{ states.button | map(attribute='entity_id')
+               | select('search', vacuum_name ~ '_nightly_mop$')
                | first | default('') }}
 
       - variables:
@@ -695,6 +711,66 @@ script:
               entity_id: "{{ rooms_entity }}"
             data:
               value: ""
+
+      # -----------------------------------------------------------------
+      # Mop-after-vacuum phase
+      # -----------------------------------------------------------------
+      # After all rooms are vacuumed, optionally charge and trigger the
+      # firmware's custom, user set, mop routine. The sequence_running flag
+      # stays on so the dashboard shows the mop phase in live mode. Stop
+      # works the same way — turning off running_entity breaks all waits.
+      #
+      # Generic: resolves the mop button and helper by vacuum name. If
+      # neither exists for a vacuum, the whole block is skipped.
+      - if:
+          - condition: template
+            value_template: >
+              {{ mop_button_entity != ''
+                 and is_state(mop_after_entity, 'on')
+                 and is_state(running_entity, 'on') }}
+        then:
+          # Signal the dashboard that we're in the mop phase. The index
+          # exceeds the room count, so we can distinguish "charging for
+          # mop/mopping" from the room-by-room queue.
+          - action: input_number.set_value
+            target:
+              entity_id: "{{ index_entity }}"
+            data:
+              value: "{{ room_ids | length + 1 }}"
+
+          # Charge to 90% before mopping (same threshold as room charging).
+          - if:
+              - condition: template
+                value_template: >
+                  {{ states(battery_entity) | int(100) < 90 }}
+            then:
+              - wait_template: >
+                  {{ states(battery_entity) | int(0) >= 90
+                     or not is_state(running_entity, 'on') }}
+                timeout: "03:00:00"
+              - *cancel_guard
+
+          # Press the firmware's button for the custom mop routine that is exposed in HA
+          - action: button.press
+            continue_on_error: true
+            target:
+              entity_id: "{{ mop_button_entity }}"
+
+          # Wait for the vacuum to leave the dock (started mopping).
+          - wait_template: >
+              {{ not is_state(vacuum_entity, 'docked')
+                 or not is_state(running_entity, 'on') }}
+            timeout: "00:02:00"
+          - *cancel_guard
+
+          # Wait for the vacuum to finish mopping and dock.
+          - wait_template: >
+              {{ is_state(vacuum_entity, 'docked')
+                 or is_state(vacuum_entity, 'idle')
+                 or not is_state(running_entity, 'on') }}
+            timeout: "03:00:00"
+          - *cancel_guard
+
       # Expects running_entity, pause_entity, resume_entity, skip_entity,
       # queue_entity and index_entity variables in scope.
       #

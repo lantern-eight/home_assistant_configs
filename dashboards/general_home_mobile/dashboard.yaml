@@ -500,6 +500,34 @@ button_card_templates:
         entity_id: "[[[ return `input_boolean.${variables.vacuum}_empty_between_rooms` ]]]"
     styles: *segment_styles
 
+  # Mop toggle. Only rendered for vacuums whose mop_after_vacuum
+  # helper exists.
+  vacuum_mop_toggle_segment:
+    template: vacuum_base
+    show_state: false
+    show_icon: false
+    show_name: true
+    variables:
+      mode: 'on'
+      color: var(--primary-color)
+      selected: |
+        [[[
+          const mopOn = states[`input_boolean.${variables.vacuum}_mop_after_vacuum`]?.state === 'on';
+          return variables.mode === 'on' ? mopOn : !mopOn;
+        ]]]
+    name: |
+      [[[
+        return variables.mode === 'on' ? 'On' : 'Off';
+      ]]]
+    tap_action:
+      action: call-service
+      service: |
+        [[[ return variables.mode === 'on'
+          ? 'input_boolean.turn_on' : 'input_boolean.turn_off' ]]]
+      service_data:
+        entity_id: "[[[ return `input_boolean.${variables.vacuum}_mop_after_vacuum` ]]]"
+    styles: *segment_styles
+
   # Preset chip — sets the whole room selection at once. Highlights when the
   # current selection already matches the preset.
   vacuum_preset_chip:
@@ -814,21 +842,21 @@ button_card_templates:
       # the ring would render complete.
       overall: |
         [[[
+          if (variables.mop_phase) return 100;
           const total = variables.room_list.length;
           if (!total) return 0;
           const done = (variables.index - 1) + variables.room_percent / 100;
           return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
         ]]]
+      mop_phase: |
+        [[[
+          return variables.index > variables.room_list.length;
+        ]]]
       status_line: |
         [[[
-          // Status line priority:
-          //   1. Paused (optimistic flag)      → "Paused · {room}"
-          //   2. Cleaning (vacuum entity)      → "Cleaning {room} · {pct}%"
-          //   3. Emptying bin (status sensor)   → "Emptying bin"
-          //   4. Docked + firmware active job   → "Charging · will resume {room}"
-          //   5. Docked, no firmware job        → "Charging between rooms"
-          //   6. Fallback                       → formatted status sensor
-          //
+          const vacuumState = states[`vacuum.${variables.vacuum}`]?.state;
+          const statusRaw = states[`sensor.${variables.vacuum}_status`]?.state || '';
+
           // Three entities describe what the vacuum is doing and they report
           // differently at different times:
           //   vacuum.<vacuum>        — flips to 'cleaning' the moment the job starts.
@@ -837,24 +865,41 @@ button_card_templates:
           //     starts, stays on during mid-room battery returns, off between rooms.
           //     Used here to distinguish between charging between rooms and charging
           //     mid-room but will continue.
-          const statusRaw = states[`sensor.${variables.vacuum}_status`]?.state || '';
+
+          // Mop phase: index exceeds room count.
+          if (variables.mop_phase) {
+            if (vacuumState === 'cleaning') return 'Mopping';
+            if (vacuumState === 'docked') {
+              const bat = states[`sensor.${variables.vacuum}_battery`]?.state;
+              return `Charging for mop · ${bat || '–'}%`;
+            }
+            return statusRaw.replace(/_/g, ' ')
+              .replace(/^./, (ch) => ch.toUpperCase()) || 'Preparing to mop';
+          }
+
+          // Vacuum phase
+          // Status line priority:
+          //   1. Paused (optimistic flag)      → "Paused · {room}"
+          //   2. Cleaning (vacuum entity)      → "Cleaning {room} · {pct}%"
+          //   3. Emptying bin (status sensor)   → "Emptying bin"
+          //   4. Docked + firmware active job   → "Charging · will resume {room}"
+          //   5. Docked, no firmware job        → "Charging between rooms"
+          //   6. Fallback                       → formatted status sensor
           const paused = states[`input_boolean.${variables.vacuum}_sequence_paused`]?.state === 'on';
-          const vacState = states[`vacuum.${variables.vacuum}`]?.state;
           // index is still 0 for the moment between the run being flagged and
           // the first room being published, so key the status off whether a
-          // room resolved rather than off `cleaning` — otherwise that window
-          // renders as "Cleaning  · 0%" with an empty room name.
+          // room resolved rather than off 'cleaning'.
           const labels = variables.queue_labels;
           const current = variables.index > 0 && variables.index <= labels.length
             ? labels[variables.index - 1] : '';
           if (!current) return 'Starting…';
           if (paused) return `Paused · ${current}`;
-          if (vacState === 'cleaning')
+          if (vacuumState === 'cleaning')
             return `Cleaning ${current} · ${variables.room_percent}%`;
           if (statusRaw === 'emptying_the_bin') return 'Emptying bin';
           // Distinguish mid-room battery return (firmware has an active job,
           // binary_sensor stays on) from between-room charging (no active job).
-          if (vacState === 'docked') {
+          if (vacuumState === 'docked') {
             const firmwareJob = states[`binary_sensor.${variables.vacuum}_cleaning`]?.state === 'on';
             if (firmwareJob) return `Charging · will resume ${current}`;
             return 'Charging between rooms';
@@ -887,6 +932,15 @@ button_card_templates:
       trailing: |
         [[[
           const accent = variables.accent;
+          if (variables.mop_phase) {
+            return `
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                <ha-icon icon="mdi:water"
+                         style="--mdc-icon-size:20px;color:${accent}"></ha-icon>
+                <span style="font-size:12px;font-weight:600;color:${accent}"
+                      >Mop</span>
+              </div>`;
+          }
           const passes = parseInt(
             states[`input_number.${variables.vacuum}_passes`]?.state) || 1;
           return `
@@ -907,6 +961,46 @@ button_card_templates:
           const accent = variables.accent;
           const green = 'var(--success-color)';
           const index = variables.index;
+
+          // Mop phase: show a simplified body with battery and status.
+          if (variables.mop_phase) {
+            const batteryState = states[`sensor.${variables.vacuum}_battery`]?.state;
+            const batteryValid = batteryState && batteryState !== 'unknown'
+              && batteryState !== 'unavailable';
+            const vacuumState = states[`vacuum.${variables.vacuum}`]?.state;
+            const isMopping = vacuumState === 'cleaning';
+            const batteryLine = !batteryValid ? ''
+              : `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+                   <ha-icon icon="${isMopping ? 'mdi:water' : 'mdi:battery-charging'}"
+                            style="--mdc-icon-size:12px;color:var(--secondary-text-color)"></ha-icon>
+                   <span style="font-size:11px;color:var(--secondary-text-color)"
+                         >Battery ${batteryState}%${!isMopping ? ' — charging' : ''}</span>
+                 </div>`;
+
+            // All vacuum rooms shown as done.
+            const doneChips = variables.queue_labels.map((label) => {
+              const base = 'padding:5px 10px;border-radius:8px;font-size:12px;'
+                         + 'white-space:nowrap;text-transform:capitalize;';
+              return `<span style="${base}background:color-mix(in srgb, ${green} 10%, transparent);color:color-mix(in srgb, ${green} 65%, var(--card-background-color));text-decoration:line-through">${label}</span>`;
+            }).join('');
+
+            return `
+              <div style="width:100%;text-align:left">
+                ${variables.header}
+
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px"
+                     >${doneChips}</div>
+
+                <div style="height:4px;border-radius:2px;margin-top:14px;overflow:hidden;
+                            background:color-mix(in srgb, var(--primary-text-color) 7%, transparent)">
+                  <div style="height:100%;width:100%;border-radius:2px;
+                              background:linear-gradient(90deg, ${accent},
+                                         color-mix(in srgb, ${accent} 60%, #ffffff))"></div>
+                </div>
+
+                ${batteryLine}
+              </div>`;
+          }
 
           const chips = variables.queue_labels.map((label, position) => {
             const number = position + 1;
@@ -1059,12 +1153,12 @@ streamline_templates:
                 pause_mode: |
                   [[[
                     const paused = states[`input_boolean.${variables.vacuum}_sequence_paused`]?.state === 'on';
-                    const vacState = states[`vacuum.${variables.vacuum}`]?.state;
+                    const vacuumState = states[`vacuum.${variables.vacuum}`]?.state;
                     // If NaN from unavailable sensor, default 0.
                     const batteryLow = (parseInt(states[`sensor.${variables.vacuum}_battery`]?.state) || 0) < 25;
                     if (paused) return 'continue';
-                    if (vacState === 'cleaning') return 'pause';
-                    if (vacState === 'docked' && batteryLow) return 'continue_dock';
+                    if (vacuumState === 'cleaning') return 'pause';
+                    if (vacuumState === 'docked' && batteryLow) return 'continue_dock';
                     return 'inactive';
                   ]]]
                 tone: |
@@ -1246,6 +1340,80 @@ streamline_templates:
                   vacuum: '[[vacuum]]'
                   mode: end_only
                   color: '[[color]]'
+
+          # Mop after vacuum toggle — only shows for vacuums that have
+          # the mop_after_vacuum helper. The conditional gates
+          # on the entity having a real state (on/off), so vacuums
+          # without the helper just don't render this row.
+          - type: conditional
+            conditions:
+            - condition: or
+              conditions:
+              - condition: state
+                entity: 'input_boolean.[[vacuum]]_mop_after_vacuum'
+                state: 'on'
+              - condition: state
+                entity: 'input_boolean.[[vacuum]]_mop_after_vacuum'
+                state: 'off'
+            card:
+              type: grid
+              columns: 2
+              square: false
+              card_mod:
+                style:
+                  .: |
+                    #root {
+                      display: flex !important;
+                      align-items: center !important;
+                      gap: 10px !important;
+                      padding: 0 18px 12px !important;
+                    }
+                    #root > * { width: auto !important; flex: 0 0 auto !important; }
+              cards:
+              - type: custom:button-card
+                show_icon: false
+                show_state: false
+                name: Mop After
+                tap_action:
+                  action: none
+                styles:
+                  card:
+                  - padding: 0
+                  - background: none
+                  - border: none
+                  name:
+                  - font-size: 12px
+                  - white-space: nowrap
+                  - color: var(--secondary-text-color)
+                card_mod:
+                  style: *theme_button_style
+              - type: grid
+                columns: 2
+                square: false
+                card_mod:
+                  style:
+                    .: |
+                      #root {
+                        display: flex !important;
+                        gap: 0 !important;
+                        padding: 2px !important;
+                        border-radius: 8px;
+                        background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+                      }
+                      #root > * { width: auto !important; flex: 0 0 auto !important; }
+                cards:
+                - type: custom:button-card
+                  template: vacuum_mop_toggle_segment
+                  variables:
+                    vacuum: '[[vacuum]]'
+                    mode: 'off'
+                    color: '[[color]]'
+                - type: custom:button-card
+                  template: vacuum_mop_toggle_segment
+                  variables:
+                    vacuum: '[[vacuum]]'
+                    mode: 'on'
+                    color: '[[color]]'
 
           # Presets
           - type: grid

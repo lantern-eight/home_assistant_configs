@@ -214,6 +214,8 @@
         - binary_sensor.<entity_35>_cleaning
         - sensor.<entity_34>_cleaning_progress
         - sensor.<entity_35>_cleaning_progress
+        - input_boolean.<entity_34>_sequence_running
+        - input_number.<entity_34>_sequence_index
     # Printers
     - platform: state
       entity_id:
@@ -502,15 +504,25 @@
              the <ha-icon> in the header's button-card template, so the
              custom-brand-icons resource is always loaded by the time it draws.
              Anything read outside Lovelace has to stay on mdi:. #}
-          {% if is_state('binary_sensor.<entity_34>_cleaning', 'on') %}
+          {% set <entity_34>_room_count = state_attr(
+               'sensor.<entity_34>_room_config', 'rooms') | default([], true) | length %}
+          {% set <entity_34>_mop_phase =
+               is_state('input_boolean.<entity_34>_sequence_running', 'on')
+               and states('input_number.<entity_34>_sequence_index')
+                   | int(0) > <entity_34>_room_count
+               and <entity_34>_room_count > 0 %}
+          {% if is_state('binary_sensor.<entity_34>_cleaning', 'on')
+                or <entity_34>_mop_phase %}
             {% set prog = states('sensor.<entity_34>_cleaning_progress')
                | float(0) | round(0) | int %}
             {% set ns.items = ns.items + [
               {
                 'id': 'vacuum_<entity_34>',
                 'active': true,
-                'label': '<entity_34>',
-                'icon': 'phu:<entity_42>',
+                'label': '<entity_34> Mopping' if <entity_34>_mop_phase
+                         else '<entity_34>',
+                'icon': 'mdi:water' if <entity_34>_mop_phase
+                        else 'phu:<entity_42>',
                 'severity': 'amber',
                 'promoted': false,
                 'sort_key': '1_vacuum_<entity_34>',
