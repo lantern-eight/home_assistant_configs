@@ -40,7 +40,7 @@ card_mod)
 - [Setup](#setup)
   - [Dashboard Registration](#1-dashboard-registration)
   - [HACS Cards](#2-hacs-cards)
-  - [card_mod Load Order Fix and Popup History Fix](#3-card_mod-load-order-fix-and-popup-history-fix)
+  - [card_mod Load Order and Popup History](#3-card_mod-load-order-and-popup-history)
   - [Theme Helpers](#4-theme-helpers)
   - [Template Sensors and Theme Macros](#5-template-sensors-and-theme-macros)
   - [Background Image Pipeline](#6-background-image-pipeline)
@@ -782,7 +782,7 @@ curl -s -X POST "http://YOUR_HA:8123/api/config/core/check_config" \
 card_mod works by monkey-patching the `hass` setter on card element classes.
 If a card class instantiates **before** card_mod loads, that card will never
 be styled. The `extra_module_url` fix (see
-[Setup](#3-card_mod-load-order-fix-and-popup-history-fix))
+[Setup](#3-card_mod-load-order-and-popup-history))
 addresses this, but if you ever see unstyled cards, the load order is the
 first thing to check.
 
