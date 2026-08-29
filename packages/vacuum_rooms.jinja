@@ -1,0 +1,132 @@
+{#-
+  Vacuum room maps — segment id, display name, short label, icon, labels
+  for each vacuum. Deployed to custom_templates/vacuum_rooms.jinja by the
+  sync script.
+
+  This is the owner of the room lists. `packages/vacuum.yaml` renders both the
+  room_config sensor's state (the room count) and its `rooms` attribute from
+  this macro, so the count can't drift out of step with the list.
+
+  `short` is used where horizontal space is tight, like live queue chips.
+
+  `labels` is a list of group tags for preset chip filtering.
+  A room can belong to zero or more groups. Add new labels here and a matching
+  preset chip in dashboard.yaml.
+
+  Segment ID's come from the device manufacturer app. Each vacuum is assumed to
+  only be on a single floor/map.
+-#}
+{%- macro vacuum_rooms(vacuum) -%}
+{%- set rooms = {
+  '<entity_34>': [
+    {
+      'id': '16',
+      'name': 'Living Room',
+      'short': 'Living Room',
+      'icon': 'mdi:sofa',
+      'labels': ['large']
+    },
+    {
+      'id': '17',
+      'name': 'Mud Room',
+      'short': 'Mud Room',
+      'icon': 'mdi:shoe-print',
+      'labels': ['small']
+    },
+    {
+      'id': '18',
+      'name': 'Kitchen',
+      'short': 'Kitchen',
+      'icon': 'mdi:silverware-fork-knife',
+      'labels': ['large']
+    },
+    {
+      'id': '19',
+      'name': 'Game Room',
+      'short': 'Game Room',
+      'icon': 'mdi:gamepad-variant',
+      'labels': ['small']
+    },
+    {
+      'id': '20',
+      'name': 'Game Room Bath',
+      'short': 'Game Bath',
+      'icon': 'mdi:shower',
+      'labels': ['small']
+    },
+    {
+      'id': '21',
+      'name': 'Front Bathroom',
+      'short': 'Front Bath',
+      'icon': 'mdi:toilet',
+      'labels': ['small']
+    },
+    {
+      'id': '22',
+      'name': 'Office',
+      'short': 'Office',
+      'icon': 'mdi:desk',
+      'labels': ['small']
+    },
+    {
+      'id': '23',
+      'name': 'Front Door',
+      'short': 'Front Door',
+      'icon': 'mdi:door-open',
+      'labels': ['small']
+    }
+  ],
+  '<entity_35>': [
+    {
+      'id': '16',
+      'name': 'Loft',
+      'short': 'Loft',
+      'icon': 'mdi:stairs-up',
+      'labels': ['large']
+    },
+    {
+      'id': '19',
+      'name': "<entity_4>'s Room",
+      'short': '<entity_4>',
+      'icon': 'mdi:bed',
+      'labels': ['large']
+    },
+    {
+      'id': '20',
+      'name': '<entity_43>s Room',
+      'short': '<entity_43>s',
+      'icon': 'mdi:bunk-bed',
+      'labels': ['large']
+    },
+    {
+      'id': '22',
+      'name': 'Main Room',
+      'short': 'Main Room',
+      'icon': 'mdi:bed-king',
+      'labels': ['large']
+    },
+    {
+      'id': '23',
+      'name': 'Main Bathroom',
+      'short': 'Main Bath',
+      'icon': 'mdi:shower',
+      'labels': ['small']
+    },
+    {
+      'id': '24',
+      'name': '<entity_45> Room',
+      'short': '<entity_45>',
+      'icon': 'mdi:bed',
+      'labels': ['large']
+    },
+    {
+      'id': '25',
+      'name': 'Main Closet',
+      'short': 'Closet',
+      'icon': 'mdi:hanger',
+      'labels': ['small']
+    }
+  ]
+} -%}
+{{- rooms.get(vacuum, []) | tojson -}}
+{%- endmacro -%}

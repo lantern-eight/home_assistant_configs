@@ -12,7 +12,11 @@ frontend:
   # card_mod applying to every card, so this must be reliable.
   extra_module_url:
     - /hacsfiles/lovelace-card-mod/card-mod.js
-    - /local/popup_history_fix.js
+    # ?v= is a cache-buster, not decoration. HA serves /local/ with a
+    # 31-day max-age, so without it a browser keeps running whichever
+    # copy it fetched first and edits to the file never ship. Bump it
+    # in the same change as any edit to popup_history_fix.js.
+    - /local/popup_history_fix.js?v=2
 
 automation: !include automations.yaml
 script: !include scripts.yaml

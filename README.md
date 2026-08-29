@@ -14,6 +14,7 @@ Home Assistant configuration backup, dashboard management, and tooling. Runs on 
   - [Uploading to Home Assistant](#uploading-to-home-assistant)
 - [Entity Discovery](#entity-discovery)
 - [Tests](#tests)
+- [macOS Local Network Permission](#macos-local-network-permission)
 - [Project Structure](#project-structure)
 
 ## Setup
@@ -158,7 +159,7 @@ IDs, friendly names, and states.
 ## Tests
 
 ```bash
-uv run pytest tests/ -v
+uv run python -m pytest tests/ -v
 ```
 
 - `test_redaction.py` — name redaction, pronoun neutralization, ID shortening
@@ -166,6 +167,30 @@ uv run pytest tests/ -v
 - `test_restore.py` — entity map round-trip restore
 - `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement
 - `test_config.py` — config loading from YAML and environment
+
+## macOS Local Network Permission
+
+Any app that auto-updates by installing each release into its own versioned
+directory on every update, creates an issue where grants, like local network
+access, given to previous versions, do not carry to new versions. Eventually,
+permission pop-ups no longer happen and new versions can not be granted
+permissions they need. It can be seen that this is happening if in macOS
+settings, for the local network permission there a multiple entries for one app.
+
+### How to fix it
+
+Two files contain information that we need to clear. They are root-owned and held
+open by `nesessionmanager` while macOS runs so they cannot be cleared while the
+computer is on in a normal boot. Boot into Recovery, open Utilities then Terminal,
+and delete both these files from the data volume:
+
+- `/Library/Preferences/com.apple.networkextension.plist`
+- `/Library/Preferences/com.apple.networkextension.uuidcache.plist`
+
+Volumes may be unmounted, you can list them and mount them, then do this.
+
+Reboot. The registry rebuilds from scratch and every application re-prompts for
+permission on its next local-network access.
 
 ## Project Structure
 

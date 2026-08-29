@@ -7,6 +7,15 @@
 ## Home Assistant
 
 - **Sync scripts** Use `uv run python scripts/<sync_script>.py` to deploy.
+- **`Errno 65: No route to host` is a macOS permission problem, not an
+  unreachable host.** See "macOS Local Network Permission" in the root
+  `README.md` for the diagnosis and the fix. Two traps: Apple-signed binaries
+  keep working while the project virtualenv's Python does not, so it looks like
+  a dependency fault; and the default gateway is exempt, so reaching the router
+  proves nothing.
+- **Run tests with `uv run python -m pytest`,** not the bare `pytest` console
+  script — that can resolve against a system Python and fail every import,
+  which reads as missing dependencies.
 - **Hard restarts take ~5 minutes.** After triggering an HA restart
   (e.g. `sync.py -r`), don't actively poll — use `Bash` with
   `run_in_background` to wait. The web server comes up early, but

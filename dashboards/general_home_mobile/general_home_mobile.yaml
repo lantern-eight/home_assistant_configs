@@ -43,6 +43,32 @@ schedule:
     friday: *uv_index_active_window
     saturday: *uv_index_active_window
     sunday: *uv_index_active_window
+  cond_vacuum_<entity_34>:
+    name: "Conditional: <entity_34> Vacuum"
+    icon: mdi:robot-vacuum
+    monday: &vacuum_evening_window
+      - from: "18:00:00"
+        to: "23:00:00"
+    tuesday: *vacuum_evening_window
+    wednesday: *vacuum_evening_window
+    thursday: *vacuum_evening_window
+    friday: *vacuum_evening_window
+    saturday: *vacuum_evening_window
+    sunday: &vacuum_sunday_window
+      - from: "07:00:00"
+        to: "12:00:00"
+  cond_vacuum_<entity_35>:
+    name: "Conditional: <entity_35> Vacuum"
+    icon: mdi:robot-vacuum
+    monday: &vacuum_morning_window
+      - from: "06:00:00"
+        to: "12:00:00"
+    tuesday: *vacuum_morning_window
+    wednesday: *vacuum_morning_window
+    thursday: *vacuum_morning_window
+    friday: *vacuum_morning_window
+    saturday: *vacuum_morning_window
+    sunday: *vacuum_sunday_window
 
 # --- Notification state ---
 

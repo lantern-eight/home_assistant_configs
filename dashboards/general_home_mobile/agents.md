@@ -72,12 +72,12 @@ name-derived entity ID. Don't assume the unique_id matches.
 
 | File | What it does |
 |------|-------------|
-| `dashboard.yaml` | All views, YAML anchor definitions, card definitions |
+| `dashboard.yaml` | All views, YAML anchor definitions, `button_card_templates`, `streamline_templates`, card definitions |
 | `general_home_theme.jinja` | Theme macro library: every palette/style value + the CSS-emitting macros (deployed to `custom_templates/`) |
 | `sensors.yaml` | Non-theme sensors (conditional card manager, notification aggregator, room light switches) |
 | `general_home_mobile.yaml` | HA package: helpers, REST sensor, command_line, shell_command, automations (deployed to `packages/`) |
 | `registry_metadata.yaml` | Category and label definitions for helpers and automations (applied via sync script `-c`) |
-| `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`) |
+| `popup_history_fix.js` | Strips bubble-card popup hashes from browser history on navigation (deployed to `www/`, loaded via `extra_module_url`). Editing it is not enough to ship a change — bump the `?v=` on its `configuration.yaml` entry, or browsers keep the copy they cached for 31 days |
 | `ha_config_additions.yaml` | Remaining HA config that can't go in a package (dashboard registration, secrets, frontend module) |
 | `README.md` | Full public-facing documentation |
 
@@ -87,7 +87,7 @@ directory — they live in repo-root `packages/` and are synced to HA's
 
 ## YAML Anchor System
 
-Seven anchors defined at the top of `dashboard.yaml` control card theming:
+Eight anchors defined at the top of `dashboard.yaml` control card theming:
 
 | Anchor | Purpose |
 |--------|---------|
@@ -97,9 +97,23 @@ Seven anchors defined at the top of `dashboard.yaml` control card theming:
 | `&theme_exempt_style` | Strips all styling — use on headings, chips, titles |
 | `&theme_exempt_sub_style` | Same as exempt but with smaller font — use on sub-section headings |
 | `&theme_card_transparent` | Transparent, no border — use on wrapper cards |
+| `&theme_button_style` | Strips only the themed shadow/blur — use on `button-card`, whose own `styles: card:` an `!important` rule would otherwise erase |
 | `&theme_bg_card` | Background overlay — must be first card in every view |
 
 To theme a new card: `card_mod: style: *theme_card_style`
+
+## Reusing a Card Body
+
+An anchor reuses a card verbatim. When two cards are the same shape but differ
+in a few values, define the body once under the top-level
+`streamline_templates:` key and instantiate it with
+`type: custom:streamline-card` + `variables:`
+
+For logic rather than shape, use `button_card_templates` inheritance: an
+entry there can name its own `template:`, and button-card resolves the chain
+recursively and deep-merges it.
+
+The vacuum cards are an example of these.
 
 The template anchors are thin wrappers — each imports
 `general_home_theme.jinja` and calls `theme_css(user, kind)` (or
@@ -243,15 +257,42 @@ Then reload the page.
    first card in each view's first section. It uses `position: fixed` with
    `z-index: -1` to paint the viewport background.
 
-5. **Don't use `initial:` on helpers if you want persistence.** Helpers
-   with `initial:` reset on every HA restart. Remove it to keep the
-   last-set value.
+5. **Decide whether a helper should survive a restart, and say so with
+   `initial:`.** A helper with `initial:` resets on every HA restart; one
+   without it restores its last value. Neither is a safe default — pick by
+   what the helper holds. State the user set (a room selection, a
+   preference) should restore. State belonging to a running script must
+   not: a script run cannot survive a restart, so a restored "sequence
+   running" flag leaves a card driven by nothing, and any guard that reads
+   the flag then gets an incorrect state.
 
 6. **Don't use these HA API endpoints** (broken in 2026.6):
    - `POST /api/services/lovelace/reload` -> 400
    - `POST /api/lovelace/reload` -> 404
 
    Use the WebSocket `lovelace/config` call with `force: true` instead.
+
+7. **Don't put a `phu:` icon anywhere Lovelace isn't the thing drawing it.**
+   `custom-brand-icons` registers as `phu:` (not `cbi:`) and loads as a
+   Lovelace resource, so it only exists inside the frontend. Card `icon:`
+   keys, view icons and `<ha-icon>` in a button-card template are fine.
+   Entity registry icons (helpers, template sensors in `packages/`),
+   `notify` payloads and anything the companion app draws natively must
+   stay on `mdi:` — they render blank otherwise. The vacuums use
+   `phu:` on the Lovelace side and `mdi:` on the helpers for exactly this
+   reason.
+
+8. **Don't name a local after one of button-card's injected parameters.**
+   Every `[[[ ... ]]]` template is compiled as a function taking `states`,
+   `entity`, `user`, `hass`, `variables`, `html` and `helpers`. A
+   `const entity = ...` inside one is a redeclaration, so the template
+   throws at compile time — the field renders blank and the only sign is a
+   console error.
+
+9. **Don't mutate a memoised variable.** button-card evaluates each
+   `variables:` entry once and hands the same object to every reader, so
+   an in-place `.sort()` or `.splice()` on one holding an array reorders
+   what the other cards on that entity see. Copy first.
 
 ## Style-Specific Notes
 
