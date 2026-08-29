@@ -296,10 +296,10 @@ button_card_templates:
   # Reading `states` inside one still registers the entity for updates.
   vacuum_base:
     variables:
-      vac: ''
+      vacuum: ''
       label: |
         [[[
-          return variables.vac.charAt(0).toUpperCase() + variables.vac.slice(1);
+          return variables.vacuum.charAt(0).toUpperCase() + variables.vacuum.slice(1);
         ]]]
       # Which list `room_list` reads: the user's selection, or the snapshot taken
       # when the running sequence started.
@@ -311,7 +311,7 @@ button_card_templates:
       room_list: |
         [[[
           const source =
-            states[`input_text.${variables.vac}_${variables.room_list_source}`];
+            states[`input_text.${variables.vacuum}_${variables.room_list_source}`];
           return (source?.state || '').split(',')
             .map((id) => id.trim()).filter((id) => /^[0-9]+$/.test(id));
         ]]]
@@ -334,7 +334,7 @@ button_card_templates:
         [[[ return variables.room_list.includes(variables.room_id); ]]]
       room: |
         [[[
-          const config = states[`sensor.${variables.vac}_room_config`];
+          const config = states[`sensor.${variables.vacuum}_room_config`];
           const rooms = config?.attributes?.rooms || [];
           return rooms.find((entry) => entry.id === variables.room_id) || {};
         ]]]
@@ -348,7 +348,7 @@ button_card_templates:
       action: call-service
       service: script.vacuum_toggle_room
       service_data:
-        vacuum_name: "[[[ return variables.vac ]]]"
+        vacuum_name: "[[[ return variables.vacuum ]]]"
         room_id: "[[[ return variables.room_id ]]]"
     styles:
       card:
@@ -440,7 +440,7 @@ button_card_templates:
       selected: |
         [[[
           return parseFloat(
-            states[`input_number.${variables.vac}_passes`]?.state
+            states[`input_number.${variables.vacuum}_passes`]?.state
           ) === variables.passes;
         ]]]
     name: "[[[ return `${variables.passes}×` ]]]"
@@ -448,7 +448,7 @@ button_card_templates:
       action: call-service
       service: input_number.set_value
       service_data:
-        entity_id: "[[[ return `input_number.${variables.vac}_passes` ]]]"
+        entity_id: "[[[ return `input_number.${variables.vacuum}_passes` ]]]"
         value: "[[[ return variables.passes ]]]"
     styles:
       card:
@@ -484,7 +484,7 @@ button_card_templates:
       color: var(--primary-color)
       selected: |
         [[[
-          const between = states[`input_boolean.${variables.vac}_empty_between_rooms`]?.state === 'on';
+          const between = states[`input_boolean.${variables.vacuum}_empty_between_rooms`]?.state === 'on';
           return variables.mode === 'each_room' ? between : !between;
         ]]]
     name: |
@@ -497,7 +497,7 @@ button_card_templates:
         [[[ return variables.mode === 'each_room'
           ? 'input_boolean.turn_on' : 'input_boolean.turn_off' ]]]
       service_data:
-        entity_id: "[[[ return `input_boolean.${variables.vac}_empty_between_rooms` ]]]"
+        entity_id: "[[[ return `input_boolean.${variables.vacuum}_empty_between_rooms` ]]]"
     styles:
       card:
       - padding: 6px 14px
@@ -537,7 +537,7 @@ button_card_templates:
         [[[
           const keyword = variables.rooms === 'all' || variables.rooms === 'common';
           if (!keyword) return variables.rooms;
-          const config = states[`sensor.${variables.vac}_room_config`];
+          const config = states[`sensor.${variables.vacuum}_room_config`];
           const rooms = config?.attributes?.rooms || [];
           return rooms
             .filter((room) => variables.rooms === 'all' || room.common)
@@ -563,7 +563,7 @@ button_card_templates:
       action: "[[[ return variables.room_ids ? 'call-service' : 'none' ]]]"
       service: script.vacuum_set_rooms
       service_data:
-        vacuum_name: "[[[ return variables.vac ]]]"
+        vacuum_name: "[[[ return variables.vacuum ]]]"
         room_ids: "[[[ return variables.room_ids ]]]"
     # Deliberately flatter than a selected room chip: the presets are a way
     # in, the rooms are the actual selection, and only one of them should be
@@ -625,7 +625,7 @@ button_card_templates:
         [[[ return variables.count ? 'call-service' : 'none' ]]]
       service: script.vacuum_clean_rooms_sequence
       service_data:
-        vacuum_entity: "[[[ return `vacuum.${variables.vac}` ]]]"
+        vacuum_entity: "[[[ return `vacuum.${variables.vacuum}` ]]]"
     styles:
       card:
       - padding: 14px
@@ -751,7 +751,7 @@ button_card_templates:
         ]]]
     tap_action:
       action: more-info
-      entity: "[[[ return `vacuum.${variables.vac}` ]]]"
+      entity: "[[[ return `vacuum.${variables.vacuum}` ]]]"
     styles:
       card:
       - padding: 16px 18px 12px
@@ -782,8 +782,8 @@ button_card_templates:
         [[[
           const unset = (value) =>
             !value || value === 'unknown' || value === 'unavailable';
-          const statusState = states[`sensor.${variables.vac}_status`]?.state;
-          const batteryState = states[`sensor.${variables.vac}_battery`]?.state;
+          const statusState = states[`sensor.${variables.vacuum}_status`]?.state;
+          const batteryState = states[`sensor.${variables.vacuum}_battery`]?.state;
           const status = unset(statusState) ? ''
             : statusState.replace(/_/g, ' ').replace(/^./, (ch) => ch.toUpperCase());
           const battery = unset(batteryState) ? '' : `${batteryState}%`;
@@ -807,12 +807,12 @@ button_card_templates:
       index: |
         [[[
           return parseInt(
-            states[`input_number.${variables.vac}_sequence_index`]?.state) || 0;
+            states[`input_number.${variables.vacuum}_sequence_index`]?.state) || 0;
         ]]]
       room_percent: |
         [[[
           return parseInt(
-            states[`sensor.${variables.vac}_cleaning_progress`]?.state) || 0;
+            states[`sensor.${variables.vacuum}_cleaning_progress`]?.state) || 0;
         ]]]
       # The queue's segment ids mapped to display labels. Two things below
       # need them — the status line names the current room, the chip row
@@ -820,7 +820,7 @@ button_card_templates:
       # doing its own lookup.
       queue_labels: |
         [[[
-          const config = states[`sensor.${variables.vac}_room_config`];
+          const config = states[`sensor.${variables.vacuum}_room_config`];
           const rooms = config?.attributes?.rooms || [];
           return variables.room_list.map((id) => {
             const room = rooms.find((entry) => entry.id === id);
@@ -851,15 +851,15 @@ button_card_templates:
           //
           // Three entities describe what the vacuum is doing and they report
           // differently at different times:
-          //   vacuum.<vac>        — flips to 'cleaning' the moment the job starts.
-          //   sensor.<vac>_status — reports transient states like emptying.
-          //   binary_sensor.<vac>_cleaning — turns on ~30s after a room really
+          //   vacuum.<vacuum>        — flips to 'cleaning' the moment the job starts.
+          //   sensor.<vacuum>_status — reports transient states like emptying.
+          //   binary_sensor.<vacuum>_cleaning — turns on ~30s after a room really
           //     starts, stays on during mid-room battery returns, off between rooms.
           //     Used here to distinguish between charging between rooms and charging
           //     mid-room but will continue.
-          const statusRaw = states[`sensor.${variables.vac}_status`]?.state || '';
-          const paused = states[`input_boolean.${variables.vac}_sequence_paused`]?.state === 'on';
-          const vacState = states[`vacuum.${variables.vac}`]?.state;
+          const statusRaw = states[`sensor.${variables.vacuum}_status`]?.state || '';
+          const paused = states[`input_boolean.${variables.vacuum}_sequence_paused`]?.state === 'on';
+          const vacState = states[`vacuum.${variables.vacuum}`]?.state;
           // index is still 0 for the moment between the run being flagged and
           // the first room being published, so key the status off whether a
           // room resolved rather than off `cleaning` — otherwise that window
@@ -875,7 +875,7 @@ button_card_templates:
           // Distinguish mid-room battery return (firmware has an active job,
           // binary_sensor stays on) from between-room charging (no active job).
           if (vacState === 'docked') {
-            const firmwareJob = states[`binary_sensor.${variables.vac}_cleaning`]?.state === 'on';
+            const firmwareJob = states[`binary_sensor.${variables.vacuum}_cleaning`]?.state === 'on';
             if (firmwareJob) return `Charging · will resume ${current}`;
             return 'Charging between rooms';
           }
@@ -908,7 +908,7 @@ button_card_templates:
         [[[
           const accent = variables.accent;
           const passes = parseInt(
-            states[`input_number.${variables.vac}_passes`]?.state) || 1;
+            states[`input_number.${variables.vacuum}_passes`]?.state) || 1;
           return `
             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
               <div style="padding:4px 9px;border-radius:6px;font-size:11px;
@@ -939,7 +939,7 @@ button_card_templates:
 
           // Context lines below the progress bar — emptying, charging, or battery.
           const emptying =
-            states[`sensor.${variables.vac}_status`]?.state === 'emptying_the_bin';
+            states[`sensor.${variables.vacuum}_status`]?.state === 'emptying_the_bin';
           const dockLine = emptying
             ? `<div style="display:flex;align-items:center;gap:6px;margin-top:10px">
                  <ha-icon icon="mdi:tray-arrow-down"
@@ -954,10 +954,10 @@ button_card_templates:
           // When not docked (cleaning, paused), show plain "Battery X%".
           // Dropped rather than rendered as "Battery –%" when the sensor
           // is unknown.
-          const batteryState = states[`sensor.${variables.vac}_battery`]?.state;
+          const batteryState = states[`sensor.${variables.vacuum}_battery`]?.state;
           const batteryValid = batteryState && batteryState !== 'unknown'
             && batteryState !== 'unavailable';
-          const isDocked = states[`vacuum.${variables.vac}`]?.state === 'docked';
+          const isDocked = states[`vacuum.${variables.vacuum}`]?.state === 'docked';
           const batteryLine = !batteryValid ? ''
             : isDocked && !emptying
               ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">
@@ -999,7 +999,7 @@ button_card_templates:
 # quoted wherever a bare `[[` would otherwise read as a YAML flow sequence.
 #
 # No `default:` block on purpose: an unset variable would render as a literal
-# `[[vac]]` in an entity id and fails visibly, rather than quietly drawing the
+# `[[vacuum]]` in an entity id and fails visibly, rather than quietly drawing the
 # other vacuum's card.
 streamline_templates:
   vacuum_card:
@@ -1031,7 +1031,7 @@ streamline_templates:
       - type: conditional
         conditions:
         - condition: state
-          entity: 'input_boolean.[[vac]]_sequence_running'
+          entity: 'input_boolean.[[vacuum]]_sequence_running'
           state: 'on'
         card:
           type: vertical-stack
@@ -1039,7 +1039,7 @@ streamline_templates:
           - type: custom:button-card
             template: vacuum_live_body
             variables:
-              vac: '[[vac]]'
+              vacuum: '[[vacuum]]'
               floor: '[[floor]]'
           - type: grid
             columns: 3
@@ -1063,11 +1063,11 @@ streamline_templates:
             - type: custom:button-card
               template: vacuum_control_button
               variables:
-                # vac must be set here because JS templates ([[[...]]]) cannot
-                # use streamline's [[vac]] substitution — streamline skips
+                # vacuum must be set here because JS templates ([[[...]]]) cannot
+                # use streamline's [[vacuum]] substitution — streamline skips
                 # triple-bracket blocks. This line IS substituted (plain YAML),
-                # making variables.vac available to the JS templates below.
-                vac: '[[vac]]'
+                # making variables.vacuum available to the JS templates below.
+                vacuum: '[[vacuum]]'
                 # Determine the button's mode from vacuum state. Computed once
                 # so icon, name, tone and tap_action can branch without
                 # repeating entity lookups.
@@ -1078,10 +1078,10 @@ streamline_templates:
                 #   'inactive'      — transitional (emptying, settling), gray
                 pause_mode: |
                   [[[
-                    const paused = states[`input_boolean.${variables.vac}_sequence_paused`]?.state === 'on';
-                    const vacState = states[`vacuum.${variables.vac}`]?.state;
+                    const paused = states[`input_boolean.${variables.vacuum}_sequence_paused`]?.state === 'on';
+                    const vacState = states[`vacuum.${variables.vacuum}`]?.state;
                     // If NaN from unavailable sensor, default 0.
-                    const batteryLow = (parseInt(states[`sensor.${variables.vac}_battery`]?.state) || 0) < 25;
+                    const batteryLow = (parseInt(states[`sensor.${variables.vacuum}_battery`]?.state) || 0) < 25;
                     if (paused) return 'continue';
                     if (vacState === 'cleaning') return 'pause';
                     if (vacState === 'docked' && batteryLow) return 'continue_dock';
@@ -1109,7 +1109,7 @@ streamline_templates:
                   [[[ return variables.pause_mode !== 'inactive' ? 'call-service' : 'none' ]]]
                 service: script.vacuum_pause_resume
                 service_data:
-                  vacuum_entity: 'vacuum.[[vac]]'
+                  vacuum_entity: 'vacuum.[[vacuum]]'
             - type: custom:button-card
               template: vacuum_control_button
               icon: mdi:skip-next
@@ -1118,7 +1118,7 @@ streamline_templates:
                 action: call-service
                 service: script.vacuum_skip_room
                 service_data:
-                  vacuum_entity: 'vacuum.[[vac]]'
+                  vacuum_entity: 'vacuum.[[vacuum]]'
             - type: custom:button-card
               template: vacuum_control_button
               icon: mdi:stop
@@ -1129,13 +1129,13 @@ streamline_templates:
                 action: call-service
                 service: script.vacuum_stop_sequence
                 service_data:
-                  vacuum_entity: 'vacuum.[[vac]]'
+                  vacuum_entity: 'vacuum.[[vacuum]]'
 
       # ---- selection mode ----
       - type: conditional
         conditions:
         - condition: state
-          entity: 'input_boolean.[[vac]]_sequence_running'
+          entity: 'input_boolean.[[vacuum]]_sequence_running'
           state: 'off'
         card:
           type: vertical-stack
@@ -1143,7 +1143,7 @@ streamline_templates:
           - type: custom:button-card
             template: vacuum_idle_header
             variables:
-              vac: '[[vac]]'
+              vacuum: '[[vacuum]]'
               floor: '[[floor]]'
               accent: '[[color]]'
 
@@ -1197,13 +1197,13 @@ streamline_templates:
               - type: custom:button-card
                 template: vacuum_pass_segment
                 variables:
-                  vac: '[[vac]]'
+                  vacuum: '[[vacuum]]'
                   passes: 1
                   color: '[[color]]'
               - type: custom:button-card
                 template: vacuum_pass_segment
                 variables:
-                  vac: '[[vac]]'
+                  vacuum: '[[vacuum]]'
                   passes: 2
                   color: '[[color]]'
 
@@ -1257,13 +1257,13 @@ streamline_templates:
               - type: custom:button-card
                 template: vacuum_empty_mode_segment
                 variables:
-                  vac: '[[vac]]'
+                  vacuum: '[[vacuum]]'
                   mode: each_room
                   color: '[[color]]'
               - type: custom:button-card
                 template: vacuum_empty_mode_segment
                 variables:
-                  vac: '[[vac]]'
+                  vacuum: '[[vacuum]]'
                   mode: end_only
                   color: '[[color]]'
 
@@ -1282,25 +1282,25 @@ streamline_templates:
                   #root > * { width: auto !important; flex: 0 0 auto !important; }
             cards:
             # Both presets name a keyword rather than a list of ids: the chip
-            # resolves them from sensor.[[vac]]_room_config, so which rooms
+            # resolves them from sensor.[[vacuum]]_room_config, so which rooms
             # in a category is decided in packages/vacuum_rooms.jinja next to
             # the rooms themselves, not restated here.
             - type: custom:button-card
               template: vacuum_preset_chip
               name: Common Areas
               variables:
-                vac: '[[vac]]'
+                vacuum: '[[vacuum]]'
                 rooms: common
                 color: '[[color]]'
             - type: custom:button-card
               template: vacuum_preset_chip
               name: All Rooms
               variables:
-                vac: '[[vac]]'
+                vacuum: '[[vacuum]]'
                 rooms: all
                 color: '[[color]]'
 
-          # Room chips, generated from sensor.[[vac]]_room_config so segment
+          # Room chips, generated from sensor.[[vacuum]]_room_config so segment
           # ids live in packages/vacuum_rooms.jinja and nowhere else —
           # adding a room to that macro makes a chip appear here.
           - type: custom:auto-entities
@@ -1322,13 +1322,13 @@ streamline_templates:
             filter:
               template: |
                 {% set ns = namespace(cards=[]) %}
-                {% for room in state_attr('sensor.[[vac]]_room_config', 'rooms') or [] %}
+                {% for room in state_attr('sensor.[[vacuum]]_room_config', 'rooms') or [] %}
                   {% set ns.cards = ns.cards + [
                     {
                       'type': 'custom:button-card',
                       'template': 'vacuum_room_chip',
                       'variables': {
-                        'vac': '[[vac]]',
+                        'vacuum': '[[vacuum]]',
                         'room_id': room.id,
                         'color': '[[color]]',
                         'color_end': '[[color_end]]'
@@ -1349,7 +1349,7 @@ streamline_templates:
             - type: custom:button-card
               template: vacuum_start_button
               variables:
-                vac: '[[vac]]'
+                vacuum: '[[vacuum]]'
                 color: '[[color]]'
                 color_end: '[[color_end]]'
 views:
@@ -2032,7 +2032,7 @@ views:
         type: custom:streamline-card
         template: vacuum_card
         variables:
-          vac: <entity_34>
+          vacuum: <entity_34>
           floor: Main Floor
           color: var(--primary-color)
           color_end: var(--warning-color)
@@ -2050,7 +2050,7 @@ views:
         type: custom:streamline-card
         template: vacuum_card
         variables:
-          vac: <entity_35>
+          vacuum: <entity_35>
           floor: Upstairs
           color: var(--success-color)
           color_end: var(--primary-color)
