@@ -203,7 +203,7 @@ input_boolean:
 #
 # The room list lives in an attribute because sensor states are capped at
 # 255 characters, and this is a list of dicts (id, name, short, icon,
-# common) well past that. The state is the room count, rendered from a
+# labels) well past that. The state is the room count, rendered from a
 # second call to the same macro.
 template:
   - sensor:

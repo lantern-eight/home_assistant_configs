@@ -543,13 +543,17 @@ button_card_templates:
       color: var(--primary-color)
       room_ids: |
         [[[
-          const keyword = variables.rooms === 'all' || variables.rooms === 'common';
-          if (!keyword) return variables.rooms;
+          if (variables.rooms === 'all') {
+            const config = states[`sensor.${variables.vacuum}_room_config`];
+            const rooms = config?.attributes?.rooms || [];
+            return rooms.map((room) => room.id).join(',');
+          }
           const config = states[`sensor.${variables.vacuum}_room_config`];
           const rooms = config?.attributes?.rooms || [];
-          return rooms
-            .filter((room) => variables.rooms === 'all' || room.common)
-            .map((room) => room.id).join(',');
+          const matched = rooms
+            .filter((room) => (room.labels || []).includes(variables.rooms));
+          return matched.length ? matched.map((room) => room.id).join(',')
+            : variables.rooms;
         ]]]
       selected: |
         [[[
@@ -1429,16 +1433,19 @@ streamline_templates:
                   }
                   #root > * { width: auto !important; flex: 0 0 auto !important; }
             cards:
-            # Both presets name a keyword rather than a list of ids: the chip
-            # resolves them from sensor.[[vacuum]]_room_config, so which rooms
-            # in a category is decided in packages/vacuum_rooms.jinja next to
-            # the rooms themselves, not restated here.
             - type: custom:button-card
               template: vacuum_preset_chip
-              name: Common Areas
+              name: Large Rooms
               variables:
                 vacuum: '[[vacuum]]'
-                rooms: common
+                rooms: large
+                color: '[[color]]'
+            - type: custom:button-card
+              template: vacuum_preset_chip
+              name: Small Rooms
+              variables:
+                vacuum: '[[vacuum]]'
+                rooms: small
                 color: '[[color]]'
             - type: custom:button-card
               template: vacuum_preset_chip
