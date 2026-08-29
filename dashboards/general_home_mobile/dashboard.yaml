@@ -450,7 +450,7 @@ button_card_templates:
       service_data:
         entity_id: "[[[ return `input_number.${variables.vacuum}_passes` ]]]"
         value: "[[[ return variables.passes ]]]"
-    styles:
+    styles: &segment_styles
       card:
       - padding: 6px 14px
       - border-radius: 7px
@@ -498,27 +498,7 @@ button_card_templates:
           ? 'input_boolean.turn_on' : 'input_boolean.turn_off' ]]]
       service_data:
         entity_id: "[[[ return `input_boolean.${variables.vacuum}_empty_between_rooms` ]]]"
-    styles:
-      card:
-      - padding: 6px 14px
-      - border-radius: 7px
-      - border: none
-      - transition: all 0.15s ease
-      - background: |
-          [[[
-            return variables.selected
-              ? `color-mix(in srgb, ${variables.color} 18%, transparent)`
-              : 'transparent';
-          ]]]
-      name:
-      - font-size: 12px
-      - white-space: nowrap
-      - font-weight: "[[[ return variables.selected ? '600' : '500' ]]]"
-      - color: |
-          [[[
-            return variables.selected
-              ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
-          ]]]
+    styles: *segment_styles
 
   # Preset chip — sets the whole room selection at once. Highlights when the
   # current selection already matches the preset.
