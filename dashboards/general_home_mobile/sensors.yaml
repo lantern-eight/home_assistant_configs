@@ -50,6 +50,20 @@
       icon: mdi:cards
       state: >
         {% set max_visible = 5 %}
+        {% set vacuum_names = ['<entity_34>', '<entity_35>'] %}
+        {% set vacuum_cards = namespace(items=[]) %}
+        {% for vacuum in vacuum_names %}
+          {% set vacuum_cards.items = vacuum_cards.items + [{
+            'id': 'vacuum_' ~ vacuum,
+            'active': is_state('schedule.cond_vacuum_' ~ vacuum, 'on')
+                      or is_state(
+                        'input_boolean.' ~ vacuum ~ '_sequence_running', 'on'),
+            'priority': 14
+               if is_state(
+                 'input_boolean.' ~ vacuum ~ '_sequence_running', 'on')
+               else 25
+          }] %}
+        {% endfor %}
         {% set cards = [
           {
             'id': 'house_armed',
@@ -64,28 +78,8 @@
             'id': 'uv_index',
             'active': is_state('schedule.cond_uv_index', 'on'),
             'priority': 15 if states('sensor.<entity_10>_uv_index') | float(0) >= 6 else 40
-          },
-          {
-            'id': 'vacuum_<entity_34>',
-            'active': is_state('schedule.cond_vacuum_<entity_34>', 'on')
-                      or is_state(
-                        'input_boolean.<entity_34>_sequence_running', 'on'),
-            'priority': 14
-               if is_state(
-                 'input_boolean.<entity_34>_sequence_running', 'on')
-               else 25
-          },
-          {
-            'id': 'vacuum_<entity_35>',
-            'active': is_state('schedule.cond_vacuum_<entity_35>', 'on')
-                      or is_state(
-                        'input_boolean.<entity_35>_sequence_running', 'on'),
-            'priority': 14
-               if is_state(
-                 'input_boolean.<entity_35>_sequence_running', 'on')
-               else 25
           }
-        ] %}
+        ] + vacuum_cards.items %}
         {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
         {{ active[:max_visible] | length }}
 
