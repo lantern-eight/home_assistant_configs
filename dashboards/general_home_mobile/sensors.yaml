@@ -82,6 +82,47 @@
         ] + vacuum_cards.items %}
         {% set active = cards | selectattr('active') | sort(attribute='priority') | list %}
         {{ active[:max_visible] | length }}
+      attributes:
+        card_order: >
+          {% set vacuum_names = ['<entity_34>', '<entity_35>'] %}
+          {% set vacuum_cards = namespace(items=[]) %}
+          {% for vacuum in vacuum_names %}
+            {% set vacuum_cards.items = vacuum_cards.items + [{
+              'id': 'vacuum_' ~ vacuum,
+              'priority': 14
+                 if is_state(
+                   'input_boolean.' ~ vacuum ~ '_sequence_running', 'on')
+                 else 25
+            }] %}
+          {% endfor %}
+          {% set min_vacuum = vacuum_cards.items
+               | map(attribute='priority') | min %}
+          {% set all_cards = [
+            {
+              'id': 'house_armed',
+              'priority': 5
+                 if is_state('input_boolean.house_armed', 'on')
+                 else (10 if (now().hour >= 22 or now().hour < 5)
+                 else 30)
+            },
+            {
+              'id': 'uv_index',
+              'priority': 15
+                 if states('sensor.<entity_10>_uv_index')
+                    | float(0) >= 6
+                 else 40
+            },
+            {
+              'id': 'vacuums_heading',
+              'priority': min_vacuum - 1
+            },
+            {
+              'id': 'soil_moisture',
+              'priority': 50
+            }
+          ] + vacuum_cards.items %}
+          {{ all_cards | sort(attribute='priority')
+             | map(attribute='id') | list }}
 
 # Room light toggles (Rooms pop-up)
 # ---------------------------------

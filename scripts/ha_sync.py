@@ -64,6 +64,7 @@ GENERAL_HOME_FILE_MAP = {
   'general_home_mobile.yaml': 'packages/general_home_mobile.yaml',
   'general_home_theme.jinja': 'custom_templates/general_home_theme.jinja',
   'popup_history_fix.js': 'www/popup_history_fix.js',
+  'card_order.js': 'www/card_order.js',
 }
 
 GENERAL_HOME_SCRIPT_MAP = {
