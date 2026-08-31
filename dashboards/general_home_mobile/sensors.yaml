@@ -239,6 +239,7 @@
       entity_id:
         - binary_sensor.<entity_3>s_door_door
         - binary_sensor.<entity_4>s_door_door
+        - binary_sensor.<entity_5>s_room_<entity_5>s_door_door
         - binary_sensor.basement_area_basement_door_door
         - binary_sensor.garage_house_garage_door_door
     # Door batteries
@@ -246,6 +247,7 @@
       entity_id:
         - sensor.<entity_3>_s_door_battery
         - sensor.<entity_4>s_door_battery
+        - sensor.<entity_5>s_room_<entity_5>s_door_battery
         - sensor.basement_area_basement_door_battery
         - sensor.garage_house_garage_door_battery
     # Vacuums
@@ -321,6 +323,14 @@
               'id': 'door_<entity_4>',
               'label': "<entity_4>'s Door",
               'sort_key': '0_door_<entity_4>',
+              'promote_anytime': false
+            },
+            {
+              'entity':
+                'binary_sensor.<entity_5>s_room_<entity_5>s_door_door',
+              'id': 'door_<entity_5>',
+              'label': "<entity_5>'s Door",
+              'sort_key': '0_door_<entity_5>',
               'promote_anytime': false
             },
             {
@@ -501,6 +511,13 @@
               'id': 'battery_<entity_4>_door',
               'label': "<entity_4>'s Door Battery",
               'sort_key': '0_battery_<entity_4>_door'
+            },
+            {
+              'entity':
+                'sensor.<entity_5>s_room_<entity_5>s_door_battery',
+              'id': 'battery_<entity_5>_door',
+              'label': "<entity_5>'s Door Battery",
+              'sort_key': '0_battery_<entity_5>_door'
             },
             {
               'entity':

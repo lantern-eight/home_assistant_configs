@@ -169,7 +169,8 @@ automation:
   # Shared lists are anchored — edit once, all references follow.
   # To wire up a new door:
   #   1. Add its binary_sensor entity_id to &all_doors (below).
-  #   2. Add a matching key to &door_colors with rgb + brightness_pct.
+  #   2. Add a mapping in &door_names (entity_id -> short key).
+  #   3. Add a matching key to &door_colors with rgb + brightness_pct.
 
   - id: door_opens_after_bedtime
     alias: "Door Opens After Bedtime"
@@ -178,6 +179,7 @@ automation:
       - entity_id: &all_doors
           - binary_sensor.<entity_3>s_door_door
           - binary_sensor.<entity_4>s_door_door
+          - binary_sensor.<entity_5>s_room_<entity_5>s_door_door
         from: "off"
         to: "on"
         trigger: state
@@ -190,14 +192,12 @@ automation:
       - variables:
           all_doors: *all_doors
 
-          # binary_sensor.<entity_3>s_door_door -> <entity_3>
-          # binary_sensor.<entity_4>s_door_door -> <entity_4>
-          # Strip prefix, strip '_door_door' suffix, the result matches the
-          # door_colors keys below.
-          base_name: >
-            {{ trigger.entity_id
-              | replace('binary_sensor.', '')
-              | replace('s_door_door', '') }}
+          door_names: &door_names
+            binary_sensor.<entity_3>s_door_door: <entity_3>
+            binary_sensor.<entity_4>s_door_door: <entity_4>
+            binary_sensor.<entity_5>s_room_<entity_5>s_door_door: <entity_5>
+
+          base_name: "{{ door_names[trigger.entity_id] }}"
 
           # Drops into the phone notification so you know which door opened
           # without looking at the light color.
@@ -214,6 +214,9 @@ automation:
               brightness_pct: 15
             <entity_4>:
               rgb: [128, 0, 128]      # purple
+              brightness_pct: 15
+            <entity_5>:
+              rgb: [0, 0, 255]        # blue
               brightness_pct: 15
 
           <entity_29>_rgb: "{{ door_colors[base_name].rgb }}"
@@ -301,15 +304,11 @@ automation:
         after: "19:45:00"
         before: "23:59:00"
     actions:
-      # Same base_name + display_name derivation as the opens automation.
       - variables:
           all_doors: *all_doors
+          door_names: *door_names
 
-          base_name: >
-            {{ trigger.entity_id
-              | replace('binary_sensor.', '')
-              | replace('_door_door', '')
-              | regex_replace(find='s$', replace='') }}
+          base_name: "{{ door_names[trigger.entity_id] }}"
 
           display_name: "{{ base_name | replace('_',' ') | title }}"
 
@@ -366,9 +365,7 @@ automation:
           - variables:
               remaining_base: >
                 {% set open_doors = all_doors | select('is_state', 'on') | list %}
-                {{ open_doors | first
-                   | replace('binary_sensor.', '')
-                   | replace('s_door_door', '') }}
+                {{ door_names[open_doors | first] }}
               remaining_rgb: "{{ door_colors[remaining_base].rgb }}"
               remaining_brightness: "{{ door_colors[remaining_base].brightness_pct }}"
           - action: <entity_29>.set_state
@@ -628,6 +625,7 @@ automation:
       - entity_id: &armed_doors
           - binary_sensor.basement_area_basement_door_door
           - binary_sensor.garage_house_garage_door_door
+          - binary_sensor.<entity_5>s_room_<entity_5>s_door_door
         from: "off"
         to: "on"
         trigger: state
@@ -642,7 +640,9 @@ automation:
               'binary_sensor.basement_area_basement_door_door':
                 'Basement Door',
               'binary_sensor.garage_house_garage_door_door':
-                'Garage Door'
+                'Garage Door',
+              'binary_sensor.<entity_5>s_room_<entity_5>s_door_door':
+                "<entity_5>'s Door"
             } %}
             {{ names.get(trigger.entity_id, 'Unknown Door') }}
       - action: notify.boss_phones

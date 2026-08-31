@@ -1948,6 +1948,11 @@ views:
             icon: mdi:door
             secondary_info: last-changed
             state_color: true
+          - entity: binary_sensor.<entity_5>s_room_<entity_5>s_door_door
+            name: <entity_5>'s Door
+            icon: mdi:door
+            secondary_info: last-changed
+            state_color: true
           - type: section
             label: Monitor only
           - entity: binary_sensor.<entity_3>s_door_door
@@ -2831,6 +2836,10 @@ views:
         secondary_info: last-changed
       - entity: binary_sensor.garage_house_garage_door_door
         name: Garage Door
+        icon: mdi:door
+        secondary_info: last-changed
+      - entity: binary_sensor.<entity_5>s_room_<entity_5>s_door_door
+        name: <entity_5>'s Door
         icon: mdi:door
         secondary_info: last-changed
       - type: divider
