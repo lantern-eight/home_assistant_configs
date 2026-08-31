@@ -515,6 +515,58 @@ automation:
           transition: 60
 
   # --------------------------------------------------------------------------
+  # <entity_4> Nightlight On
+  # --------------------------------------------------------------------------
+  # Turn on <entity_4>'s room light when the position sensor detects movement
+  # in a zone during the nighttime window.
+
+  - id: <entity_4>_nightlight_on
+    alias: "<entity_4> Nightlight On"
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.<entity_50>_zone_2_occupancy
+        to: "on"
+    conditions:
+      # If already on, don't trigger this automation
+      - condition: state
+        entity_id: light.<entity_4>s_room
+        state: "off"
+      - condition: time
+        after: "20:15:00"
+        before: "06:45:00"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.<entity_4>s_room
+        data:
+          brightness_pct: 1
+          color_temp_kelvin: 2000
+
+  # --------------------------------------------------------------------------
+  # <entity_4> Nightlight Off
+  # --------------------------------------------------------------------------
+  # Turns off <entity_4>'s room light after the room zone clears for a time.
+  # mode: restart resets the timer on any new zone activity.
+
+  - id: <entity_4>_nightlight_off
+    alias: "<entity_4> Nightlight Off"
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.<entity_50>_zone_2_occupancy
+        to: "off"
+    conditions:
+      - condition: time
+        after: "20:15:00"
+        before: "06:45:00"
+    actions:
+      - delay: "00:10:00"
+      - action: light.turn_off
+        target:
+          entity_id: light.<entity_4>s_room
+
+  # --------------------------------------------------------------------------
   # Soil moisture low
   # --------------------------------------------------------------------------
   # Fires when soil moisture drops at or below the configurable threshold.
