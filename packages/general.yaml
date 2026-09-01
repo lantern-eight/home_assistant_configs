@@ -84,6 +84,9 @@ input_boolean:
   house_armed:
     name: "House Armed"
     icon: mdi:shield-lock
+  bedtime_disruption_active:
+    name: "Bedtime Disruption Active"
+    icon: mdi:door-open
 
 input_number:
   soil_moisture_minimum:
@@ -224,6 +227,9 @@ automation:
 
           notif_message: "{{ now().strftime('%-I:%M %p') }} {{ display_name }} 🏃🚪👀"
 
+      - action: input_boolean.turn_on
+        entity_id: input_boolean.bedtime_disruption_active
+
       # If this is the FIRST tracked door to open (all other tracked doors
       # are still closed), snapshot the light lights into a scene so the
       # close automation can restore them. If another door is already open,
@@ -303,6 +309,9 @@ automation:
       - condition: time
         after: "19:45:00"
         before: "23:59:00"
+      - condition: state
+        entity_id: input_boolean.bedtime_disruption_active
+        state: "on"
     actions:
       - variables:
           all_doors: *all_doors
@@ -358,6 +367,9 @@ automation:
                   color_temp_kelvin: 4000
                   brightness: 128
                   transition: 0
+
+              - action: input_boolean.turn_off
+                entity_id: input_boolean.bedtime_disruption_active
 
         # Some doors are still open — switch the lights to a remaining open
         # door's color so they no longer show the just-closed door's color.
