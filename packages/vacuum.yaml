@@ -18,20 +18,43 @@
 # that macro. Room chips are generated from the sensor by auto-entities, and
 # groups resolve their ids from it as well.
 #
+# Two modes, controlled by input_boolean.<vac>_empty_between_rooms:
+#
+#   Batched, empty between OFF: Rooms sent as a list rather than one at
+#     a time. Firmware owns room routing, auto-empties only at the end.
+#     If a device sensor reports current rooms, this may include traversal
+#     rooms that it is moving throug to get to the next one to clean, reports
+#     so the index may briefly show a traversal room's queue position but will
+#     be corrected when it reaches the actual target room to clean.
+#     Per-room skip not available, stop cancels the batch.
+#
+#   Per-room, empty between ON: Rooms sent one at a time. HA controls
+#     the loop: settle, empty, advance. Device-level settings are
+#     re-applied before each room since firmware resets to defaults
+#     when it finishes a job from it's point of view.
+#     Note: Some vacuum docks have a duty-cycle limit on emptying dustbins
+#     enforced by the dock firmware, it will refuse to empty until the duty
+#     cycle window resets. The vacuum can still clean rooms and dock between
+#     them, but the dock may stop emtpying during a sequence. This is a known
+#     behavior that models may have.
+#
 # Interactions:
 #
 #   Event                          | Behavior
 #   -------------------------------|------------------------------------------
-#   Room finishes normally         | Settle, conditionally empty bin
-#                                  | (per empty_between_rooms), advance.
-#                                  | If emptying at end only, one empty
-#                                  | fires after the last room.
-#   Battery return mid-room        | Don't interfere, let firmware.
-#                                  | auto-resume. If not, send resume or start.
-#   Multiple battery returns,      | Inner while retries each time.
-#     same room                    |
-#   Skip during cleaning           | Skip flag + return_to_base. Post-dock
-#     (battery OK)                 | reads flag and advances.
+#   Room finishes normally         | Per-room: settle, empty, advance.
+#     (per-room mode)              | Batched: firmware routes to next room
+#                                  | automatically, HA waits for final dock.
+#   Battery return mid-job         | Per-room: inner while retries; charge
+#                                  | wait, then resume or start.
+#                                  | Batched: firmware charges and resumes
+#                                  | automatically. HA loop detects low-
+#                                  | battery dock and waits for the vacuum
+#                                  | to leave again.
+#   Skip during cleaning           | Per-room: skip flag + return_to_base.
+#     (battery OK)                 | Post-dock, reads flag and advances.
+#                                  | Batched: not available (firmware owns
+#                                  | routing). return_to_base ends batch.
 #   Skip during cleaning           | Skip flag overrides battery-return
 #     (battery low)                | check, advances instead of retrying.
 #   Skip during charge wait        | Skip flag breaks charge wait, advances.
@@ -296,6 +319,8 @@ script:
                | select('search', vacuum_name ~ '_cleaning_mode$')
                | first | default('') }}
           mop_after_entity: "input_boolean.{{ vacuum_name }}_mop_after_vacuum"
+          current_room_entity: "sensor.{{ vacuum_name }}_current_room"
+          room_config_entity: "sensor.{{ vacuum_name }}_room_config"
           mop_button_entity: >
             {{ states.button | map(attribute='entity_id')
                | select('search', vacuum_name ~ '_nightly_mop$')
@@ -381,6 +406,174 @@ script:
         data:
           option: 'off'
 
+      # Cancel Guard: evaluated here as a no-op (running was just turned
+      # on), then aliased as *cancel_guard throughout both paths below.
+      - &cancel_guard
+        if:
+          - condition: template
+            value_template: >
+              {{ not is_state(running_entity, 'on') }}
+        then:
+          - stop: Sequence cancelled
+
+      # ----------------------------------------------------------------
+      # Batched mode: all rooms in one firmware job
+      # ----------------------------------------------------------------
+      # When empty between rooms is off, rooms are all sent together in
+      # a single job. One firmware job means no auto-emptying between
+      # rooms. Firmware owns room routing. Per-room skip is not available.
+      #
+      # After completion, the index is advanced past the room count so
+      # the per-room loop below is skipped entirely.
+      - if:
+          - condition: template
+            value_template: >
+              {{ not is_state(empty_between_entity, 'on') }}
+        then:
+          - action: vacuum.set_fan_speed
+            continue_on_error: true
+            target:
+              entity_id: "{{ vacuum_entity }}"
+            data:
+              fan_speed: <entity_46>
+          - action: vacuum.send_command
+            continue_on_error: true
+            target:
+              entity_id: "{{ vacuum_entity }}"
+            data:
+              command: app_segment_clean
+              params:
+                - segments: "{{ room_ids | map('int') | list }}"
+                  repeat: "{{ passes }}"
+          - wait_template: >
+              {{ is_state(vacuum_entity, 'cleaning')
+                 or not is_state(running_entity, 'on') }}
+            timeout: "00:02:00"
+          - *cancel_guard
+          # Wait for the firmware to finish all rooms. It handles
+          # battery returns automatically: docks, charges, resumes.
+          #
+          # The loop also tracks per-room progress. Each iteration snapshots
+          # the room, maps it to a queue position, updates the index, then
+          # waits for either a dock event or a room change. A room change
+          # re-enters the loop to pick up the new position. A dock
+          # triggers battery-return or completion handling.
+          - repeat:
+              while:
+                - condition: template
+                  value_template: >
+                    {{ states(index_entity) | int(0) <= (room_ids | length)
+                       and is_state(running_entity, 'on') }}
+              sequence:
+                # Snapshot the current room and map it to a queue
+                # position. If the name doesn't match any entry in
+                # room_config (traveral room, or name mismatch), the
+                # index is left unchanged.
+                #
+                # Known quirk: the current_room sensor reports every
+                # room the vacuum passes through, including traversals.
+                # If a traversal room is in the queue, the index briefly
+                # jumps to that room's position before correcting when
+                # the vacuum reaches the actual next room.
+                #
+                # Matching is case-insensitive and ignores apostrophes.
+                # Whitespace-stripping tags ({%- -%}) because YAML > folding
+                # leaves spaces between blocks, and HA's NativeEnvironment
+                # converts " 20 " to int 20, which fails the string `in` check
+                # against room_ids.
+                - variables:
+                    tracked_room: >
+                      {{ states(current_room_entity) }}
+                    tracked_room_id: >
+                      {%- set rooms =
+                          state_attr(room_config_entity,
+                          'rooms') -%}
+                      {%- set clean_tracked =
+                          tracked_room | replace("'", '')
+                          | lower -%}
+                      {%- set match = namespace(id='') -%}
+                      {%- for room in rooms -%}
+                        {%- if room.name | replace("'", '')
+                              | lower == clean_tracked -%}
+                          {%- set match.id = room.id -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {{ match.id }}
+                    tracked_queue_pos: >
+                      {%- set rid = tracked_room_id | string | trim -%}
+                      {%- if rid in room_ids -%}
+                        {{ room_ids.index(rid) + 1 }}
+                      {%- else -%}
+                        {{ states(index_entity) | int(1) }}
+                      {%- endif -%}
+                - if:
+                    - condition: template
+                      value_template: >
+                        {{ tracked_queue_pos | int
+                           != states(index_entity) | int
+                           and tracked_queue_pos | int
+                           <= room_ids | length }}
+                  then:
+                    - action: input_number.set_value
+                      target:
+                        entity_id: "{{ index_entity }}"
+                      data:
+                        value: "{{ tracked_queue_pos }}"
+
+                # Wait for dock, room change, or cancel.
+                - wait_template: >
+                    {{ is_state(vacuum_entity, 'docked')
+                       or states(current_room_entity)
+                          != tracked_room
+                       or not is_state(running_entity, 'on') }}
+                  timeout: "05:00:00"
+                - *cancel_guard
+
+                # If the vacuum docked, decide battery return vs
+                # job complete. If it was just a room change the
+                # loop continues and the next iteration picks up
+                # the new room.
+                - if:
+                    - condition: template
+                      value_template: >
+                        {{ is_state(vacuum_entity, 'docked') }}
+                  then:
+                    - action: input_boolean.turn_off
+                      target:
+                        entity_id: "{{ pause_entity }}"
+                    # Low battery: mid-job return. Wait for firmware
+                    # auto-resume or full charge without leaving
+                    # (job ended on a low battery).
+                    - if:
+                        - condition: template
+                          value_template: >
+                            {{ states(battery_entity) | int(100) < 25 }}
+                      then:
+                        - wait_template: >
+                            {{ not is_state(vacuum_entity, 'docked')
+                               or states(battery_entity) | int(0) >= 90
+                               or not is_state(running_entity, 'on') }}
+                          timeout: "03:00:00"
+                        - *cancel_guard
+                    # Still docked after battery-return handling (or
+                    # battery was OK on arrival): job is complete.
+                    # Advance index past room count to exit this
+                    # loop and skip the per-room loop.
+                    - if:
+                        - condition: template
+                          value_template: >
+                            {{ is_state(vacuum_entity, 'docked') }}
+                      then:
+                        - action: input_number.set_value
+                          target:
+                            entity_id: "{{ index_entity }}"
+                          data:
+                            value: "{{ room_ids | length + 1 }}"
+
+      # ----------------------------------------------------------------
+      # Per-room mode (empty-between-rooms is on)
+      # ----------------------------------------------------------------
+      # Skipped entirely when the batched path advanced the index.
       - repeat:
           # Outer while: one iteration per room. Inner while: retries the
           # current room on battery return. Index is advanced only on
@@ -459,13 +652,7 @@ script:
                              or is_state(skip_entity, 'on')
                              or is_state(resume_entity, 'on') }}
                         timeout: "03:00:00"
-                      - &cancel_guard
-                        if:
-                          - condition: template
-                            value_template: >
-                              {{ not is_state(running_entity, 'on') }}
-                        then:
-                          - stop: Sequence cancelled
+                      - *cancel_guard
                       - if:
                           - condition: template
                             value_template: >
@@ -501,16 +688,31 @@ script:
                         value_template: >
                           {{ not is_state(vacuum_entity, 'cleaning') }}
                     then:
-                      # Suction strength set on every room. From the firmware point of
-                      # view, each room is a new job and it uses default settings.
-                      #
-                      # continue_on_error here and elsewhere: an action that raises
-                      # aborts the whole script, and the running flag is only cleared
-                      # in cleanup after the loop. A vacuum that drops off the network
-                      # mid-run would leave the flag on permanently and the card frozen
-                      # in live mode, every later 'Start' rejected. Letting the run
-                      # continue means the configured waits time out and the script
-                      # still reaches cleanup.
+                      # - Device-level settings (cleaning mode, mop intensity) reset
+                      #   when each firmware job ends. Re-apply before every room start.
+                      # - continue_on_error: The running flag is only cleared in cleanup
+                      #   after the loop. A vacuum that drops off the network mid-run
+                      #   would leave the flag on permanently and the card frozen in
+                      #   live mode, every later 'Start' rejected. Letting the run
+                      #   continue means the configured waits time out and the script
+                      #   still reaches cleanup.
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ cleaning_mode_entity != '' }}
+                        then:
+                          - action: select.select_option
+                            continue_on_error: true
+                            target:
+                              entity_id: "{{ cleaning_mode_entity }}"
+                            data:
+                              option: vacuum
+                      - action: select.select_option
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ mop_intensity_entity }}"
+                        data:
+                          option: 'off'
                       - action: vacuum.set_fan_speed
                         continue_on_error: true
                         target:

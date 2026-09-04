@@ -1,7 +1,6 @@
 # home_assistant_configs
 
-Home Assistant configuration backup, dashboard management, and tooling. Runs on an
-[HA Green](https://www.home-assistant.io/green/) with configs shared over SMB.
+Home Assistant configuration backup, dashboard management, and tooling.
 
 ## Table of Contents
 
