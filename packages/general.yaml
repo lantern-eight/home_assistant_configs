@@ -104,6 +104,83 @@ input_number:
     unit_of_measurement: "%"
     icon: mdi:flower
 
+input_datetime:
+  uv_forecast_refresh:
+    name: "UV Forecast Refresh"
+    has_time: true
+    has_date: false
+    icon: mdi:sun-wireless
+  bedtime_door_window_start:
+    name: "Bedtime Door Window Start"
+    has_time: true
+    has_date: false
+    icon: mdi:door-open
+  bedtime_door_window_end:
+    name: "Bedtime Door Window End"
+    has_time: true
+    has_date: false
+    icon: mdi:door-closed
+  go_to_bed:
+    name: "Go to Bed"
+    has_time: true
+    has_date: false
+    icon: mdi:bed
+  main_suite_weekday_wake:
+    name: "Main Suite Weekday Wake"
+    has_time: true
+    has_date: false
+    icon: mdi:alarm
+  kitchen_light_morning:
+    name: "Kitchen Light Morning"
+    has_time: true
+    has_date: false
+    icon: mdi:silverware-fork-knife
+  <entity_4>_daytime_light:
+    name: "<entity_4> Daytime Light"
+    has_time: true
+    has_date: false
+    icon: mdi:weather-sunny
+  <entity_4>_light_dim:
+    name: "<entity_4> Light Dim"
+    has_time: true
+    has_date: false
+    icon: mdi:brightness-5
+  <entity_4>_light_off:
+    name: "<entity_4> Light Off"
+    has_time: true
+    has_date: false
+    icon: mdi:lightbulb-off
+  <entity_4>_light_second_off:
+    name: "<entity_4> Light Second Off"
+    has_time: true
+    has_date: false
+    icon: mdi:lightbulb-off
+  nightlight_window_start:
+    name: "Nightlight Window Start"
+    has_time: true
+    has_date: false
+    icon: mdi:weather-night
+  nightlight_window_end:
+    name: "Nightlight Window End"
+    has_time: true
+    has_date: false
+    icon: mdi:weather-sunset-up
+  house_auto_disarm:
+    name: "House Auto-Disarm"
+    has_time: true
+    has_date: false
+    icon: mdi:shield-off
+  conditional_card_morning_shift:
+    name: "Conditional Card Morning Shift"
+    has_time: true
+    has_date: false
+    icon: mdi:cards
+  conditional_card_evening_shift:
+    name: "Conditional Card Evening Shift"
+    has_time: true
+    has_date: false
+    icon: mdi:cards
+
 utility_meter:
   lawn_rain_weekly:
     source: sensor.<entity_37>_precipitation_today
@@ -137,11 +214,102 @@ rest:
           - uv_index
 
 automation:
+  # --------------------------------------------------------------------------
+  # Initialize schedule helpers on HA start
+  # --------------------------------------------------------------------------
+  # Sets input_datetime helpers to their default values from secrets.yaml.
+  # Fires on every restart so the "normal" schedule is always restored.
+  # Temporary UI adjustments can be made, but next Home Assistant restart will
+  # reset them.
+
+  - id: initialize_schedule_helpers
+    alias: "Initialize Schedule Helpers"
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.uv_forecast_refresh
+        data:
+          time: !secret uv_forecast_refresh
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.bedtime_door_window_start
+        data:
+          time: !secret bedtime_door_window_start
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.bedtime_door_window_end
+        data:
+          time: !secret bedtime_door_window_end
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.go_to_bed
+        data:
+          time: !secret go_to_bed
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.main_suite_weekday_wake
+        data:
+          time: !secret main_suite_weekday_wake
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.kitchen_light_morning
+        data:
+          time: !secret kitchen_light_morning
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.<entity_4>_daytime_light
+        data:
+          time: !secret <entity_4>_daytime_light
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.<entity_4>_light_dim
+        data:
+          time: !secret <entity_4>_light_dim
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.<entity_4>_light_off
+        data:
+          time: !secret <entity_4>_light_off
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.<entity_4>_light_second_off
+        data:
+          time: !secret <entity_4>_light_second_off
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.nightlight_window_start
+        data:
+          time: !secret nightlight_window_start
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.nightlight_window_end
+        data:
+          time: !secret nightlight_window_end
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.house_auto_disarm
+        data:
+          time: !secret house_auto_disarm
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.conditional_card_morning_shift
+        data:
+          time: !secret conditional_card_morning_shift
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.conditional_card_evening_shift
+        data:
+          time: !secret conditional_card_evening_shift
+
   - id: refresh_uv_forecast
     alias: "Refresh UV Forecast"
     trigger:
       - platform: time
-        at: "06:55:00"
+        at: input_datetime.uv_forecast_refresh
     action:
       - action: homeassistant.update_entity
         target:
@@ -188,8 +356,8 @@ automation:
         trigger: state
     conditions:
       - condition: time
-        after: "19:45:00"
-        before: "23:59:00"
+        after: input_datetime.bedtime_door_window_start
+        before: input_datetime.bedtime_door_window_end
     actions:
       # Derive per-door identity + light color from the trigger entity.
       - variables:
@@ -307,8 +475,8 @@ automation:
         trigger: state
     conditions:
       - condition: time
-        after: "19:45:00"
-        before: "23:59:00"
+        after: input_datetime.bedtime_door_window_start
+        before: input_datetime.bedtime_door_window_end
       - condition: state
         entity_id: input_boolean.bedtime_disruption_active
         state: "on"
@@ -398,7 +566,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "21:00:00"
+        at: input_datetime.go_to_bed
     actions:
       - action: script.media_all_off
 
@@ -412,7 +580,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "05:40:00"
+        at: input_datetime.main_suite_weekday_wake
         weekday:
           - mon
           - tue
@@ -440,7 +608,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "05:45:00"
+        at: input_datetime.kitchen_light_morning
     actions:
       - action: light.turn_on
         target:
@@ -459,7 +627,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "07:00:00"
+        at: input_datetime.<entity_4>_daytime_light
     actions:
       - action: light.turn_on
         target:
@@ -478,7 +646,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "19:00:00"
+        at: input_datetime.<entity_4>_light_dim
     actions:
       - action: light.turn_on
         target:
@@ -497,7 +665,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "19:15:00"
+        at: input_datetime.<entity_4>_light_off
     actions:
       - action: light.turn_off
         target:
@@ -515,7 +683,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "20:05:00"
+        at: input_datetime.<entity_4>_light_second_off
     actions:
       - action: light.turn_off
         target:
@@ -542,8 +710,8 @@ automation:
         entity_id: light.<entity_4>s_room
         state: "off"
       - condition: time
-        after: "20:15:00"
-        before: "06:45:00"
+        after: input_datetime.nightlight_window_start
+        before: input_datetime.nightlight_window_end
     actions:
       - action: light.turn_on
         target:
@@ -567,8 +735,8 @@ automation:
         to: "off"
     conditions:
       - condition: time
-        after: "20:15:00"
-        before: "06:45:00"
+        after: input_datetime.nightlight_window_start
+        before: input_datetime.nightlight_window_end
     actions:
       - delay: "00:10:00"
       - action: light.turn_off
@@ -686,7 +854,7 @@ automation:
     mode: single
     triggers:
       - trigger: time
-        at: "05:00:00"
+        at: input_datetime.house_auto_disarm
     conditions:
       - condition: state
         entity_id: input_boolean.house_armed

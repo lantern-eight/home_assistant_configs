@@ -37,10 +37,12 @@
         - input_boolean.<entity_34>_sequence_running
         - input_boolean.<entity_35>_sequence_running
         - sensor.<entity_10>_uv_index
+        - input_datetime.conditional_card_morning_shift
+        - input_datetime.conditional_card_evening_shift
     - platform: time
       at:
-        - "05:00:00"
-        - "22:00:00"
+        - input_datetime.conditional_card_morning_shift
+        - input_datetime.conditional_card_evening_shift
   sensor:
     # -------------------------------------------------------------------------
     # Conditional card visibility manager
@@ -49,6 +51,8 @@
       unique_id: dashboard_conditional_visible
       icon: mdi:cards
       state: >
+        {% set evening_hour = state_attr('input_datetime.conditional_card_evening_shift', 'hour') %}
+        {% set morning_hour = state_attr('input_datetime.conditional_card_morning_shift', 'hour') %}
         {% set max_visible = 5 %}
         {% set vacuum_names = ['<entity_34>', '<entity_35>'] %}
         {% set vacuum_cards = namespace(items=[]) %}
@@ -71,7 +75,7 @@
                'binary_sensor.house_armed_card_visible', 'on'),
             'priority': 5
                if is_state('input_boolean.house_armed', 'on')
-               else (10 if (now().hour >= 22 or now().hour < 5)
+               else (10 if (now().hour >= evening_hour or now().hour < morning_hour)
                else 30)
           },
           {
@@ -84,6 +88,8 @@
         {{ active[:max_visible] | length }}
       attributes:
         card_order: >
+          {% set evening_hour = state_attr('input_datetime.conditional_card_evening_shift', 'hour') %}
+          {% set morning_hour = state_attr('input_datetime.conditional_card_morning_shift', 'hour') %}
           {% set vacuum_names = ['<entity_34>', '<entity_35>'] %}
           {% set vacuum_cards = namespace(items=[]) %}
           {% for vacuum in vacuum_names %}
@@ -102,7 +108,7 @@
               'id': 'house_armed',
               'priority': 5
                  if is_state('input_boolean.house_armed', 'on')
-                 else (10 if (now().hour >= 22 or now().hour < 5)
+                 else (10 if (now().hour >= evening_hour or now().hour < morning_hour)
                  else 30)
             },
             {
