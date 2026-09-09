@@ -637,12 +637,12 @@ automation:
           brightness_pct: 100
 
   # --------------------------------------------------------------------------
-  # <entity_4> light dim at 7
+  # <entity_4> light dim 1
   # --------------------------------------------------------------------------
   # Sets <entity_4>'s room to a warm dim for bedtime wind-down.
 
-  - id: <entity_4>_light_dim_at_7
-    alias: "<entity_4> light dim at 7"
+  - id: <entity_4>_light_dim_1
+    alias: "<entity_4> light dim 1"
     mode: single
     triggers:
       - trigger: time
@@ -656,12 +656,12 @@ automation:
           brightness_pct: 60
 
   # --------------------------------------------------------------------------
-  # <entity_4> light off 715
+  # <entity_4> light off 1
   # --------------------------------------------------------------------------
   # Turns off <entity_4>'s light with a 60s transition for sleep.
 
-  - id: <entity_4>_light_off_715
-    alias: "<entity_4> light off 715"
+  - id: <entity_4>_light_off_1
+    alias: "<entity_4> light off 1"
     mode: single
     triggers:
       - trigger: time
@@ -674,12 +674,12 @@ automation:
           transition: 60
 
   # --------------------------------------------------------------------------
-  # <entity_4> light second off 805
+  # <entity_4> light off 2
   # --------------------------------------------------------------------------
   # Turns off <entity_4>'s light a second time to be sure.
 
-  - id: <entity_4>_light_second_off_805
-    alias: "<entity_4> light second off 805"
+  - id: <entity_4>_light_off_2
+    alias: "<entity_4> light off 2"
     mode: single
     triggers:
       - trigger: time
