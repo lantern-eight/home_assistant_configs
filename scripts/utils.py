@@ -33,18 +33,56 @@ _RED = "\033[31m"
 _YELLOW = "\033[33m"
 _GREEN = "\033[32m"
 _DIM = "\033[2m"
+_BLUE = "\033[1;34m"
 
 _LEVEL_COLORS = {
   logging.CRITICAL: _RED,
   logging.ERROR: _RED,
   logging.WARNING: _YELLOW,
-  logging.INFO: _GREEN,
   logging.DEBUG: _DIM,
 }
 
+_LEVEL_PREFIXES = {
+  logging.DEBUG: '  ',
+  logging.WARNING: '** ',
+  logging.ERROR: '!! ',
+  logging.CRITICAL: '!! ',
+}
+
+_NAMED_COLORS = {
+  'red': _RED,
+  'yellow': _YELLOW,
+  'green': _GREEN,
+  'blue': _BLUE,
+  'dim': _DIM,
+}
+
+_BUILTIN_ATTRS = frozenset(logging.LogRecord(
+  '', 0, '', 0, '', (), None,
+).__dict__.keys()) | {'message', 'taskName', 'color'}
+
+
+class ReadableFormatter(logging.Formatter):
+  '''Formats log records as human-readable lines with extra fields appended.'''
+
+  def format(self, record: logging.LogRecord) -> str:
+    prefix = _LEVEL_PREFIXES.get(record.levelno, '')
+    msg = record.getMessage()
+    extras = {
+      k: v for k, v in record.__dict__.items()
+      if k not in _BUILTIN_ATTRS and v is not None
+    }
+    if extras:
+      pairs = '  '.join(f'{k}={v}' for k, v in extras.items())
+      msg = f'{msg}  {pairs}'
+    return f'{prefix}{msg}'
+
 
 class ColoredStreamHandler(logging.StreamHandler):
-  '''StreamHandler that colorizes the formatted log line by level when stream is a TTY.'''
+  '''StreamHandler that colorizes the formatted log line by level when stream is a TTY.
+
+  Pass extra={'color': 'blue'} on a log call to override the level color.
+  '''
 
   def __init__(self, stream=None):
     super().__init__(stream or sys.stdout)
@@ -53,7 +91,8 @@ class ColoredStreamHandler(logging.StreamHandler):
     try:
       msg = self.format(record)
       if self.stream and getattr(self.stream, "isatty", lambda: False)():
-        color = _LEVEL_COLORS.get(record.levelno, _RESET)
+        override = _NAMED_COLORS.get(getattr(record, 'color', None), None)
+        color = override or _LEVEL_COLORS.get(record.levelno, _RESET)
         msg = f"{color}{msg}{_RESET}"
       if self.stream:
         self.stream.write(msg + self.terminator)
@@ -63,18 +102,24 @@ class ColoredStreamHandler(logging.StreamHandler):
 
 
 def init_logger() -> Logger:
-  '''Create and return a logger with JSON formatter and optional TTY coloring.'''
-  log_format = (
-    "%(asctime)s %(levelname)s %(name)s %(message)s "
-    "%(filename)s %(funcName)s %(lineno)d"
-  )
+  '''Create and return a logger.
+
+  TTY (interactive CLI): human-readable text with level-colored prefixes.
+  Non-TTY (piped/redirected): JSON lines.
+  '''
   logger = logging.getLogger("ha_backup")
   level_name = (os.environ.get("LOG_LEVEL") or "INFO").upper()
   logger.setLevel(getattr(logging, level_name, logging.INFO))
 
   console_handler = ColoredStreamHandler(sys.stdout)
-  formatter = jsonlogger.JsonFormatter(log_format)
-  console_handler.setFormatter(formatter)
+  if sys.stdout.isatty():
+    console_handler.setFormatter(ReadableFormatter())
+  else:
+    log_format = (
+      "%(asctime)s %(levelname)s %(name)s %(message)s "
+      "%(filename)s %(funcName)s %(lineno)d"
+    )
+    console_handler.setFormatter(jsonlogger.JsonFormatter(log_format))
   logger.addHandler(console_handler)
 
   return logger
@@ -389,4 +434,4 @@ def apply_registry_metadata(metadata_path: Path, token: str, entity_map_path: Pa
           'entity': entity_id, 'error': resp.get('error'),
         })
 
-  LOGGER.info('Category/label sync complete', extra={'file': metadata_path.name})
+  LOGGER.info('Category/label sync complete', extra={'file': metadata_path.name, 'color': 'green'})

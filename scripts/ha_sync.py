@@ -31,18 +31,6 @@ from utils import (
   restart_ha,
 )
 
-_BLUE = '\033[1;34m'
-_RESET = '\033[0m'
-
-
-def _status(msg: str) -> None:
-  '''Print a blue status line to stdout (no-op if stdout is not a TTY).'''
-  if sys.stdout.isatty():
-    print(f'{_BLUE}=> {msg}{_RESET}')
-  else:
-    print(f'=> {msg}')
-
-
 # ---------------------------------------------------------------------------
 # Path constants
 # ---------------------------------------------------------------------------
@@ -288,7 +276,7 @@ def _push_files(cfg: dict) -> int:
 
   # General Home Mobile dashboard
   if GENERAL_HOME_DIR.exists():
-    _status('Pushing General Home Mobile dashboard')
+    LOGGER.info('Pushing General Home Mobile dashboard', extra={'color': 'blue'})
     for local_name, remote_rel in GENERAL_HOME_FILE_MAP.items():
       local_path = GENERAL_HOME_DIR / local_name
       if not local_path.exists():
@@ -301,7 +289,7 @@ def _push_files(cfg: dict) -> int:
 
   # Cyberdeck dashboard
   if CYBERDECK_DIR.exists():
-    _status('Pushing Cyberdeck dashboard')
+    LOGGER.info('Pushing Cyberdeck dashboard', extra={'color': 'blue'})
     for local_name, remote_rel in CYBERDECK_FILE_MAP.items():
       local_path = CYBERDECK_DIR / local_name
       if not local_path.exists():
@@ -314,7 +302,7 @@ def _push_files(cfg: dict) -> int:
 
   # Packages (*.yaml → packages/, *.jinja → custom_templates/)
   if PACKAGES_DIR.exists():
-    _status('Pushing packages')
+    LOGGER.info('Pushing packages', extra={'color': 'blue'})
     for local_path in sorted(PACKAGES_DIR.glob('*.yaml')):
       if _upload_file(smb_root, local_path, f'packages/{local_path.name}',
                       restore=True, entity_map=entity_map):
@@ -363,17 +351,17 @@ def _reload_services(cfg: dict) -> None:
 
 def _apply_all_registry_metadata(cfg: dict) -> None:
   '''Apply labels and categories from both root and dashboard metadata files.'''
-  _status('Applying registry metadata')
+  LOGGER.info('Applying registry metadata', extra={'color': 'blue'})
   token = cfg['token']
 
   root_metadata = REPO_ROOT / 'registry_metadata.yaml'
   if root_metadata.exists():
-    LOGGER.info('Applying root registry metadata')
+    LOGGER.info('Applying root registry metadata', extra={'color': 'blue'})
     apply_registry_metadata(root_metadata, token, ENTITY_MAP_PATH)
 
   dashboard_metadata = GENERAL_HOME_DIR / 'registry_metadata.yaml'
   if dashboard_metadata.exists():
-    LOGGER.info('Applying General Home Mobile registry metadata')
+    LOGGER.info('Applying General Home Mobile registry metadata', extra={'color': 'blue'})
     apply_registry_metadata(dashboard_metadata, token, ENTITY_MAP_PATH)
 
 
@@ -385,13 +373,13 @@ def _apply_all_registry_metadata(cfg: dict) -> None:
 def _pull_backup(cfg: dict) -> None:
   '''Pull specific HA config files from the SMB share into
   home_assistant_backup/. Only files in BACKUP_FILES are pulled.'''
-  _status('Pulling backup files from Home Assistant')
+  LOGGER.info('Pulling backup files from Home Assistant', extra={'color': 'blue'})
   smb_root = open_smb_session(cfg)
 
   os.makedirs(DEST, exist_ok=True)
 
   files_copied = 0
-  _status(f'Pulling {len(BACKUP_FILES)} file(s) from SMB share...')
+  LOGGER.info(f'Pulling {len(BACKUP_FILES)} file(s) from SMB share...', extra={'color': 'blue'})
   for relative_path in BACKUP_FILES:
     smb_rel = relative_path.replace("/", "\\")
     smb_file = rf'{smb_root}\{smb_rel}'
@@ -411,7 +399,7 @@ def _pull_backup(cfg: dict) -> None:
       )
 
   smbclient.reset_connection_cache()
-  _status(f'Backup complete — {files_copied}/{len(BACKUP_FILES)} files copied')
+  LOGGER.info(f'Backup complete — {files_copied}/{len(BACKUP_FILES)} files copied', extra={'color': 'green'})
 
 
 # ---------------------------------------------------------------------------
@@ -475,7 +463,7 @@ def _run_redact(redact_entities: list[str]) -> None:
   unredacted occurrences pick up the SAME placeholder as before
   instead of drifting.
   '''
-  _status('Starting redaction pass')
+  LOGGER.info('Starting redaction pass', extra={'color': 'blue'})
   entity_map: dict = {'ids': {}, 'entities': {}}
   if ENTITY_MAP_PATH.exists():
     entity_map = load_entity_map(ENTITY_MAP_PATH)
@@ -488,7 +476,7 @@ def _run_redact(redact_entities: list[str]) -> None:
     )
 
   for dir_path in _iter_sanitize_dirs():
-    _status(f'Redacting files in {dir_path}')
+    LOGGER.info(f'Redacting files in {dir_path}', extra={'color': 'blue'})
     normalize = dir_path not in (DASHBOARDS_DIR, str(PACKAGES_DIR))
     _process_backup_files(
       dir_path, redact_entities, entity_map,
@@ -496,9 +484,9 @@ def _run_redact(redact_entities: list[str]) -> None:
     )
 
   if entity_map['ids'] or entity_map['entities']:
-    _status(f'Saving entity map to {ENTITY_MAP_PATH}')
+    LOGGER.info(f'Saving entity map to {ENTITY_MAP_PATH}', extra={'color': 'blue'})
     save_entity_map(entity_map, ENTITY_MAP_PATH)
-  _status('Redaction complete')
+  LOGGER.info('Redaction complete', extra={'color': 'green'})
 
 
 # ---------------------------------------------------------------------------
@@ -542,15 +530,15 @@ def _restore_backup_files(dest_dir: str, entity_map: dict) -> None:
 
 def _run_unredact() -> None:
   '''Reverse all redaction using entity_map.yaml across all sanitize dirs.'''
-  _status('Restoring redactions using entity_map.yaml')
+  LOGGER.info('Restoring redactions using entity_map.yaml', extra={'color': 'blue'})
   if not ENTITY_MAP_PATH.exists():
     LOGGER.error('entity_map.yaml not found at %s — run a sync first', ENTITY_MAP_PATH)
     sys.exit(1)
   entity_map = load_entity_map(ENTITY_MAP_PATH)
   for dir_path in _iter_sanitize_dirs():
-    _status(f'Restoring files in {dir_path}')
+    LOGGER.info(f'Restoring files in {dir_path}', extra={'color': 'blue'})
     _restore_backup_files(dir_path, entity_map)
-  _status('Restore complete')
+  LOGGER.info('Restore complete', extra={'color': 'blue'})
 
 
 # ---------------------------------------------------------------------------
@@ -590,10 +578,10 @@ def main(argv: list[str] | None = None) -> None:
     return
 
   # Default: full sync
-  _status('Full sync: push → metadata → reload → pull → redact')
+  LOGGER.info('Full sync: push → metadata → reload → pull → redact', extra={'color': 'blue'})
 
   count = _push_files(cfg)
-  LOGGER.info('Push complete', extra={'files_synced': count})
+  LOGGER.info('Push complete', extra={'files_synced': count, 'color': 'green'})
 
   _apply_all_registry_metadata(cfg)
 
@@ -607,7 +595,7 @@ def main(argv: list[str] | None = None) -> None:
   redact_entities = _normalize_redact_entities(cfg.get('redact_entities', []))
   _run_redact(redact_entities)
 
-  _status('Sync complete')
+  LOGGER.info('Sync complete', extra={'color': 'green'})
 
 
 if __name__ == '__main__':
