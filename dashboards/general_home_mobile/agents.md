@@ -192,6 +192,7 @@ automatically when their entity state is active.
 
 - `sensor.dashboard_notifications` — aggregation sensor (state = count, attrs = items list)
 - `input_boolean.notification_expanded_<username>` — per-user expand/collapse toggle
+- `input_boolean.weather_expanded` — expand/collapse toggle for the weather card (shared, not per-user)
 - `&theme_chip_style` — YAML anchor for promoted chip cards (theme chrome without bg/border)
 
 ## Entity Naming

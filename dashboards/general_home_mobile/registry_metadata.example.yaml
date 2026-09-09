@@ -15,6 +15,9 @@ categories:
   GenMobile Dashboard Notifications:
     scope: helpers
     icon: mdi:bell
+  GenMobile Dashboard Weather:
+    scope: helpers
+    icon: mdi:weather-partly-cloudy
   GenMobile Theme System:
     scope: helpers
     icon: mdi:palette
@@ -35,6 +38,9 @@ labels:
   gm-notifications:
     color: red
     icon: mdi:bell-ring
+  gm-weather:
+    color: cyan
+    icon: mdi:weather-partly-cloudy
   gm-theme-preferences:
     color: purple
     icon: mdi:palette-swatch-variant
@@ -154,3 +160,8 @@ entities:
     labels:
       - gm-dashboard
       - gm-notifications
+  input_boolean.weather_expanded:
+    category: GenMobile Dashboard Weather
+    labels:
+      - gm-dashboard
+      - gm-weather

@@ -1793,115 +1793,164 @@ views:
               --ha-card-border-width: 0 !important;
             }
       cards:
-      - type: custom:weather-forecast-card
-        entity: weather.forecast_home
-        default_forecast: daily
-        current:
-          temperature_entity: sensor.<entity_10>_temperature
-          temperature_precision: 0
-          show_attributes:
-          - name: apparent_temperature
-            entity: sensor.<entity_10>_feels_like
-        forecast:
-          mode: chart
-          extra_attribute: wind_bearing
-          hourly_group_size: 2
-        card_mod:
-          style:
-            .: *theme_card_transparent
-            $: |
-              .wfc-current-secondary-info {
-                display: none !important;
-              }
-              .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name {
-                font-size: 0;
-              }
-              .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name::after {
-                content: "Feels Like";
-                font-size: var(--ha-font-size-m, 14px);
-              }
-              .wfc-current-weather {
-                background: rgba(var(--rgb-primary-text-color), 0.05);
-                margin: -16px -16px 0;
-                padding: 12px 16px 4px;
-              }
-      - type: custom:apexcharts-card
-        header:
-          show: true
-          title: Absolute humidity
-          show_states: true
-        graph_span: 24h
-        span:
-          end: hour
-        yaxis:
-        - decimals: 0
-          apex_config:
-            tickAmount: 4
-            labels:
-              show: true
-        apex_config:
-          chart:
-            height: 130
-          stroke:
-            curve: smooth
-            width: 2
-          fill:
-            type: gradient
-            gradient:
-              opacityFrom: 0.45
-              opacityTo: 0.05
+      - type: custom:button-card
+        entity: sensor.<entity_10>_temperature
+        show_name: false
+        show_state: false
+        show_icon: false
+        tap_action:
+          action: call-service
+          service: input_boolean.toggle
+          service_data:
+            entity_id: input_boolean.weather_expanded
+        custom_fields:
+          weather_summary: |
+            [[[
+              const temp = Math.round(parseFloat(entity.state));
+              const feels = Math.round(parseFloat(states['sensor.<entity_10>_feels_like'].state));
+              const humidity = parseFloat(states['sensor.backyard_absolute_humidity'].state).toFixed(1);
+              const expanded = states['input_boolean.weather_expanded']?.state === 'on';
+              const chevron = expanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
+              return `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                <div style="display:flex;gap:16px;align-items:baseline;">
+                  <span style="font-size:1.1em;font-weight:500;">${temp}°</span>
+                  <span style="color:var(--secondary-text-color);font-size:0.9em;">Feels ${feels}°</span>
+                  <span style="color:var(--secondary-text-color);font-size:0.9em;">Humidity ${humidity} g/m³</span>
+                </div>
+                <ha-icon icon="${chevron}" style="--mdc-icon-size:20px;color:var(--secondary-text-color);"></ha-icon>
+              </div>`;
+            ]]]
+        styles:
+          card:
+          - padding: 12px 16px
+          - background: none
+          - box-shadow: none
+          - border: none
           grid:
-            show: true
-            borderColor: rgba(128, 128, 128, 0.2)
-          legend:
-            show: false
-          xaxis:
-            type: datetime
-            tickAmount: 5
-            labels:
-              showDuplicates: false
-              formatter: |
-                EVAL:function(val, timestamp, opts) {
-                  const i = opts.i;
-                  const n = opts.w.globals.labels.length;
-                  const step = Math.max(1, Math.round((n - 1) / 5));
-                  if (i % step !== 0 && i !== n - 1) return '';
-                  return new Date(val).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    hour12: true,
-                  });
-                }
-        series:
-        - entity: sensor.backyard_absolute_humidity
-          name: Absolute humidity
-          type: area
-          color: var(--primary-color)
-          show:
-            name_in_header: false
-          group_by:
-            func: avg
-            duration: 1h
+          - grid-template-areas: '"weather_summary"'
         card_mod:
-          style: |
-            {% from 'general_home_theme.jinja' import theme_css %}
-            {{ theme_css(user, 'exempt') }}
-            ha-card {
-              margin-top: -8px;
-              padding-top: 0 !important;
-            }
-            .apexcharts-xaxis text {
-              font-size: 10px !important;
-            }
-            .apexcharts-area-series path[stroke] {
-              stroke: var(--primary-color) !important;
-            }
-            .apexcharts-area-series path[fill^="url"] {
-              fill: var(--primary-color) !important;
-              opacity: 0.15;
-            }
-            .apexcharts-area-series path[fill]:not([fill^="url"]):not([fill="none"]) {
-              fill: var(--primary-color) !important;
-            }
+          style: *theme_exempt_style
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: input_boolean.weather_expanded
+          state: 'on'
+        card:
+          type: custom:weather-forecast-card
+          entity: weather.forecast_home
+          default_forecast: daily
+          current:
+            temperature_entity: sensor.<entity_10>_temperature
+            temperature_precision: 0
+            show_attributes:
+            - name: apparent_temperature
+              entity: sensor.<entity_10>_feels_like
+          forecast:
+            mode: chart
+            extra_attribute: wind_bearing
+            hourly_group_size: 2
+          card_mod:
+            style:
+              .: *theme_card_transparent
+              $: |
+                .wfc-current-secondary-info {
+                  display: none !important;
+                }
+                .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name {
+                  font-size: 0;
+                }
+                .wfc-current-attribute:nth-child(1) .wfc-current-attribute-name::after {
+                  content: "Feels Like";
+                  font-size: var(--ha-font-size-m, 14px);
+                }
+                .wfc-current-weather {
+                  background: rgba(var(--rgb-primary-text-color), 0.05);
+                  margin: -16px -16px 0;
+                  padding: 12px 16px 4px;
+                }
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: input_boolean.weather_expanded
+          state: 'on'
+        card:
+          type: custom:apexcharts-card
+          header:
+            show: true
+            title: Absolute humidity
+            show_states: true
+          graph_span: 24h
+          span:
+            end: hour
+          yaxis:
+          - decimals: 0
+            apex_config:
+              tickAmount: 4
+              labels:
+                show: true
+          apex_config:
+            chart:
+              height: 130
+            stroke:
+              curve: smooth
+              width: 2
+            fill:
+              type: gradient
+              gradient:
+                opacityFrom: 0.45
+                opacityTo: 0.05
+            grid:
+              show: true
+              borderColor: rgba(128, 128, 128, 0.2)
+            legend:
+              show: false
+            xaxis:
+              type: datetime
+              tickAmount: 5
+              labels:
+                showDuplicates: false
+                formatter: |
+                  EVAL:function(val, timestamp, opts) {
+                    const i = opts.i;
+                    const n = opts.w.globals.labels.length;
+                    const step = Math.max(1, Math.round((n - 1) / 5));
+                    if (i % step !== 0 && i !== n - 1) return '';
+                    return new Date(val).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      hour12: true,
+                    });
+                  }
+          series:
+          - entity: sensor.backyard_absolute_humidity
+            name: Absolute humidity
+            type: area
+            color: var(--primary-color)
+            show:
+              name_in_header: false
+            group_by:
+              func: avg
+              duration: 1h
+          card_mod:
+            style: |
+              {% from 'general_home_theme.jinja' import theme_css %}
+              {{ theme_css(user, 'exempt') }}
+              ha-card {
+                margin-top: -8px;
+                padding-top: 0 !important;
+              }
+              .apexcharts-xaxis text {
+                font-size: 10px !important;
+              }
+              .apexcharts-area-series path[stroke] {
+                stroke: var(--primary-color) !important;
+              }
+              .apexcharts-area-series path[fill^="url"] {
+                fill: var(--primary-color) !important;
+                opacity: 0.15;
+              }
+              .apexcharts-area-series path[fill]:not([fill^="url"]):not([fill="none"]) {
+                fill: var(--primary-color) !important;
+              }
   - type: grid
     column_span: 1
     cards:
