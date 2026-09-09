@@ -1577,12 +1577,12 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.soil_moisture_sensor_moisture
+        entity: sensor.soil_moisture_sensor_soil_moisture
         below: input_number.soil_moisture_minimum
       card:
         type: custom:button-card
         template: promoted_chip
-        entity: sensor.soil_moisture_sensor_moisture
+        entity: sensor.soil_moisture_sensor_soil_moisture
         icon: mdi:water-percent
         name: |
           [[[
@@ -2266,7 +2266,7 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.soil_moisture_sensor_moisture
+        entity: sensor.soil_moisture_sensor_soil_moisture
         state_not: unavailable
       card: &cond_card_soil_moisture
         type: custom:stack-in-card
@@ -2295,7 +2295,7 @@ views:
             - input_number.soil_moisture_healthy
           card:
             type: gauge
-            entity: sensor.soil_moisture_sensor_moisture
+            entity: sensor.soil_moisture_sensor_soil_moisture
             name: Moisture
             unit: "%"
             min: 0

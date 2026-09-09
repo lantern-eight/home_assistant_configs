@@ -296,7 +296,7 @@
     # Soil moisture
     - platform: state
       entity_id:
-        - sensor.soil_moisture_sensor_moisture
+        - sensor.soil_moisture_sensor_soil_moisture
         - sensor.soil_moisture_sensor_battery
         - input_number.soil_moisture_minimum
         - input_number.soil_moisture_healthy
@@ -479,7 +479,7 @@
             }
           ] %}
 
-          {% set soil_moisture = states('sensor.soil_moisture_sensor_moisture')
+          {% set soil_moisture = states('sensor.soil_moisture_sensor_soil_moisture')
              | float(-1) %}
           {% set soil_threshold = states('input_number.soil_moisture_minimum')
              | float(25) %}

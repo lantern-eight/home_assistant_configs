@@ -755,12 +755,12 @@ automation:
     mode: single
     triggers:
       - trigger: numeric_state
-        entity_id: sensor.soil_moisture_sensor_moisture
+        entity_id: sensor.soil_moisture_sensor_soil_moisture
         below: input_number.soil_moisture_minimum
     actions:
       - variables:
           moisture: >
-            {{ states('sensor.soil_moisture_sensor_moisture')
+            {{ states('sensor.soil_moisture_sensor_soil_moisture')
                | float(0) | round(0) | int }}
           threshold: >
             {{ states('input_number.soil_moisture_minimum')
