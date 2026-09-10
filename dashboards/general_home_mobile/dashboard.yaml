@@ -4032,11 +4032,17 @@ views:
               const start = lo - pad, end = hi + pad;
               const pct = (mins) => ((mins - start) / (end - start)) * 100;
 
+              // Two-layer ring: a hard inner ring in the card colour, then
+              // the soft tinted halo. On a narrow phone the pairs five
+              // minutes apart sit about a dot's width apart, and where
+              // they share a category they would read as one long blob —
+              // the hard ring keeps a visible seam between them.
               const dots = marks.map((m) => `
                 <div style="position:absolute;left:${pct(m.mins)}%;top:50%;
-                            width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+                            width:8px;height:8px;margin:-4px 0 0 -4px;
                             border-radius:50%;background:${COLORS[m.cat]};
-                            box-shadow:0 0 0 3px color-mix(in srgb, ${COLORS[m.cat]} 22%, transparent)"
+                            box-shadow:0 0 0 1.5px var(--card-background-color),
+                                       0 0 0 4px color-mix(in srgb, ${COLORS[m.cat]} 20%, transparent)"
                      title="${clockOf(m.mins)}"></div>`).join('');
 
               // Only drawn while the clock is inside this track's span.
