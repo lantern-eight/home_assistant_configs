@@ -51,6 +51,33 @@ dashboard's package file.
 - Package changes require an HA restart (`sync.py -r`); they can't
   hot-reload.
 
+## Registry metadata (categories & labels)
+
+Every automation, helper, script, and sensor needs labels (and usually
+a category) in `registry_metadata.yaml`. Two files exist:
+
+- **Root `registry_metadata.yaml`** — general-purpose, for entities
+  from `packages/*.yaml`.
+- **Dashboard `registry_metadata.yaml`** — dashboard-specific, for
+  helpers from `general_home_mobile.yaml` and dashboard-scoped
+  automation groupings.
+
+**Labels** are cross-cutting tags (an entity can have many):
+`Lighting`, `Security`, `Scheduled`, `Notification`. Dashboard labels
+are prefixed (`gm-`, `automation-`, `vacuum-`).
+
+**Categories** are single-assignment per domain, used for Settings UI
+grouping: `Bedtime`, `Morning Routine`, etc. Each has a `scope:` (automation,
+script, helpers).
+
+When adding an entity: read the existing file to find matching
+labels/categories. Every automation gets a category + labels in the
+root file, plus an `automation-*` label in the dashboard file. Helpers
+get at least one label; dashboard helpers also get a category. Existing
+labels/categories can be used and new ones created as needed.
+
+Applied with `ha_sync.py -c` or as part of a full sync.
+
 ## Home Assistant config backup
 
 Relevant when working under `home_assistant_backup/**` or `dashboards/**`.

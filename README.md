@@ -6,6 +6,7 @@ Home Assistant configuration backup, dashboard management, and tooling.
 
 - [Setup](#setup)
 - [Sync](#sync)
+- [Registry Metadata (Categories & Labels)](#registry-metadata-categories--labels)
 - [General HA Packages](#general-ha-packages)
 - [Dashboards](#dashboards)
   - [General Home Mobile](#general-home-mobile)
@@ -90,6 +91,54 @@ redact).
 Pulled backup files land in `home_assistant_backup/`. To back up additional
 files, add their paths (relative to the HA config root) to the
 `BACKUP_FILES` list in `scripts/ha_sync.py`.
+
+## Registry Metadata (Categories & Labels)
+
+Every automation, helper, script, and sensor should have labels and
+a category assigned via `registry_metadata.yaml` files. The sync script
+applies them to Home Assistant's entity registry.
+
+### Two files, two scopes
+
+| File | Scope |
+|------|-------|
+| Root `registry_metadata.yaml` | General-purpose labels/categories that span the whole HA instance — entities from `packages/*.yaml` |
+| `dashboards/general_home_mobile/registry_metadata.yaml` | Dashboard-specific labels/categories — helpers from `general_home_mobile.yaml`, dashboard-scoped automation groupings |
+
+### Labels vs. categories
+
+- **Labels** are cross-cutting tags — an entity can have many. They
+  describe what an entity relates to: `Lighting`, `Security`,
+  `Scheduled`, `Notification`, `3D Printing`.
+- **Categories** are single-assignment per domain (one automation can
+  only be in one automation category). They group entities in the Settings
+  UI: `Bedtime`, `Morning Routine`, `Print Alerts`, etc. Each category has
+  a `scope:` (automation, script, helpers).
+
+### Conventions
+
+- **Automations** get a category + at least one label in the root
+  file, plus a dashboard-scoped `automation-*` label in the dashboard
+  file.
+- **Helpers** get at least one label. Dashboard helpers also get a
+  category.
+- **Scripts** get a category + labels.
+- **Sensors** get labels.
+- Dashboard-specific labels are prefixed (`gm-`, `automation-`,
+  `vacuum-`).
+- When adding a new entity, read the existing file to find matching
+  labels/categories. Existing labels/categories can be used and new
+  ones created as needed.
+
+### Applying
+
+```bash
+# Apply categories & labels only
+uv run python scripts/ha_sync.py -c
+
+# Full sync includes metadata automatically
+uv run python scripts/ha_sync.py
+```
 
 ## General HA Packages
 
