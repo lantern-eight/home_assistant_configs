@@ -291,7 +291,7 @@
     # Lightning
     - platform: state
       entity_id:
-        - sensor.<entity_10>_lightning_count
+        - sensor.<entity_37>_lightning_count_last_3_hr
         - sensor.<entity_10>_lightning_average_distance
     # Soil moisture
     - platform: state
@@ -440,7 +440,7 @@
             {% endfor %}
           {% endif %}
 
-          {% set lightning_count = states('sensor.<entity_10>_lightning_count') | int(0) %}
+          {% set lightning_count = states('sensor.<entity_37>_lightning_count_last_3_hr') | int(0) %}
           {% set lightning_dist = states('sensor.<entity_10>_lightning_average_distance')
              | float(0) | round(1) %}
           {% set lightning_label = lightning_count | string
