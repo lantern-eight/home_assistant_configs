@@ -66,3 +66,7 @@ home_assistant_backup/themes/material_you/material_you.yaml
 # Registry metadata — label/category assignments
 registry_metadata.yaml
 dashboards/*/registry_metadata.yaml
+
+# Working plans — local scratch for tracking in-progress work across
+# sessions on this machine. Not repo content, so never synced to git.
+plans/

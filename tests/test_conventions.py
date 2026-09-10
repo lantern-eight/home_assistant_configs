@@ -57,6 +57,14 @@ class TestFileMapExistence:
 # ── 2. PII scan ────────────────────────────────────────────────────────────
 
 
+# Local-only scratch directories. `plans/` holds working plans that track
+# in-progress work across sessions on one machine; they are gitignored, so
+# git already hides them here. Listing the prefix as well keeps the PII scan
+# off them even if a file is ever force-added, since a plan may legitimately
+# quote UUID-shaped things like design-tool URLs.
+_SCAN_EXCLUDED_PREFIXES = ('plans/',)
+
+
 def _git_visible_files(*extensions):
   """Return tracked and untracked (non-ignored) files matching extensions."""
   globs = [f'*.{ext.lstrip(".")}' for ext in extensions]
@@ -68,7 +76,10 @@ def _git_visible_files(*extensions):
   result = subprocess.run(
     args, capture_output=True, text=True, cwd=str(REPO_ROOT),
   )
-  return [line for line in result.stdout.splitlines() if line]
+  return [
+    line for line in result.stdout.splitlines()
+    if line and not line.startswith(_SCAN_EXCLUDED_PREFIXES)
+  ]
 
 
 def _redact_entities():
