@@ -63,7 +63,7 @@ x-theme-chip-style: &theme_chip_style |
 x-theme-chrome-style: &theme_chrome_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'chrome') }}
-# Schedule time shown on each automation row of the Automations view.
+# Schedule time shown on each row of the Automations view.
 #
 # Reads `schedule_entity` off the row's own config rather than naming an
 # entity inline, so this formatting lives in exactly one place and every
@@ -71,11 +71,15 @@ x-theme-chrome-style: &theme_chrome_style |
 # YAML config to its templates, which is what makes the indirection work —
 # a plain anchor could not vary the entity per row.
 #
+# Falls back to the row's own entity so a row that already points at an
+# input_datetime — a time-window boundary, say — needs no second key
+# naming the same helper twice.
+#
 # 12-hour with AM/PM because this view is read at a glance on a phone.
 # Whitespace is trimmed on every tag: untrimmed Jinja blocks would pad the
-# rendered string and visibly offset the secondary line.
+# rendered string and visibly offset the line.
 x-schedule-time: &schedule_time >-
-  {%- set sched = config.schedule_entity -%}
+  {%- set sched = config.schedule_entity | default(config.entity) -%}
   {%- set hour = state_attr(sched, 'hour') -%}
   {%- set minute = state_attr(sched, 'minute') -%}
   {%- if hour is not none -%}
@@ -4011,17 +4015,31 @@ views:
       entities:
       # Automations that run inside a window rather than at a point in
       # time list the window's two boundary helpers first, then the
-      # automations gated by them. The boundaries are plain
-      # input_datetime rows: an entities card already renders those as an
-      # editable time, so they need no template and no tap_action.
+      # automations gated by them.
+      #
+      # The boundaries are template-entity-rows, not plain input_datetime
+      # rows: a plain row draws a full hh:mm inline editor, which is wider
+      # than a phone comfortably fits and breaks the rhythm of the list.
+      # These show the time where an automation row shows its toggle, and
+      # tapping opens the same picker every other row does.
       - type: section
         label: Security
-      - entity: input_datetime.bedtime_door_window_start
+      - type: custom:template-entity-row
+        entity: input_datetime.bedtime_door_window_start
         name: Door Window Opens
         icon: mdi:clock-start
-      - entity: input_datetime.bedtime_door_window_end
+        state: *schedule_time
+        tap_action:
+          action: more-info
+          entity: input_datetime.bedtime_door_window_start
+      - type: custom:template-entity-row
+        entity: input_datetime.bedtime_door_window_end
         name: Door Window Closes
         icon: mdi:clock-end
+        state: *schedule_time
+        tap_action:
+          action: more-info
+          entity: input_datetime.bedtime_door_window_end
       - entity: automation.door_opens_after_bedtime
         name: Door Opens After Bedtime
         icon: mdi:door-open
@@ -4038,12 +4056,22 @@ views:
 
       - type: section
         label: Bedtime
-      - entity: input_datetime.nightlight_window_start
+      - type: custom:template-entity-row
+        entity: input_datetime.nightlight_window_start
         name: Nightlight Window Opens
         icon: mdi:clock-start
-      - entity: input_datetime.nightlight_window_end
+        state: *schedule_time
+        tap_action:
+          action: more-info
+          entity: input_datetime.nightlight_window_start
+      - type: custom:template-entity-row
+        entity: input_datetime.nightlight_window_end
         name: Nightlight Window Closes
         icon: mdi:clock-end
+        state: *schedule_time
+        tap_action:
+          action: more-info
+          entity: input_datetime.nightlight_window_end
       # template-entity-row rather than a plain row: only it evaluates a
       # template in `name:`, which these need to render the label
       # capitalised. They have no schedule of their own — the window rows
