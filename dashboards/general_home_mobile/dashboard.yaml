@@ -82,6 +82,19 @@ x-schedule-time: &schedule_time >-
   {{ hour % 12 if hour % 12 else 12 }}:{{ '%02d' % minute }}
   {{- ' AM' if hour < 12 else ' PM' -}}
   {%- endif -%}
+# Row label taken from the entity's own friendly name, title-cased.
+#
+# For automations named after a household member the name is redacted in
+# this file, and redaction is case-insensitive — every spelling collapses
+# to one placeholder, which restores as the lowercase form. That reaches
+# the automation's alias too, so its friendly name is lowercase in Home
+# Assistant. Title-casing here fixes the display without writing the real
+# name into a tracked file.
+#
+# Reads `config.entity`, so this is the same string on every row it is
+# used on and only needs to exist once.
+x-titled-name: &titled_name >-
+  {{ state_attr(config.entity, 'friendly_name') | title }}
 # UV index severity colors (Material Design). Defined once, referenced by
 # both the annotation band fills and the line color_threshold so they
 # stay in sync automatically.
@@ -3950,17 +3963,10 @@ views:
         tap_action:
           action: more-info
           entity: input_datetime.kitchen_light_morning
-      # Title-cased from the friendly name rather than written inline.
-      # An <entity_N> placeholder restores to its stored lowercase
-      # spelling, so both an inline name and the automation's own alias
-      # render uncapitalised; deriving the label here fixes the display
-      # without putting the real name in this tracked file.
       - type: custom:template-entity-row
         entity: automation.<entity_4>_daytime
         schedule_entity: input_datetime.<entity_4>_daytime_light
-        name: >-
-          {{ state_attr('automation.<entity_4>_daytime', 'friendly_name')
-             | title }}
+        name: *titled_name
         icon: mdi:weather-sunny
         secondary: *schedule_time
         toggle: true
@@ -3993,6 +3999,105 @@ views:
         tap_action:
           action: more-info
           entity: input_datetime.uv_forecast_refresh
+
+    - type: custom:mushroom-title-card
+      title: Evening
+      icon: mdi:weather-night
+      card_mod:
+        style: *theme_exempt_style
+    - type: entities
+      card_mod:
+        style: *theme_card_style
+      entities:
+      # Automations that run inside a window rather than at a point in
+      # time list the window's two boundary helpers first, then the
+      # automations gated by them. The boundaries are plain
+      # input_datetime rows: an entities card already renders those as an
+      # editable time, so they need no template and no tap_action.
+      - type: section
+        label: Security
+      - entity: input_datetime.bedtime_door_window_start
+        name: Door Window Opens
+        icon: mdi:clock-start
+      - entity: input_datetime.bedtime_door_window_end
+        name: Door Window Closes
+        icon: mdi:clock-end
+      - entity: automation.door_opens_after_bedtime
+        name: Door Opens After Bedtime
+        icon: mdi:door-open
+      - entity: automation.door_closes_after_bedtime
+        name: Door Closes After Bedtime
+        icon: mdi:door-closed
+      # Armed Door Opens has no schedule of its own — it is gated on the
+      # house being armed, which in practice is an evening state. Listed
+      # here without a time so the section reflects what actually runs at
+      # night.
+      - entity: automation.armed_door_opens
+        name: Armed Door Opens
+        icon: mdi:shield-alert
+
+      - type: section
+        label: Bedtime
+      - entity: input_datetime.nightlight_window_start
+        name: Nightlight Window Opens
+        icon: mdi:clock-start
+      - entity: input_datetime.nightlight_window_end
+        name: Nightlight Window Closes
+        icon: mdi:clock-end
+      # template-entity-row rather than a plain row: only it evaluates a
+      # template in `name:`, which these need to render the label
+      # capitalised. They have no schedule of their own — the window rows
+      # above are what gates them — so there is no secondary or tap.
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_nightlight_on
+        name: *titled_name
+        icon: mdi:weather-night
+        toggle: true
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_nightlight_off
+        name: *titled_name
+        icon: mdi:weather-sunset-up
+        toggle: true
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_dim_1
+        schedule_entity: input_datetime.<entity_4>_light_dim
+        name: *titled_name
+        icon: mdi:brightness-5
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_dim
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_off_1
+        schedule_entity: input_datetime.<entity_4>_light_off
+        name: *titled_name
+        icon: mdi:lightbulb-off
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_off
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_off_2
+        schedule_entity: input_datetime.<entity_4>_light_second_off
+        name: *titled_name
+        icon: mdi:lightbulb-off-outline
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_second_off
+      - type: custom:template-entity-row
+        entity: automation.go_to_bed
+        schedule_entity: input_datetime.go_to_bed
+        name: Go to Bed
+        icon: mdi:bed
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.go_to_bed
 
     # =====================================================================
     # Legacy flat list — replaced by the timeline sections above.
