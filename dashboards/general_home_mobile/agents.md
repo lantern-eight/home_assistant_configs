@@ -248,12 +248,12 @@ Then reload the page.
 3. **Don't template `entity_id` in `tap_action`.** HA doesn't support
    Jinja2 in tap_action fields. The Appearance page works around this by
    routing tap_actions through scripts (`script.theme_select`,
-   `script.theme_set_background`, `script.theme_reset_customization`)
-   that resolve `context.user_id` at runtime to target the correct
-   per-user helper. Selection outlines use card_mod Jinja (which does
-   get `user`). Sections that need `more-info` with a static entity
-   (Opacity/Blur sliders, Custom color card, Palette shades) still use
-   per-user `condition: user` blocks.
+   `script.theme_set_background`) that resolve `context.user_id` at
+   runtime to target the correct per-user helper. Selection outlines
+   use card_mod Jinja (which does get `user`). Sections that need
+   `more-info` with a static entity (Opacity/Blur sliders, Custom
+   color card, Palette shades) use per-user `condition: user` blocks
+   and call `input_number.set_value` directly.
 
 4. **Don't remove or reorder the background overlay card.** It must be the
    first card in each view's first section. It uses `position: fixed` with

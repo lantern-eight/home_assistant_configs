@@ -684,12 +684,12 @@ three scripts in `general_home_mobile.yaml`:
 
 - `script.theme_select` — sets any `input_select` helper (mode, style, palette)
 - `script.theme_set_background` — sets the `input_text` background helper
-- `script.theme_reset_customization` — resets an `input_number` to its default
 
 Each script resolves `context.user_id` at runtime to build the correct
 per-user entity ID. Selection outlines use card_mod Jinja (which receives
-`user`). This lets Mode, Style, Palette, and Background tiles be shared
-across accounts instead of duplicated.
+`user`). Sections that need `more-info` with a static entity (Opacity/Blur
+sliders, Custom color card, Palette shades) use per-user `condition: user`
+blocks and call `input_number.set_value` directly.
 
 Sections that need `tap_action: more-info` with a static entity (Opacity/Blur
 sliders, Custom color card) still use per-account `condition: user` blocks.
