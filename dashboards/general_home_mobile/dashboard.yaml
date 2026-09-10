@@ -3975,11 +3975,16 @@ views:
       custom_fields:
         tracks: |
           [[[
+            // Resolved through the theme's CSS custom properties rather
+            // than fixed hex, the same way notification severity colors
+            // are, so these follow the active palette and the user's
+            // severity color mode preference. Bedtime has no severity
+            // equivalent and takes the palette accent.
             const COLORS = {
-              routine:  '#3ecf8e',
-              security: '#6b9fff',
-              bedtime:  '#a87dde',
-              system:   '#e8a840',
+              routine:  'var(--success-color)',
+              security: 'var(--info-color)',
+              bedtime:  'var(--accent-color)',
+              system:   'var(--warning-color)',
             };
 
             const TRACKS = [
