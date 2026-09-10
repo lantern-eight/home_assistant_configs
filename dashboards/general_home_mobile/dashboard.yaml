@@ -3948,6 +3948,133 @@ views:
         name: All Automations
         icon: mdi:robot
 
+    # Overview of when the day's scheduled automations actually fire.
+    #
+    # Drawn as two separately-scaled tracks rather than one axis across
+    # the whole day, because the schedule is not spread evenly: almost
+    # everything lands between 5–7 AM or 7:30–9 PM, with nothing at all
+    # in between. On a single 24-hour axis at phone width that is mostly
+    # empty space, and the pairs five minutes apart collapse into one
+    # dot. Scaling each track to its own span keeps those pairs legible.
+    #
+    # Times are read live from the same helpers the rows use, so the
+    # chart follows any adjustment made on this page.
+    - type: custom:button-card
+      card_mod:
+        style: *theme_card_style
+      show_icon: false
+      show_name: false
+      show_state: false
+      tap_action:
+        action: none
+      styles:
+        card:
+          - padding: 16px 18px
+        grid:
+          - grid-template-areas: '"tracks"'
+      custom_fields:
+        tracks: |
+          [[[
+            const COLORS = {
+              routine:  '#3ecf8e',
+              security: '#6b9fff',
+              bedtime:  '#a87dde',
+              system:   '#e8a840',
+            };
+
+            const TRACKS = [
+              { label: 'Morning', marks: [
+                { helper: 'input_datetime.house_auto_disarm',        cat: 'security' },
+                { helper: 'input_datetime.main_suite_weekday_wake',  cat: 'routine'  },
+                { helper: 'input_datetime.kitchen_light_morning',    cat: 'routine'  },
+                { helper: 'input_datetime.uv_forecast_refresh',      cat: 'system'   },
+                { helper: 'input_datetime.<entity_4>_daytime_light', cat: 'routine'  },
+              ]},
+              { label: 'Evening', marks: [
+                { helper: 'input_datetime.<entity_4>_light_dim',         cat: 'bedtime' },
+                { helper: 'input_datetime.<entity_4>_light_off',         cat: 'bedtime' },
+                { helper: 'input_datetime.<entity_4>_light_second_off',  cat: 'bedtime' },
+                { helper: 'input_datetime.go_to_bed',                    cat: 'bedtime' },
+              ]},
+            ];
+
+            const minutesOf = (id) => {
+              const a = states[id]?.attributes;
+              if (!a || a.hour == null) return null;
+              return a.hour * 60 + a.minute;
+            };
+            const clockOf = (mins) => {
+              const h24 = Math.floor(mins / 60), m = mins % 60;
+              const h = h24 % 12 === 0 ? 12 : h24 % 12;
+              return `${h}:${String(m).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`;
+            };
+
+            const now = new Date();
+            const nowMins = now.getHours() * 60 + now.getMinutes();
+
+            const rendered = TRACKS.map((track) => {
+              const marks = track.marks
+                .map((m) => ({ ...m, mins: minutesOf(m.helper) }))
+                .filter((m) => m.mins !== null);
+              if (!marks.length) return '';
+
+              // Pad the span so the first and last dots are not clipped by
+              // the ends of the track, and so a track whose marks all sit
+              // at one time still has a width to position within.
+              const lo = Math.min(...marks.map((m) => m.mins));
+              const hi = Math.max(...marks.map((m) => m.mins));
+              const pad = Math.max(10, Math.round((hi - lo) * 0.12));
+              const start = lo - pad, end = hi + pad;
+              const pct = (mins) => ((mins - start) / (end - start)) * 100;
+
+              const dots = marks.map((m) => `
+                <div style="position:absolute;left:${pct(m.mins)}%;top:50%;
+                            width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+                            border-radius:50%;background:${COLORS[m.cat]};
+                            box-shadow:0 0 0 3px color-mix(in srgb, ${COLORS[m.cat]} 22%, transparent)"
+                     title="${clockOf(m.mins)}"></div>`).join('');
+
+              // Only drawn while the clock is inside this track's span.
+              const nowMarker = (nowMins >= start && nowMins <= end) ? `
+                <div style="position:absolute;left:${pct(nowMins)}%;top:0;bottom:0;
+                            width:2px;margin-left:-1px;border-radius:1px;
+                            background:var(--primary-text-color);opacity:0.45"></div>` : '';
+
+              return `
+                <div style="margin-bottom:14px">
+                  <div style="display:flex;justify-content:space-between;
+                              align-items:baseline;margin-bottom:7px">
+                    <span style="font-size:11px;font-weight:600;letter-spacing:0.4px;
+                                 color:var(--secondary-text-color)"
+                          >${track.label.toUpperCase()}</span>
+                    <span style="font-size:11px;color:var(--secondary-text-color);
+                                 opacity:0.75"
+                          >${clockOf(lo)} – ${clockOf(hi)}</span>
+                  </div>
+                  <div style="position:relative;height:18px">
+                    <div style="position:absolute;left:0;right:0;top:50%;height:2px;
+                                margin-top:-1px;border-radius:1px;
+                                background:color-mix(in srgb, var(--primary-text-color) 10%, transparent)"></div>
+                    ${nowMarker}${dots}
+                  </div>
+                </div>`;
+            }).join('');
+
+            const legend = Object.entries(COLORS).map(([name, color]) => `
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:7px;height:7px;border-radius:50%;background:${color}"></div>
+                <span style="font-size:11px;color:var(--secondary-text-color);
+                             text-transform:capitalize">${name}</span>
+              </div>`).join('');
+
+            return `
+              <div style="width:100%;text-align:left">
+                ${rendered}
+                <div style="display:flex;gap:12px;flex-wrap:wrap;
+                            padding-top:2px">${legend}</div>
+              </div>`;
+          ]]]
+
     - type: custom:mushroom-title-card
       title: Morning
       icon: mdi:weather-sunny
