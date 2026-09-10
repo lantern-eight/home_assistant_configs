@@ -42,5 +42,5 @@
 # frontend:
 #   extra_module_url:
 #     - /hacsfiles/lovelace-card-mod/card-mod.js
-#     - /local/popup_history_fix.js?v=2
+#     - /local/popup_history_fix.js?v=3
 #     - /local/card_order.js?v=1

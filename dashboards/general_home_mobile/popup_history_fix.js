@@ -18,7 +18,21 @@ history.pushState = function (state, title, url) {
   if (location.hash) {
     history.replaceState(null, "", location.pathname);
   }
-  return _pushState(state, title, url);
+
+  // Kiosk mode hides the sidebar via DOM manipulation that persists
+  // across SPA navigation. Force a full reload to restore it.
+  const leavingKiosk =
+    location.pathname.startsWith("/general-home") &&
+    url != null &&
+    !String(url).includes("/general-home");
+
+  const result = _pushState(state, title, url);
+
+  if (leavingKiosk) {
+    location.reload();
+  }
+
+  return result;
 };
 
 // Collapse the notification tray on every page load so it never persists
