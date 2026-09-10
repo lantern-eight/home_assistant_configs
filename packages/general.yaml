@@ -188,6 +188,124 @@ utility_meter:
     cycle: weekly
 
 # =============================================================================
+# Automation Groups — bulk enable/disable
+# =============================================================================
+# Groups every automation by when it runs, so the Automations dashboard can
+# offer one switch per heading instead of only per-automation switches.
+#
+# A group is on when ANY member is on, and turning it off turns off every
+# member, so a heading switch reads "is anything here running" and flipping
+# it clears the whole heading. Groups nest, so turning off a whole part of
+# the day cascades down to each category under it.
+#
+# Membership lives here rather than in the dashboard because tap actions in
+# Lovelace cannot be templated — a dashboard-side version would have to
+# repeat every entity id in each card, and those copies drift as automations
+# come and go. One list per group, consumed by the dashboard.
+#
+# The three-level shape mirrors the page: category -> part of day -> all.
+
+group:
+  # --- Categories within each part of the day -------------------------------
+  automations_morning_routine:
+    name: "Automations Morning Routine"
+    entities:
+      - automation.main_suite_weekday_wake
+      - automation.kitchen_light_morning
+      - automation.<entity_4>_daytime
+
+  automations_morning_security:
+    name: "Automations Morning Security"
+    entities:
+      - automation.house_auto_disarm
+
+  automations_morning_system:
+    name: "Automations Morning System"
+    entities:
+      - automation.refresh_uv_forecast
+
+  automations_evening_security:
+    name: "Automations Evening Security"
+    entities:
+      - automation.door_opens_after_bedtime
+      - automation.door_closes_after_bedtime
+      - automation.armed_door_opens
+
+  automations_evening_bedtime:
+    name: "Automations Evening Bedtime"
+    entities:
+      - automation.<entity_4>_nightlight_on
+      - automation.<entity_4>_nightlight_off
+      - automation.<entity_4>_light_dim_1
+      - automation.<entity_4>_light_off_1
+      - automation.<entity_4>_light_off_2
+      - automation.go_to_bed
+
+  automations_always_printing:
+    name: "Automations Always Printing"
+    entities:
+      - automation.3d_print_complete_notification
+      - automation.3d_print_failure_alert
+      - automation.3d_print_halfway_notification
+      - automation.3d_printer_light_on_on_start
+
+  automations_always_security:
+    name: "Automations Always Security"
+    entities:
+      - automation.basement_door_open_too_long
+
+  automations_always_system:
+    name: "Automations Always System"
+    entities:
+      - automation.soil_moisture_low
+
+  # Cache and sync plumbing. Grouped so it can be switched as a unit, but
+  # deliberately left out of the parent groups below: turning off a part of
+  # the day should never silently stop the caches other pages depend on.
+  automations_infrastructure:
+    name: "Automations Infrastructure"
+    entities:
+      - automation.initialize_schedule_helpers
+      - automation.theme_generate_background_thumbnails
+      - automation.cache_3d_print_filename
+      - automation.cache_<entity_20>_slot_data
+      - automation.cache_<entity_21>_slot_data
+      - automation.reset_slot_cache_on_new_job
+      - automation.spoolman_update_on_print_complete
+
+  # --- Parts of the day -----------------------------------------------------
+  automations_morning:
+    name: "Automations Morning"
+    entities:
+      - group.automations_morning_routine
+      - group.automations_morning_security
+      - group.automations_morning_system
+
+  automations_evening:
+    name: "Automations Evening"
+    entities:
+      - group.automations_evening_security
+      - group.automations_evening_bedtime
+
+  automations_always_active:
+    name: "Automations Always Active"
+    entities:
+      - group.automations_always_printing
+      - group.automations_always_security
+      - group.automations_always_system
+
+  # --- Everything ------------------------------------------------------------
+  # Infrastructure is included here so the master switch really does mean
+  # every automation, even though the per-day groups leave it alone.
+  automations_all:
+    name: "Automations All"
+    entities:
+      - group.automations_morning
+      - group.automations_evening
+      - group.automations_always_active
+      - group.automations_infrastructure
+
+# =============================================================================
 # UV Index — REST Sensor + Daily Refresh
 # =============================================================================
 # Fetches the day's hourly UV forecast from Open-Meteo once per day

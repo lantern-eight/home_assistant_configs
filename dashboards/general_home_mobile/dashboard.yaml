@@ -3935,6 +3935,18 @@ views:
     # auto-entities because `tap_action` cannot be templated in HA, so the
     # helper entity has to be named literally on each row. The repeated
     # part — formatting the time — is shared via the *schedule_time anchor.
+    #
+    # Headings are group entities, so a heading switch really is the
+    # automations under it rather than a separate flag that can fall out
+    # of step. Membership is defined once in packages/general.yaml.
+
+    - type: entities
+      card_mod:
+        style: *theme_card_style
+      entities:
+      - entity: group.automations_all
+        name: All Automations
+        icon: mdi:robot
 
     - type: custom:mushroom-title-card
       title: Morning
@@ -3945,8 +3957,12 @@ views:
       card_mod:
         style: *theme_card_style
       entities:
-      - type: section
-        label: Routine
+      - entity: group.automations_morning
+        name: All Morning
+        icon: mdi:weather-sunny
+      - entity: group.automations_morning_routine
+        name: ROUTINE
+        icon: mdi:clock-outline
       - type: custom:template-entity-row
         entity: automation.main_suite_weekday_wake
         schedule_entity: input_datetime.main_suite_weekday_wake
@@ -3978,8 +3994,9 @@ views:
           action: more-info
           entity: input_datetime.<entity_4>_daytime_light
 
-      - type: section
-        label: Security
+      - entity: group.automations_morning_security
+        name: SECURITY
+        icon: mdi:shield-lock
       - type: custom:template-entity-row
         entity: automation.house_auto_disarm
         schedule_entity: input_datetime.house_auto_disarm
@@ -3991,8 +4008,9 @@ views:
           action: more-info
           entity: input_datetime.house_auto_disarm
 
-      - type: section
-        label: System
+      - entity: group.automations_morning_system
+        name: SYSTEM
+        icon: mdi:cog
       - type: custom:template-entity-row
         entity: automation.refresh_uv_forecast
         schedule_entity: input_datetime.uv_forecast_refresh
@@ -4022,8 +4040,12 @@ views:
       # than a phone comfortably fits and breaks the rhythm of the list.
       # These show the time where an automation row shows its toggle, and
       # tapping opens the same picker every other row does.
-      - type: section
-        label: Security
+      - entity: group.automations_evening
+        name: All Evening
+        icon: mdi:weather-night
+      - entity: group.automations_evening_security
+        name: SECURITY
+        icon: mdi:shield-lock
       - type: custom:template-entity-row
         entity: input_datetime.bedtime_door_window_start
         name: Door Window Opens
@@ -4054,8 +4076,9 @@ views:
         name: Armed Door Opens
         icon: mdi:shield-alert
 
-      - type: section
-        label: Bedtime
+      - entity: group.automations_evening_bedtime
+        name: BEDTIME
+        icon: mdi:bed-clock
       - type: custom:template-entity-row
         entity: input_datetime.nightlight_window_start
         name: Nightlight Window Opens
@@ -4140,8 +4163,12 @@ views:
       # these rows are plain: no time to show and no tap target to adjust,
       # just the toggle. Subsections still match the rest of the page so
       # the categories read the same wherever you are on it.
-      - type: section
-        label: 3D Printing
+      - entity: group.automations_always_active
+        name: All Always Active
+        icon: mdi:lightning-bolt-outline
+      - entity: group.automations_always_printing
+        name: 3D PRINTING
+        icon: mdi:printer-3d
       - entity: automation.3d_print_complete_notification
         name: Print Complete
         icon: mdi:check-circle-outline
@@ -4155,14 +4182,16 @@ views:
         name: Printer Light on Start
         icon: mdi:lightbulb-on-outline
 
-      - type: section
-        label: Security
+      - entity: group.automations_always_security
+        name: SECURITY
+        icon: mdi:shield-lock
       - entity: automation.basement_door_open_too_long
         name: Basement Door Open Too Long
         icon: mdi:door-open
 
-      - type: section
-        label: System
+      - entity: group.automations_always_system
+        name: SYSTEM
+        icon: mdi:cog
       - entity: automation.soil_moisture_low
         name: Soil Moisture Low
         icon: mdi:water-alert
@@ -4171,11 +4200,16 @@ views:
       # it breaks something else on the dashboard, so it is collapsed by
       # default — present and switchable, but out of the way of the
       # automations worth changing day to day.
+      # The fold's head is the group row, so the same line both expands
+      # the list and carries its switch. Infrastructure sits outside the
+      # per-day groups, so this is the only heading that reaches it —
+      # apart from the master switch at the top of the page.
       - type: custom:fold-entity-row
         open: false
         head:
-          type: section
-          label: Infrastructure
+          entity: group.automations_infrastructure
+          name: INFRASTRUCTURE
+          icon: mdi:cog-sync
         entities:
         - entity: automation.initialize_schedule_helpers
           name: Initialize Schedule Helpers
