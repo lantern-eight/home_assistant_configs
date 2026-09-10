@@ -2312,12 +2312,18 @@ views:
               style: *theme_card_transparent
         - type: entities
           entities:
-            - entity: input_number.soil_moisture_minimum
-              name: Alert Threshold
-              icon: mdi:water-alert
-            - entity: input_number.soil_moisture_healthy
-              name: Healthy Threshold
-              icon: mdi:water-check
+            - type: custom:fold-entity-row
+              head:
+                type: section
+                label: Adjust Thresholds
+              open: false
+              entities:
+                - entity: input_number.soil_moisture_minimum
+                  name: Alert Threshold
+                  icon: mdi:water-alert
+                - entity: input_number.soil_moisture_healthy
+                  name: Healthy Threshold
+                  icon: mdi:water-check
           card_mod:
             style: *theme_card_transparent
   - type: grid

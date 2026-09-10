@@ -16,7 +16,7 @@ frontend:
     # 31-day max-age, so without it a browser keeps running whichever
     # copy it fetched first and edits to the file never ship. Bump it
     # in the same change as any edit to popup_history_fix.js.
-    - /local/popup_history_fix.js?v=2
+    - /local/popup_history_fix.js?v=3
     - /local/card_order.js?v=1
 
 automation: !include automations.yaml
