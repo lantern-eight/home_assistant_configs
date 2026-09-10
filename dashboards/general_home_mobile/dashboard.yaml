@@ -4127,6 +4127,78 @@ views:
           action: more-info
           entity: input_datetime.go_to_bed
 
+    - type: custom:mushroom-title-card
+      title: Always Active
+      icon: mdi:lightning-bolt-outline
+      card_mod:
+        style: *theme_exempt_style
+    - type: entities
+      card_mod:
+        style: *theme_card_style
+      entities:
+      # Everything here reacts to a state change rather than a clock, so
+      # these rows are plain: no time to show and no tap target to adjust,
+      # just the toggle. Subsections still match the rest of the page so
+      # the categories read the same wherever you are on it.
+      - type: section
+        label: 3D Printing
+      - entity: automation.3d_print_complete_notification
+        name: Print Complete
+        icon: mdi:check-circle-outline
+      - entity: automation.3d_print_failure_alert
+        name: Print Failure
+        icon: mdi:printer-3d-nozzle-alert
+      - entity: automation.3d_print_halfway_notification
+        name: Print Halfway
+        icon: mdi:progress-clock
+      - entity: automation.3d_printer_light_on_on_start
+        name: Printer Light on Start
+        icon: mdi:lightbulb-on-outline
+
+      - type: section
+        label: Security
+      - entity: automation.basement_door_open_too_long
+        name: Basement Door Open Too Long
+        icon: mdi:door-open
+
+      - type: section
+        label: System
+      - entity: automation.soil_moisture_low
+        name: Soil Moisture Low
+        icon: mdi:water-alert
+
+      # Plumbing that keeps caches and helpers in sync. Toggling any of
+      # it breaks something else on the dashboard, so it is collapsed by
+      # default — present and switchable, but out of the way of the
+      # automations worth changing day to day.
+      - type: custom:fold-entity-row
+        open: false
+        head:
+          type: section
+          label: Infrastructure
+        entities:
+        - entity: automation.initialize_schedule_helpers
+          name: Initialize Schedule Helpers
+          icon: mdi:cog-sync
+        - entity: automation.theme_generate_background_thumbnails
+          name: Generate Theme Thumbnails
+          icon: mdi:image-multiple
+        - entity: automation.cache_3d_print_filename
+          name: Cache Print Filename
+          icon: mdi:database
+        - entity: automation.cache_<entity_20>_slot_data
+          name: Cache <entity_20> Slot Data
+          icon: mdi:database
+        - entity: automation.cache_<entity_21>_slot_data
+          name: Cache <entity_21> Slot Data
+          icon: mdi:database
+        - entity: automation.reset_slot_cache_on_new_job
+          name: Reset Slot Cache
+          icon: mdi:database-refresh
+        - entity: automation.spoolman_update_on_print_complete
+          name: Spoolman Update
+          icon: mdi:database-sync
+
     # =====================================================================
     # Legacy flat list — replaced by the timeline sections above.
     # Kept visible while the new layout is built out so the two can be
