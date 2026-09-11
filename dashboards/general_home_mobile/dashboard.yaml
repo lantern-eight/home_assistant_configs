@@ -224,6 +224,25 @@ x-section-heading-row-style: &section_heading_row_style |
 # `.info` is forced static so the time resolves against the row host and not
 # against the name block it nominally lives in.
 #
+# The marker is a plain coloured dot rather than an icon. A per-automation
+# glyph has to be guessed at from what the automation does, and the guesses
+# were both loud and unreliable — the kitchen light drew cutlery and the
+# daytime light drew a sun nearly identical to the Morning heading's own. The
+# name already states what an automation is; the only scannable thing the
+# marker adds is which category it belongs to, and that is carried by colour.
+# A dot says exactly that and stops competing with the name for attention.
+#
+# The glyph is collapsed with --mdc-icon-size rather than hidden from inside
+# the badge's shadow root, because that is a custom property and crosses the
+# boundary on its own. Reaching in would need the `state-badge$` key, which
+# the colour anchors already own, and merge keys resolve earliest-wins. The
+# dot takes `currentColor`, so it picks up whatever colour they set.
+#
+# The `icon:` keys stay in the row configs, unused. They are the only icons
+# these rows have — Home Assistant automations carry none of their own, in
+# YAML or in the registry — so deleting them would discard the choices for no
+# gain, and restoring icons is a one-line change while they remain.
+#
 # The left column is sized for the longest time it has to hold ("11:59p"),
 # not for the longest one currently on the page — the times are adjustable
 # from this very page, so a column fitted to today's values would clip
@@ -238,14 +257,16 @@ x-child-row-layout: &child_row_layout
     :host { position: relative; }
     state-badge {
       margin-left: 48px !important;
-      flex: 0 0 22px !important;
-      width: 22px !important;
-      height: 22px !important;
-      --mdc-icon-size: 20px !important;
-      background: none !important;
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
     }
     .info {
-      margin-left: 12px !important;
+      margin-left: 14px !important;
       position: static !important;
     }
     .info .secondary {
@@ -262,13 +283,35 @@ x-child-row-layout: &child_row_layout
   hui-generic-entity-row$: |
     state-badge {
       margin-left: 48px !important;
-      flex: 0 0 22px !important;
-      width: 22px !important;
-      height: 22px !important;
-      --mdc-icon-size: 20px !important;
-      background: none !important;
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
     }
-    .info { margin-left: 12px !important; }
+    .info { margin-left: 14px !important; }
+    /* An 8px marker no longer sets the row's height the way a 40px icon did,
+       so a plain row collapses to 22px and breaks the rhythm against the
+       template rows, which hold 40px on their own. */
+    .row { min-height: 40px !important; }
+# Subsection headings take the same dot as the rows under them, minus the
+# left column — a heading has no time and stays flush against the card edge,
+# which together with its capitals is what separates it from its children.
+x-heading-dot-style: &heading_dot_style
+  hui-generic-entity-row$: |
+    state-badge {
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
+    }
+    .info { margin-left: 14px !important; }
+    .row { min-height: 40px !important; }
 # Row icon colour, one anchor per category.
 #
 # The first four are the same theme properties the schedule overview paints
@@ -4445,7 +4488,7 @@ views:
         icon: mdi:clock-outline
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_routine]
+            <<: [*switch_row_style, *heading_dot_style, *cat_routine]
       - type: custom:template-entity-row
         entity: automation.main_suite_weekday_wake
         schedule_entity: input_datetime.main_suite_weekday_wake
@@ -4491,7 +4534,7 @@ views:
         icon: mdi:shield-lock
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_security]
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
       - type: custom:template-entity-row
         entity: automation.house_auto_disarm
         schedule_entity: input_datetime.house_auto_disarm
@@ -4511,7 +4554,7 @@ views:
         icon: mdi:cog
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_system]
+            <<: [*switch_row_style, *heading_dot_style, *cat_system]
       - type: custom:template-entity-row
         entity: automation.refresh_uv_forecast
         schedule_entity: input_datetime.uv_forecast_refresh
@@ -4561,7 +4604,7 @@ views:
         icon: mdi:shield-lock
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_security]
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
       - type: custom:template-entity-row
         entity: input_datetime.bedtime_door_window_start
         name: Door Window Opens
@@ -4614,7 +4657,7 @@ views:
         icon: mdi:bed-clock
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_bedtime]
+            <<: [*switch_row_style, *heading_dot_style, *cat_bedtime]
       - type: custom:template-entity-row
         entity: input_datetime.nightlight_window_start
         name: Nightlight Window Opens
@@ -4742,7 +4785,7 @@ views:
         icon: mdi:printer-3d
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_printing]
+            <<: [*switch_row_style, *heading_dot_style, *cat_printing]
       - entity: automation.3d_print_complete_notification
         name: Print Complete
         icon: mdi:check-circle-outline
@@ -4773,7 +4816,7 @@ views:
         icon: mdi:shield-lock
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_security]
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
       - entity: automation.basement_door_open_too_long
         name: Basement Door Open Too Long
         icon: mdi:door-open
@@ -4786,7 +4829,7 @@ views:
         icon: mdi:cog
         card_mod:
           style:
-            <<: [*switch_row_style, *cat_system]
+            <<: [*switch_row_style, *heading_dot_style, *cat_system]
       - entity: automation.soil_moisture_low
         name: Soil Moisture Low
         icon: mdi:water-alert
@@ -4810,7 +4853,7 @@ views:
           icon: mdi:cog-sync
           card_mod:
             style:
-              <<: [*switch_row_style, *cat_infrastructure]
+              <<: [*switch_row_style, *heading_dot_style, *cat_infrastructure]
         entities:
         - entity: automation.initialize_schedule_helpers
           name: Initialize Schedule Helpers
