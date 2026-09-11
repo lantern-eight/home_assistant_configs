@@ -4104,6 +4104,32 @@ views:
               return `${h}:${String(m).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`;
             };
 
+            // Axis labels are written short: the hour alone when a tick
+            // lands on it, and the meridiem only on the first tick and
+            // wherever it changes. Spelling out "5:00 AM 5:30 AM 6:00 AM"
+            // across a phone-width track is what made the old single range
+            // label unreadable in the first place.
+            const tickLabel = (mins, carriedMeridiem) => {
+              const h24 = Math.floor(mins / 60), m = mins % 60;
+              const h = h24 % 12 === 0 ? 12 : h24 % 12;
+              const meridiem = h24 < 12 ? 'AM' : 'PM';
+              const base = m === 0 ? `${h}` : `${h}:${String(m).padStart(2, '0')}`;
+              return {
+                text: meridiem === carriedMeridiem ? base : `${base} ${meridiem}`,
+                meridiem,
+              };
+            };
+
+            // Round intervals a reader already thinks in. The smallest one
+            // that fits within five ticks wins, so a wide track is not
+            // crowded and a narrow one still gets more than its two ends
+            // labelled.
+            const TICK_STEPS = [15, 30, 60, 120, 180, 240, 360];
+            const chooseStep = (start, end) =>
+              TICK_STEPS.find(
+                (s) => Math.floor(end / s) - Math.ceil(start / s) + 1 <= 5
+              ) || TICK_STEPS[TICK_STEPS.length - 1];
+
             const now = new Date();
             const nowMins = now.getHours() * 60 + now.getMinutes();
 
@@ -4141,22 +4167,52 @@ views:
                             width:2px;margin-left:-1px;border-radius:1px;
                             background:var(--primary-text-color);opacity:0.45"></div>` : '';
 
+              // The scale itself. Each track is scaled to its own span, so
+              // the ticks have to be worked out per track rather than shared
+              // — an evening reading of 7:30/8/8:30/9 next to a morning one
+              // of 5/5:30/6/6:30/7.
+              const step = chooseStep(start, end);
+              const ticks = [];
+              let carried = null;
+              for (let t = Math.ceil(start / step) * step; t <= end; t += step) {
+                const { text, meridiem } = tickLabel(t, carried);
+                carried = meridiem;
+                ticks.push({ mins: t, text });
+              }
+
+              const tickMarks = ticks.map((t) => `
+                <div style="position:absolute;left:${pct(t.mins)}%;top:2px;bottom:2px;
+                            width:1px;margin-left:-0.5px;
+                            background:color-mix(in srgb, var(--primary-text-color) 14%, transparent)"></div>`
+              ).join('');
+
+              // A tick sitting hard against either end would have half its
+              // label hanging off the card, so the outermost ones anchor to
+              // the edge instead of centring on their mark.
+              const tickLabels = ticks.map((t) => {
+                const p = pct(t.mins);
+                const place = p < 8 ? 'left:0'
+                  : p > 92 ? 'right:0'
+                  : `left:${p}%;transform:translateX(-50%)`;
+                return `
+                <span style="position:absolute;${place};font-size:10px;
+                             white-space:nowrap;color:var(--secondary-text-color);
+                             opacity:0.8">${t.text}</span>`;
+              }).join('');
+
               return `
-                <div style="margin-bottom:14px">
-                  <div style="display:flex;justify-content:space-between;
-                              align-items:baseline;margin-bottom:7px">
-                    <span style="font-size:11px;font-weight:600;letter-spacing:0.4px;
-                                 color:var(--secondary-text-color)"
-                          >${track.label.toUpperCase()}</span>
-                    <span style="font-size:11px;color:var(--secondary-text-color);
-                                 opacity:0.75"
-                          >${clockOf(lo)} – ${clockOf(hi)}</span>
-                  </div>
+                <div style="margin-bottom:16px">
+                  <div style="font-size:11px;font-weight:600;letter-spacing:0.4px;
+                              color:var(--secondary-text-color);margin-bottom:7px"
+                       >${track.label.toUpperCase()}</div>
                   <div style="position:relative;height:18px">
                     <div style="position:absolute;left:0;right:0;top:50%;height:2px;
                                 margin-top:-1px;border-radius:1px;
                                 background:color-mix(in srgb, var(--primary-text-color) 10%, transparent)"></div>
-                    ${nowMarker}${dots}
+                    ${tickMarks}${nowMarker}${dots}
+                  </div>
+                  <div style="position:relative;height:14px;margin-top:1px">
+                    ${tickLabels}
                   </div>
                 </div>`;
             }).join('');
