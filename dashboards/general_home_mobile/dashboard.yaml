@@ -155,6 +155,48 @@ x-page-heading-row-style: &page_heading_row_style |
     color: var(--secondary-text-color);
     opacity: 0.75;
   }
+# Section heading that carries a switch — Morning, Evening, Always Active.
+#
+# Same shape as the page heading and for the same reason: only an entity row
+# can hold a working control, so a heading that owns a switch has to be a
+# row. Putting it here rather than as the first row of the card below means
+# the switch reads as governing that card, instead of looking like the first
+# item in it.
+#
+# Padding is what mushroom-title-card was already using for these headings
+# (24px above, 8px below), so replacing them moves nothing else on the page.
+x-section-heading-style: &section_heading_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  #states {
+    padding: 24px 12px 8px !important;
+  }
+# The row inside a section heading.
+#
+# Unlike the page heading this one keeps its badge, because a section is
+# recognised by its icon as much as by its name. mushroom-title-card has no
+# icon option at all, so the `icon:` key those heading cards carried was
+# being dropped on the floor and the headings never showed one.
+#
+# The badge is shrunk well below its 40px default: at full size it towers
+# over a 24px heading and shoves the text off the left margin. Its colour is
+# pinned to the text colour so the heading reads as neutral and the palette
+# colours further down the page keep their meaning.
+x-section-heading-row-style: &section_heading_row_style |
+  state-badge {
+    flex: 0 0 26px !important;
+    width: 26px !important;
+    height: 26px !important;
+    --mdc-icon-size: 22px !important;
+    color: var(--primary-text-color) !important;
+    background: none !important;
+  }
+  .info {
+    margin-left: 10px !important;
+    font-size: 24px !important;
+    line-height: 32px !important;
+    cursor: default !important;
+  }
 # The two-tone sheen on a switch track, applied from the row that owns it.
 #
 # Switch colours themselves come from the theme macro, which sets the
@@ -4232,20 +4274,27 @@ views:
               </div>`;
           ]]]
 
-    - type: custom:mushroom-title-card
-      title: Morning
-      icon: mdi:weather-sunny
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_morning
+        name: Morning
+        icon: mdi:weather-sunny
+        toggle: true
+        tap_action:
+          action: none
+        card_mod:
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
     - type: entities
       card_mod:
         style: *theme_card_style
       entities:
-      - entity: group.automations_morning
-        name: All Morning
-        icon: mdi:weather-sunny
-        card_mod:
-          style: *switch_row_style
       - entity: group.automations_morning_routine
         name: ROUTINE
         icon: mdi:clock-outline
@@ -4324,11 +4373,23 @@ views:
         card_mod:
           style: *switch_row_style
 
-    - type: custom:mushroom-title-card
-      title: Evening
-      icon: mdi:weather-night
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_evening
+        name: Evening
+        icon: mdi:weather-night
+        toggle: true
+        tap_action:
+          action: none
+        card_mod:
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
     - type: entities
       card_mod:
         style: *theme_card_style
@@ -4342,11 +4403,6 @@ views:
       # than a phone comfortably fits and breaks the rhythm of the list.
       # These show the time where an automation row shows its toggle, and
       # tapping opens the same picker every other row does.
-      - entity: group.automations_evening
-        name: All Evening
-        icon: mdi:weather-night
-        card_mod:
-          style: *switch_row_style
       - entity: group.automations_evening_security
         name: SECURITY
         icon: mdi:shield-lock
@@ -4484,11 +4540,23 @@ views:
         card_mod:
           style: *switch_row_style
 
-    - type: custom:mushroom-title-card
-      title: Always Active
-      icon: mdi:lightning-bolt-outline
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_always_active
+        name: Always Active
+        icon: mdi:lightning-bolt-outline
+        toggle: true
+        tap_action:
+          action: none
+        card_mod:
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
     - type: entities
       card_mod:
         style: *theme_card_style
@@ -4497,11 +4565,6 @@ views:
       # these rows are plain: no time to show and no tap target to adjust,
       # just the toggle. Subsections still match the rest of the page so
       # the categories read the same wherever you are on it.
-      - entity: group.automations_always_active
-        name: All Always Active
-        icon: mdi:lightning-bolt-outline
-        card_mod:
-          style: *switch_row_style
       - entity: group.automations_always_printing
         name: 3D PRINTING
         icon: mdi:printer-3d
