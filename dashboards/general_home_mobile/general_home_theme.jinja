@@ -255,6 +255,32 @@ ha-card {
   --error-color: {{ sev.error }};
   --info-color: {{ sev.info }};
 {%- endif %}
+{#- Home Assistant's switch draws itself from its own --ha-switch-*
+    properties. Nothing on the dashboard sets them, so they fall through to
+    the global Material You theme and every toggle renders cyan no matter
+    which palette the card around it is following. Setting them here puts
+    every switch on the dashboard on the chosen palette.
+
+    Emitted for every kind, not just 'card': switches turn up on exempt
+    surfaces (the Automations heading) and chrome ones (the room lights in
+    the Rooms popup) as well as on content cards.
+
+    Custom properties cross shadow boundaries, which is what makes this
+    work at all — the switch's internals are three shadow roots down and
+    no stylesheet here can reach them directly.
+
+    The checked track is a flat colour by necessity: this property lands in
+    `background-color`, which takes a colour and not a gradient. A page
+    that wants the two-tone sheen paints it as a background-image on the
+    track itself, from row-level card_mod. -#}
+  --ha-switch-checked-background-color: {{ colors.primary }};
+  --ha-switch-checked-border-color: color-mix(in srgb, {{ colors.primary }} 62%, white);
+  --ha-switch-checked-thumb-background-color: #fff;
+  --ha-switch-checked-thumb-border-color: transparent;
+  --ha-switch-background-color: color-mix(in srgb, var(--primary-text-color) 10%, transparent);
+  --ha-switch-border-color: color-mix(in srgb, var(--primary-text-color) 20%, transparent);
+  --ha-switch-thumb-background-color: color-mix(in srgb, var(--primary-text-color) 55%, transparent);
+  --ha-switch-thumb-border-color: transparent;
 {%- if kind != 'exempt' %}
   border-radius: {{ radius }} !important;
 {%- endif %}
