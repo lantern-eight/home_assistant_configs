@@ -177,9 +177,9 @@ x-switch-row-style: &switch_row_style
   ha-entity-toggle$ha-switch$: |
     .checked .switch {
       background-image: linear-gradient(135deg,
-        color-mix(in srgb, var(--primary-color) 72%, white),
+        color-mix(in srgb, var(--primary-color) 82%, black),
         var(--primary-color) 55%,
-        color-mix(in srgb, var(--primary-color) 86%, black)) !important;
+        color-mix(in srgb, var(--primary-color) 55%, white)) !important;
       border-color: transparent !important;
     }
 # UV index severity colors (Material Design). Defined once, referenced by
