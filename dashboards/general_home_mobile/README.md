@@ -109,19 +109,27 @@ aggregate all lights in an HA area (excluding presence-detection LEDs).
 
 Install all of these via HACS before setting up the dashboard:
 
+`test_conventions.py` checks this table against the card types
+`dashboard.yaml` actually uses, so it fails if a card is added without
+being listed here (or stays listed after its last use is removed).
+
 | Integration | Purpose |
 |-------------|---------|
 | **card-mod** | CSS injection for all theme styling |
 | **bubble-card** | Popup cards for Rooms and More |
 | **mushroom** | Template cards, entity cards, chips, title cards |
 | **stack-in-card** | Card grouping with unified styling |
+| **button-card** | Cards that draw their own body from a JS template |
 | **mini-graph-card** | Sparkline graphs |
 | **apexcharts-card** | UV index chart |
-| **clock-weather-card** | Combined clock/weather display |
+| **weather-forecast-card** | Weather card on the Home view |
 | **calendar-card-pro** | Calendar view |
 | **navbar-card** | Bottom navigation bar |
-| **auto-entities** | Dynamic card generation|
+| **auto-entities** | Dynamic card generation |
 | **streamline-card** | Parameterised card bodies |
+| **config-template-card** | Templating in card options that aren't templatable |
+| **template-entity-row** | Entity rows whose text comes from a template |
+| **fold-entity-row** | Collapsible groups of rows inside an entities card |
 | **material-you-utilities** | Material You theme support |
 | **kiosk-mode** | Hide HA header and sidebar |
 

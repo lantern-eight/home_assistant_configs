@@ -213,7 +213,8 @@ uv run python -m pytest tests/ -v
 - `test_redaction.py` — name redaction, pronoun neutralization, ID shortening
 - `test_process_backup_files.py` — end-to-end backup file processing
 - `test_restore.py` — entity map round-trip restore
-- `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement
+- `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement,
+  HACS cards documented
 - `test_config.py` — config loading from YAML and environment
 
 ## macOS Local Network Permission

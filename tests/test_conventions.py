@@ -1,9 +1,10 @@
 """Convention tests — enforce what docs currently only describe.
 
-Three categories:
+Four categories:
 1. FILE_MAP existence: every source path in the sync scripts' FILE_MAPs exists.
 2. PII scan: no unredacted IDs or names in tracked/staged YAML/jinja/md.
 3. Doc/map agreement: agents.md deploy tables match the FILE_MAPs.
+4. HACS card documentation: the dashboard README lists the cards it uses.
 """
 
 import re
@@ -132,18 +133,24 @@ class TestNoPiiInTrackedFiles:
 # ── 3. Doc/map agreement ───────────────────────────────────────────────────
 
 
-def _extract_table_column(text, header_pattern, column_index=0):
-  """Extract backtick-quoted values from a markdown table column.
+_BACKTICK_CELL = re.compile(r'`([^`]+)`')
+_BOLD_CELL = re.compile(r'\*\*([^*]+)\*\*')
+
+
+def _extract_table_column(text, header_pattern, column_index=0,
+                          cell_pattern=_BACKTICK_CELL):
+  """Extract marked-up values from a markdown table column.
 
   Finds the first table whose header row matches header_pattern,
-  then pulls backtick-quoted strings from the given column index
-  in each data row (skipping the separator row).
+  then pulls the first cell_pattern match from the given column index
+  in each data row (skipping the separator row). Defaults to
+  backtick-quoted values; pass _BOLD_CELL for **bold** ones.
   """
   lines = text.splitlines()
   values = []
   in_table = False
   skip_separator = False
-  backtick = re.compile(r'`([^`]+)`')
+  backtick = cell_pattern
 
   for line in lines:
     stripped = line.strip()
@@ -202,4 +209,67 @@ class TestDocMapAgreement:
     missing = map_files - set(doc_files)
     assert not missing, (
       f"FILE_MAP entries missing from File Roles table: {sorted(missing)}"
+    )
+
+
+# ── 4. HACS card documentation ─────────────────────────────────────────────
+
+# Entries that are real dependencies but never appear as a `custom:` card
+# type, so they cannot be derived from dashboard.yaml: card-mod is a CSS
+# injector, kiosk-mode and material-you-utilities are frontend modules.
+_NON_CARD_HACS_ENTRIES = {
+  'card-mod',
+  'kiosk-mode',
+  'material-you-utilities',
+}
+
+# mushroom ships a family of card types under one HACS package.
+_CARD_TYPE_TO_HACS = {'mushroom': 'mushroom'}
+
+
+def _hacs_package_for(card_type):
+  """Map a `custom:` card type to the HACS package that provides it."""
+  for prefix, package in _CARD_TYPE_TO_HACS.items():
+    if card_type.startswith(prefix):
+      return package
+  return card_type
+
+
+class TestHacsCardsDocumented:
+  """The dashboard README must list the cards dashboard.yaml actually uses.
+
+  The table is a setup checklist — a card missing from it means a fresh
+  install renders "Custom element doesn't exist" with no clue what to
+  install, and a card lingering in it sends people to install something
+  nothing uses.
+  """
+
+  def _used_and_documented(self):
+    dashboard_dir = REPO_ROOT / 'dashboards' / 'general_home_mobile'
+    dashboard = (dashboard_dir / 'dashboard.yaml').read_text(encoding='utf-8')
+    readme = (dashboard_dir / 'README.md').read_text(encoding='utf-8')
+
+    used = {
+      _hacs_package_for(match)
+      for match in re.findall(r'custom:([a-z0-9-]+)', dashboard)
+    }
+    documented = set(_extract_table_column(
+      readme, r'Integration\s*\|\s*Purpose', cell_pattern=_BOLD_CELL,
+    ))
+    return used, documented
+
+  def test_every_used_card_is_documented(self):
+    used, documented = self._used_and_documented()
+    missing = used - documented
+    assert not missing, (
+      "Cards used by dashboard.yaml but absent from the README's HACS "
+      f"table: {sorted(missing)}"
+    )
+
+  def test_no_documented_card_is_unused(self):
+    used, documented = self._used_and_documented()
+    stale = documented - used - _NON_CARD_HACS_ENTRIES
+    assert not stale, (
+      "Cards listed in the README's HACS table that dashboard.yaml no "
+      f"longer uses: {sorted(stale)}"
     )
