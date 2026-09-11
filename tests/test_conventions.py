@@ -1,10 +1,11 @@
 """Convention tests — enforce what docs currently only describe.
 
-Four categories:
+Five categories:
 1. FILE_MAP existence: every source path in the sync scripts' FILE_MAPs exists.
 2. PII scan: no unredacted IDs or names in tracked/staged YAML/jinja/md.
 3. Doc/map agreement: agents.md deploy tables match the FILE_MAPs.
-4. HACS card documentation: the dashboard README lists the cards it uses.
+4. Automation icons: rows do not override what the entity registry sets.
+5. HACS card documentation: the dashboard README lists the cards it uses.
 """
 
 import re
@@ -233,6 +234,51 @@ def _hacs_package_for(card_type):
     if card_type.startswith(prefix):
       return package
   return card_type
+
+
+class TestAutomationIconsLiveInTheRegistry:
+  """Automation icons belong to the entity, not to a dashboard row.
+
+  A Home Assistant automation cannot declare an icon in its own YAML, so the
+  only way one appears in the Settings list, in search, or on a related-entity
+  view is via the entity registry — which `registry_metadata.yaml` drives.
+  A row that names its own icon overrides that for one dashboard and leaves
+  the entity bare everywhere else, which is how this page ended up with a
+  second, private set of icons in the first place.
+  """
+
+  def _automation_rows_with_icons(self):
+    dashboard = (
+      REPO_ROOT / 'dashboards' / 'general_home_mobile' / 'dashboard.yaml'
+    ).read_text(encoding='utf-8')
+
+    offenders = []
+    lines = dashboard.splitlines()
+    for index, line in enumerate(lines):
+      match = re.match(r'^(\s*)(?:- )?entity: (automation\.\S+)$', line)
+      if not match:
+        continue
+      indent = match.group(1)
+      body = indent + '  ' if line.lstrip().startswith('- ') else indent
+      # Scan the row's own keys only — stop at the first nested block so a
+      # tap_action's or a fold's inner keys are never mistaken for the row's.
+      for following in lines[index + 1:index + 10]:
+        if re.match(rf'^{re.escape(body)}icon: ', following):
+          offenders.append(f'{match.group(2)} (line {index + 1})')
+          break
+        if re.match(rf'^{re.escape(body)}(card_mod|tap_action):', following):
+          break
+        if not following.startswith(body):
+          break
+    return offenders
+
+  def test_no_automation_row_declares_its_own_icon(self):
+    offenders = self._automation_rows_with_icons()
+    assert not offenders, (
+      "Automation rows declaring their own icon. Move these to the `icon:` "
+      "key on the entity in registry_metadata.yaml, so the icon shows "
+      f"everywhere in Home Assistant rather than on this page only: {offenders}"
+    )
 
 
 class TestHacsCardsDocumented:

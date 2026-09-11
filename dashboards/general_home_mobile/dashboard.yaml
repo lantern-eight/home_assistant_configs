@@ -4493,7 +4493,6 @@ views:
         entity: automation.main_suite_weekday_wake
         schedule_entity: input_datetime.main_suite_weekday_wake
         name: Main Suite Wake
-        icon: mdi:alarm
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4506,7 +4505,6 @@ views:
         entity: automation.kitchen_light_morning
         schedule_entity: input_datetime.kitchen_light_morning
         name: Kitchen Light
-        icon: mdi:silverware-fork-knife
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4519,7 +4517,6 @@ views:
         entity: automation.<entity_4>_daytime
         schedule_entity: input_datetime.<entity_4>_daytime_light
         name: *titled_name
-        icon: mdi:weather-sunny
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4539,7 +4536,6 @@ views:
         entity: automation.house_auto_disarm
         schedule_entity: input_datetime.house_auto_disarm
         name: House Auto-Disarm
-        icon: mdi:shield-off
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4559,7 +4555,6 @@ views:
         entity: automation.refresh_uv_forecast
         schedule_entity: input_datetime.uv_forecast_refresh
         name: UV Forecast Refresh
-        icon: mdi:sun-wireless
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4631,13 +4626,11 @@ views:
             <<: [*switch_row_style, *child_row_layout, *cat_security]
       - entity: automation.door_opens_after_bedtime
         name: Door Opens After Bedtime
-        icon: mdi:door-open
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_security]
       - entity: automation.door_closes_after_bedtime
         name: Door Closes After Bedtime
-        icon: mdi:door-closed
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_security]
@@ -4647,7 +4640,6 @@ views:
       # night.
       - entity: automation.armed_door_opens
         name: Armed Door Opens
-        icon: mdi:shield-alert
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_security]
@@ -4689,7 +4681,6 @@ views:
       - type: custom:template-entity-row
         entity: automation.<entity_4>_nightlight_on
         name: *titled_name
-        icon: mdi:weather-night
         toggle: true
         card_mod:
           style:
@@ -4697,7 +4688,6 @@ views:
       - type: custom:template-entity-row
         entity: automation.<entity_4>_nightlight_off
         name: *titled_name
-        icon: mdi:weather-sunset-up
         toggle: true
         card_mod:
           style:
@@ -4706,7 +4696,6 @@ views:
         entity: automation.<entity_4>_light_dim_1
         schedule_entity: input_datetime.<entity_4>_light_dim
         name: *titled_name
-        icon: mdi:brightness-5
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4719,7 +4708,6 @@ views:
         entity: automation.<entity_4>_light_off_1
         schedule_entity: input_datetime.<entity_4>_light_off
         name: *titled_name
-        icon: mdi:lightbulb-off
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4732,7 +4720,6 @@ views:
         entity: automation.<entity_4>_light_off_2
         schedule_entity: input_datetime.<entity_4>_light_second_off
         name: *titled_name
-        icon: mdi:lightbulb-off-outline
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4745,7 +4732,6 @@ views:
         entity: automation.go_to_bed
         schedule_entity: input_datetime.go_to_bed
         name: Go to Bed
-        icon: mdi:bed
         secondary: *schedule_time
         toggle: true
         tap_action:
@@ -4788,25 +4774,21 @@ views:
             <<: [*switch_row_style, *heading_dot_style, *cat_printing]
       - entity: automation.3d_print_complete_notification
         name: Print Complete
-        icon: mdi:check-circle-outline
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_printing]
       - entity: automation.3d_print_failure_alert
         name: Print Failure
-        icon: mdi:printer-3d-nozzle-alert
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_printing]
       - entity: automation.3d_print_halfway_notification
         name: Print Halfway
-        icon: mdi:progress-clock
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_printing]
       - entity: automation.3d_printer_light_on_on_start
         name: Printer Light on Start
-        icon: mdi:lightbulb-on-outline
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_printing]
@@ -4819,7 +4801,6 @@ views:
             <<: [*switch_row_style, *heading_dot_style, *cat_security]
       - entity: automation.basement_door_open_too_long
         name: Basement Door Open Too Long
-        icon: mdi:door-open
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_security]
@@ -4832,7 +4813,6 @@ views:
             <<: [*switch_row_style, *heading_dot_style, *cat_system]
       - entity: automation.soil_moisture_low
         name: Soil Moisture Low
-        icon: mdi:water-alert
         card_mod:
           style:
             <<: [*switch_row_style, *child_row_layout, *cat_system]
@@ -4857,43 +4837,36 @@ views:
         entities:
         - entity: automation.initialize_schedule_helpers
           name: Initialize Schedule Helpers
-          icon: mdi:cog-sync
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.theme_generate_background_thumbnails
           name: Generate Theme Thumbnails
-          icon: mdi:image-multiple
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.cache_3d_print_filename
           name: Cache Print Filename
-          icon: mdi:database
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.cache_<entity_20>_slot_data
           name: Cache <entity_20> Slot Data
-          icon: mdi:database
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.cache_<entity_21>_slot_data
           name: Cache <entity_21> Slot Data
-          icon: mdi:database
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.reset_slot_cache_on_new_job
           name: Reset Slot Cache
-          icon: mdi:database-refresh
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
         - entity: automation.spoolman_update_on_print_complete
           name: Spoolman Update
-          icon: mdi:database-sync
           card_mod:
             style:
               <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]

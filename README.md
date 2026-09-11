@@ -107,6 +107,12 @@ applies them to Home Assistant's entity registry.
 
 ### Labels vs. categories
 
+`icon:` sets the entity's registry icon. It is written on every entity the
+file lists, so removing it here clears it in Home Assistant rather than
+leaving the last one applied. Clearing only removes the registry override:
+anything declaring an icon in its own YAML, as the helpers in `packages/` do,
+falls back to that.
+
 - **Labels** are cross-cutting tags — an entity can have many. They
   describe what an entity relates to: `Lighting`, `Security`,
   `Scheduled`, `Notification`, `3D Printing`.
@@ -118,8 +124,10 @@ applies them to Home Assistant's entity registry.
 ### Conventions
 
 - **Automations** get a category + at least one label in the root
-  file, plus a dashboard-scoped `automation-*` label in the dashboard
-  file.
+  file, plus an `icon:`. An automation cannot declare an icon in its own
+  YAML, so this is the only way one reaches the Settings list, search and
+  related-entity views. Dashboards should not set icons on automation
+  rows — `test_conventions.py` enforces that.
 - **Helpers** get at least one label. Dashboard helpers also get a
   category.
 - **Scripts** get a category + labels.
@@ -214,7 +222,7 @@ uv run python -m pytest tests/ -v
 - `test_process_backup_files.py` — end-to-end backup file processing
 - `test_restore.py` — entity map round-trip restore
 - `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement,
-  HACS cards documented
+  automation icons in the registry, HACS cards documented
 - `test_config.py` — config loading from YAML and environment
 
 ## macOS Local Network Permission

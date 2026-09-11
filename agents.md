@@ -70,6 +70,12 @@ are prefixed (`gm-`, `automation-`, `vacuum-`).
 grouping: `Bedtime`, `Morning Routine`, etc. Each has a `scope:` (automation,
 script, helpers).
 
+**Icons** go on the entity as `icon:`. Home Assistant automations have no
+icon field of their own, so the registry is the only place one can be set,
+and it is what makes the icon show up outside the dashboard. The sync writes
+this key for every listed entity, so deleting it clears the icon rather than
+leaving the old one in place.
+
 When adding an entity: read the existing file to find matching
 labels/categories. Every automation gets a category + labels in the
 root file, plus an `automation-*` label in the dashboard file. Helpers
