@@ -99,6 +99,62 @@ x-schedule-time: &schedule_time >-
 # used on and only needs to exist once.
 x-titled-name: &titled_name >-
   {{ state_attr(config.entity, 'friendly_name') | title }}
+# Page heading that carries a switch — the Automations page title and its
+# master on/off.
+#
+# An entities card rather than a mushroom-title-card because only an entity
+# row can hold a working control, and the switch belongs on the heading line
+# rather than in a card of its own below it. The exempt treatment strips the
+# card back to nothing so it still reads as page furniture, not content.
+#
+# Padding reproduces mushroom-title-card's own (24px top, 16px bottom, 12px
+# sides), so this heading lands in exactly the same place as the heading on
+# every other page instead of drifting a few pixels out of line.
+x-page-heading-style: &page_heading_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  #states {
+    padding: 24px 12px 16px !important;
+  }
+# The row inside that heading card.
+#
+# template-entity-row renders a flat shadow tree — state-badge, .info with
+# an optional .secondary, and .state holding the toggle — so these are plain
+# selectors rather than shadow-piercing ones.
+#
+# Type sizes mirror mushroom-title-card's title and subtitle so the two are
+# indistinguishable. No icon: on a heading the text is the heading, and the
+# badge would only push the title out of line with the other pages.
+x-page-heading-row-style: &page_heading_row_style |
+  state-badge { display: none !important; }
+  .info {
+    margin-left: 0 !important;
+    font-size: 24px !important;
+    line-height: 32px !important;
+    cursor: default !important;
+  }
+  .info .secondary {
+    font-size: 16px !important;
+    line-height: 24px !important;
+    margin-top: 8px !important;
+  }
+  /* Names what the switch reaches, which the heading text alone does not
+     say — the title reads "Automations", not "all automations". */
+  .state {
+    position: relative;
+  }
+  .state::after {
+    content: 'ALL';
+    position: absolute;
+    right: 0;
+    top: calc(50% + 13px);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    line-height: 1;
+    color: var(--secondary-text-color);
+    opacity: 0.75;
+  }
 # UV index severity colors (Material Design). Defined once, referenced by
 # both the annotation band fills and the line color_threshold so they
 # stay in sync automatically.
@@ -3914,12 +3970,25 @@ views:
   - type: grid
     column_span: 1
     cards:
-    - type: custom:mushroom-title-card
-      title: Automations
-      subtitle: Tap a time to adjust it
-      icon: mdi:robot-outline
+    # Page title and the master switch, on one line. See the
+    # *page_heading_style anchor for why this is an entities card.
+    #
+    # The row itself is inert — only the switch does anything. Tapping a
+    # page title to open a group dialog would be a surprise, so the tap is
+    # turned off rather than left to the row's default.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
+        style: *page_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_all
+        name: Automations
+        secondary: Tap a time to adjust it
+        toggle: true
+        tap_action:
+          action: none
+        card_mod:
+          style: *page_heading_row_style
 
     # =====================================================================
     # Timeline sections — automations grouped by when they run
@@ -3939,14 +4008,6 @@ views:
     # Headings are group entities, so a heading switch really is the
     # automations under it rather than a separate flag that can fall out
     # of step. Membership is defined once in packages/general.yaml.
-
-    - type: entities
-      card_mod:
-        style: *theme_card_style
-      entities:
-      - entity: group.automations_all
-        name: All Automations
-        icon: mdi:robot
 
     # Overview of when the day's scheduled automations actually fire.
     #
