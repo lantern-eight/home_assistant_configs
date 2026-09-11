@@ -321,6 +321,59 @@ x-heading-dot-style: &heading_dot_style
     }
     .info { padding-left: 0 !important; margin-left: 12px !important; }
     .row { min-height: 40px !important; }
+# A hairline between two automations that sit next to each other, so the eye
+# can carry a name across to the switch that belongs to it without drifting a
+# row.
+#
+# It is drawn from the card rather than from the rows because a heading is a
+# row too: a rule attached to each row would underline every heading and every
+# group's first automation. The adjacent sibling combinator only fires when an
+# automation follows an automation, which also leaves a group holding a single
+# automation with no line at all, and draws nothing under a card's last row.
+#
+# Headings are the group rows — a heading's switch turns its whole group on and
+# off, so `group.` is what its entity has to be — and that is what tells a
+# heading from an automation here.
+x-row-list-card-style: &row_list_card_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'card') }}
+  /* Declared on the card so the fold below inherits it through its host,
+     which is what lets the two rules share one colour. */
+  ha-card {
+    --row-separator-color: color-mix(in srgb, var(--primary-text-color) 7%, transparent);
+  }
+  #states > div { position: relative; }
+  #states > div:has(> :is(template-entity-row, hui-toggle-entity-row))
+         + div:has(> :is(template-entity-row, hui-toggle-entity-row))::before {
+    content: '';
+    position: absolute;
+    /* Half of the 8px the card leaves between rows, so the line sits in the
+       middle of the gap instead of hugging the row above it. */
+    top: -4px;
+    /* Starts under the dot rather than at the card edge — the inset is the
+       width of the time gutter — and runs out to the switch. */
+    left: 48px;
+    right: 0;
+    height: 1px;
+    background: var(--row-separator-color);
+  }
+# The same hairline inside a fold, which cannot share the rule above. A fold
+# keeps its children in its own shadow root and stacks them flush rather than
+# in the card's 8px gaps, so the line goes on a row's top edge instead of half
+# a gap above it. Nothing here has to tell a heading from an automation,
+# because a fold holds only automations — and skipping the first child is what
+# leaves the fold's own heading unlined.
+x-fold-row-separator: &fold_row_separator |
+  .container.expanded > div { position: relative; }
+  .container.expanded > div + div::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 48px;
+    right: 0;
+    height: 1px;
+    background: var(--row-separator-color);
+  }
 # Row icon colour, one anchor per category.
 #
 # The first four are the same theme properties the schedule overview paints
@@ -4490,7 +4543,7 @@ views:
             .: *section_heading_row_style
     - type: entities
       card_mod:
-        style: *theme_card_style
+        style: *row_list_card_style
       entities:
       - entity: group.automations_morning_routine
         name: ROUTINE
@@ -4592,7 +4645,7 @@ views:
             .: *section_heading_row_style
     - type: entities
       card_mod:
-        style: *theme_card_style
+        style: *row_list_card_style
       entities:
       # Automations that run inside a window rather than at a point in
       # time list the window's two boundary helpers first, then the
@@ -4769,7 +4822,9 @@ views:
             .: *section_heading_row_style
     - type: entities
       card_mod:
-        style: *theme_card_style
+        style:
+          .: *row_list_card_style
+          fold-entity-row$: *fold_row_separator
       entities:
       # Everything here reacts to a state change rather than a clock, so
       # these rows are plain: no time to show and no tap target to adjust,
