@@ -265,16 +265,25 @@ x-child-row-layout: &child_row_layout
       --mdc-icon-size: 0px !important;
       overflow: hidden !important;
     }
+    /* Zero the padding Home Assistant's own row stylesheet puts on .info, so
+       the margin below is the only thing setting the gap to the name. */
     .info {
-      margin-left: 14px !important;
+      padding-left: 0 !important;
+      margin-left: 12px !important;
       position: static !important;
     }
+    /* Right-aligned against a fixed-width box, so the gap to the dot is the
+       same on every row. Left-aligned, the leftover space inside the box was
+       the gap, so a two-digit hour sat 7px closer to its dot than a
+       single-digit one. The width holds the widest time the box can carry
+       (a two-digit hour with a meridiem letter) with a little slack. */
     .info .secondary {
       position: absolute !important;
       left: 0;
       top: 50%;
       transform: translateY(-50%);
-      width: 44px;
+      width: 40px;
+      text-align: right;
       margin: 0 !important;
       font-size: 12px !important;
       line-height: 1 !important;
@@ -291,7 +300,7 @@ x-child-row-layout: &child_row_layout
       --mdc-icon-size: 0px !important;
       overflow: hidden !important;
     }
-    .info { margin-left: 14px !important; }
+    .info { padding-left: 0 !important; margin-left: 12px !important; }
     /* An 8px marker no longer sets the row's height the way a 40px icon did,
        so a plain row collapses to 22px and breaks the rhythm against the
        template rows, which hold 40px on their own. */
@@ -310,7 +319,7 @@ x-heading-dot-style: &heading_dot_style
       --mdc-icon-size: 0px !important;
       overflow: hidden !important;
     }
-    .info { margin-left: 14px !important; }
+    .info { padding-left: 0 !important; margin-left: 12px !important; }
     .row { min-height: 40px !important; }
 # Row icon colour, one anchor per category.
 #
