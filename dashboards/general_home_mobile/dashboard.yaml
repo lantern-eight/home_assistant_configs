@@ -283,6 +283,13 @@ x-child-row-layout: &child_row_layout
 # 3D printing takes the palette primary; infrastructure is deliberately
 # muted, being plumbing that is collapsed out of the way by default.
 #
+# Primary for 3D printing is a considered choice, not an oversight: on the
+# Indigo palette primary and accent are the same hex, so its icons match the
+# bedtime ones exactly. That was weighed against the alternatives and kept —
+# the two categories live in different sections and never sit next to each
+# other, and the palettes that do separate the two colours give it an
+# identity for free. Do not "fix" this by swapping in the error colour.
+#
 # Both the badge and the icon inside it are targeted. A plain row sets an
 # inline colour on its icon element, and an inline colour on a descendant
 # beats a colour inherited from an ancestor — so setting only the host
