@@ -113,8 +113,12 @@ x-titled-name: &titled_name >-
 x-page-heading-style: &page_heading_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'exempt') }}
+  /* Right padding is 16px to match what an entities card pads its rows by,
+     so the switch here lands in the same column as the switches on the rows
+     below. The left stays at 12px, which is where mushroom-title-card puts
+     heading text on every other page. */
   #states {
-    padding: 24px 12px 16px !important;
+    padding: 24px 16px 16px 12px !important;
   }
 # The row inside that heading card.
 #
@@ -168,8 +172,11 @@ x-page-heading-row-style: &page_heading_row_style |
 x-section-heading-style: &section_heading_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'exempt') }}
+  /* Asymmetric for the same reason as the page heading: 16px on the right
+     lines this switch up with the ones on the rows underneath, 12px on the
+     left keeps the heading text where headings sit elsewhere. */
   #states {
-    padding: 24px 12px 8px !important;
+    padding: 24px 16px 8px 12px !important;
   }
 # The row inside a section heading.
 #
@@ -197,6 +204,27 @@ x-section-heading-row-style: &section_heading_row_style |
     line-height: 32px !important;
     cursor: default !important;
   }
+# Indent for the rows sitting under a subsection heading.
+#
+# Without it a heading and the automations it covers share a left edge, so
+# the card reads as one flat run of rows and the only thing marking the
+# grouping is the heading being in capitals. Shifting the children in a
+# little is enough to show what belongs to what.
+#
+# Applied to the badge rather than as padding on the row, because the row is
+# a flex line with the switch at the far end: padding the row would drag the
+# switch inwards with it and break the column all the switches line up in.
+# Moving the badge carries the name along with it and leaves the switch be.
+#
+# Two selectors for the two row shapes. A template-entity-row holds its
+# badge directly in its own shadow root; a plain row holds it one level
+# further down, inside hui-generic-entity-row. Whichever shape a row is not,
+# that selector simply matches nothing.
+x-child-row-indent: &child_row_indent
+  .: |
+    state-badge { margin-left: 14px !important; }
+  hui-generic-entity-row$: |
+    state-badge { margin-left: 14px !important; }
 # The two-tone sheen on a switch track, applied from the row that owns it.
 #
 # Switch colours themselves come from the theme macro, which sets the
@@ -4311,7 +4339,8 @@ views:
           action: more-info
           entity: input_datetime.main_suite_weekday_wake
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.kitchen_light_morning
         schedule_entity: input_datetime.kitchen_light_morning
@@ -4323,7 +4352,8 @@ views:
           action: more-info
           entity: input_datetime.kitchen_light_morning
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.<entity_4>_daytime
         schedule_entity: input_datetime.<entity_4>_daytime_light
@@ -4335,7 +4365,8 @@ views:
           action: more-info
           entity: input_datetime.<entity_4>_daytime_light
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       - entity: group.automations_morning_security
         name: SECURITY
@@ -4353,7 +4384,8 @@ views:
           action: more-info
           entity: input_datetime.house_auto_disarm
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       - entity: group.automations_morning_system
         name: SYSTEM
@@ -4371,7 +4403,8 @@ views:
           action: more-info
           entity: input_datetime.uv_forecast_refresh
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
     # Section heading with the switch for everything under it. See the
     # *section_heading_style anchor for why this is an entities card.
@@ -4417,7 +4450,8 @@ views:
           action: more-info
           entity: input_datetime.bedtime_door_window_start
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: input_datetime.bedtime_door_window_end
         name: Door Window Closes
@@ -4427,17 +4461,20 @@ views:
           action: more-info
           entity: input_datetime.bedtime_door_window_end
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - entity: automation.door_opens_after_bedtime
         name: Door Opens After Bedtime
         icon: mdi:door-open
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - entity: automation.door_closes_after_bedtime
         name: Door Closes After Bedtime
         icon: mdi:door-closed
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       # Armed Door Opens has no schedule of its own — it is gated on the
       # house being armed, which in practice is an evening state. Listed
       # here without a time so the section reflects what actually runs at
@@ -4446,7 +4483,8 @@ views:
         name: Armed Door Opens
         icon: mdi:shield-alert
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       - entity: group.automations_evening_bedtime
         name: BEDTIME
@@ -4462,7 +4500,8 @@ views:
           action: more-info
           entity: input_datetime.nightlight_window_start
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: input_datetime.nightlight_window_end
         name: Nightlight Window Closes
@@ -4472,7 +4511,8 @@ views:
           action: more-info
           entity: input_datetime.nightlight_window_end
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       # template-entity-row rather than a plain row: only it evaluates a
       # template in `name:`, which these need to render the label
       # capitalised. They have no schedule of their own — the window rows
@@ -4483,14 +4523,16 @@ views:
         icon: mdi:weather-night
         toggle: true
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.<entity_4>_nightlight_off
         name: *titled_name
         icon: mdi:weather-sunset-up
         toggle: true
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.<entity_4>_light_dim_1
         schedule_entity: input_datetime.<entity_4>_light_dim
@@ -4502,7 +4544,8 @@ views:
           action: more-info
           entity: input_datetime.<entity_4>_light_dim
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.<entity_4>_light_off_1
         schedule_entity: input_datetime.<entity_4>_light_off
@@ -4514,7 +4557,8 @@ views:
           action: more-info
           entity: input_datetime.<entity_4>_light_off
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.<entity_4>_light_off_2
         schedule_entity: input_datetime.<entity_4>_light_second_off
@@ -4526,7 +4570,8 @@ views:
           action: more-info
           entity: input_datetime.<entity_4>_light_second_off
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - type: custom:template-entity-row
         entity: automation.go_to_bed
         schedule_entity: input_datetime.go_to_bed
@@ -4538,7 +4583,8 @@ views:
           action: more-info
           entity: input_datetime.go_to_bed
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
     # Section heading with the switch for everything under it. See the
     # *section_heading_style anchor for why this is an entities card.
@@ -4574,22 +4620,26 @@ views:
         name: Print Complete
         icon: mdi:check-circle-outline
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - entity: automation.3d_print_failure_alert
         name: Print Failure
         icon: mdi:printer-3d-nozzle-alert
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - entity: automation.3d_print_halfway_notification
         name: Print Halfway
         icon: mdi:progress-clock
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
       - entity: automation.3d_printer_light_on_on_start
         name: Printer Light on Start
         icon: mdi:lightbulb-on-outline
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       - entity: group.automations_always_security
         name: SECURITY
@@ -4600,7 +4650,8 @@ views:
         name: Basement Door Open Too Long
         icon: mdi:door-open
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       - entity: group.automations_always_system
         name: SYSTEM
@@ -4611,7 +4662,8 @@ views:
         name: Soil Moisture Low
         icon: mdi:water-alert
         card_mod:
-          style: *switch_row_style
+          style:
+            <<: [*switch_row_style, *child_row_indent]
 
       # Plumbing that keeps caches and helpers in sync. Toggling any of
       # it breaks something else on the dashboard, so it is collapsed by
@@ -4634,37 +4686,44 @@ views:
           name: Initialize Schedule Helpers
           icon: mdi:cog-sync
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.theme_generate_background_thumbnails
           name: Generate Theme Thumbnails
           icon: mdi:image-multiple
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.cache_3d_print_filename
           name: Cache Print Filename
           icon: mdi:database
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.cache_<entity_20>_slot_data
           name: Cache <entity_20> Slot Data
           icon: mdi:database
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.cache_<entity_21>_slot_data
           name: Cache <entity_21> Slot Data
           icon: mdi:database
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.reset_slot_cache_on_new_job
           name: Reset Slot Cache
           icon: mdi:database-refresh
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
         - entity: automation.spoolman_update_on_print_complete
           name: Spoolman Update
           icon: mdi:database-sync
           card_mod:
-            style: *switch_row_style
+            style:
+              <<: [*switch_row_style, *child_row_indent]
 
   - type: grid
     column_span: 1
