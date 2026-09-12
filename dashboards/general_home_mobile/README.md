@@ -56,6 +56,7 @@ card_mod)
   - [Card Opacity and Blur](#card-opacity-and-blur)
   - [Appearance Subview](#appearance-subview)
 - [Notification System](#notification-system)
+- [Automations Page](#automations-page)
 - [Architecture](#architecture)
   - [Why Card-Level, Not View-Level](#why-card-level-not-view-level)
   - [Macro Library, Not Sensors](#macro-library-not-sensors)
@@ -102,6 +103,10 @@ aggregate all lights in an HA area (excluding presence-detection LEDs).
 
 **More popup:** Navigation links to Appearance, Conditionals, Automations,
 3D Printer Farm (links to the Cyberdeck dashboard), and core HA UI.
+
+**Automations view:** A chronological timeline of everything that runs on a
+schedule, with switches at four levels. See
+[Automations Page](#automations-page).
 
 ---
 
@@ -544,6 +549,75 @@ list, etc.), not just a notification dot.
 
 ---
 
+## Automations Page
+
+Everything that runs on a schedule, at `/general-home/automations`, listed in
+the order it runs through the day rather than alphabetically, so the page reads
+as a timeline.
+
+### Layout
+
+Three sections — **Morning**, **Evening** and **Always Active** — each with a
+heading and a switch. Inside each, automations sit under subsection headings by
+category: Routine, Security, System, Bedtime, 3D Printing and Infrastructure.
+Infrastructure is collapsed behind a fold, being plumbing rather than anything
+worth changing day to day.
+
+A **schedule overview** sits at the top: two separately scaled tracks, one for
+the morning cluster and one for the evening, with a dot per automation coloured
+by category and a legend underneath. The tracks are scaled independently
+because almost everything runs between 5–7 AM or 7:30–9 PM, and a single
+24-hour axis at phone width is mostly empty space with the close pairs
+collapsed into one dot.
+
+### Row anatomy
+
+| Part | What it is |
+|------|-----------|
+| Time | Right-aligned in a fixed gutter. Tapping a row opens the helper that sets its time |
+| Dot | 8px, coloured by category, the same colours the overview's legend names |
+| Name | The automation |
+| Switch | Turns that one automation on and off |
+
+A hairline separates two automations that sit next to each other. It never
+touches a heading, and a category holding a single automation gets none, so the
+lines mark only the rows that can be mistaken for one another.
+
+**Window rows** are the exception. An automation that runs *between* two times
+gets a single row with a bar spanning from its opening time to its closing one
+and the window's name underneath. The bar is split down the middle: tapping
+anywhere in the left half opens the opening time, anywhere in the right half
+the closing one.
+
+### Switch hierarchy
+
+Four levels, all driven by HA groups defined in `packages/general.yaml`:
+
+1. The master switch beside the page title (`group.automations_all`)
+2. One per section (`group.automations_morning` and its siblings)
+3. One per subsection (`group.automations_morning_routine` and its siblings)
+4. One per automation
+
+A group is on when any member is on, and turning it off turns off every member,
+so a heading switch reads "is anything under here running" and flipping it
+clears the whole heading. Groups nest, so turning off a part of the day
+cascades down to each category under it.
+
+Membership lives in the package rather than in the dashboard because Lovelace
+tap actions cannot be templated. A dashboard-side version would have to repeat
+every entity id in each card, and those copies drift as automations come and
+go.
+
+### Icons
+
+Automation icons live in the entity registry, set from
+`registry_metadata.yaml`. A Home Assistant automation cannot declare an icon in
+its own YAML, so the registry is the only thing that puts one in the Settings
+list, in search and on related-entity views. This page draws dots rather than
+icons — the registry icons are for everywhere else in HA.
+
+---
+
 ## Architecture
 
 ### Why Card-Level, Not View-Level
@@ -828,6 +902,21 @@ returns `#009ac7` (Material You default), it didn't. If it returns nothing
 or `unknown`, card_mod applied but the macro render failed — check that
 `custom_templates/general_home_theme.jinja` is deployed, run
 `homeassistant.reload_custom_templates`, and confirm the theme helpers exist.
+
+### card_mod Nested Selectors Hit Only the First Match
+
+A `$`-piercing selector in a card-level `card_mod` block styles one element per
+selector per card, not every element that matches. A rule written once on an
+entities card to restyle its rows reached 8 of 33 of them, with no error and no
+pattern that made the misses obvious.
+
+Anything that has to apply to every row must be attached to every row, which is
+why the Automations page carries its layout and colour blocks on each row
+rather than once on the card around them.
+
+Ordinary selectors are unaffected. Elements sharing one shadow root, such as
+`#states` and its children, all match a single rule — the limit is specific to
+shadow piercing.
 
 ### Neon Font Loading
 

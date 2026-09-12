@@ -151,8 +151,8 @@ uv run python scripts/ha_sync.py
 ## General HA Packages
 
 `packages/` at the repo root holds general-purpose HA config — house-wide
-sensors, utility meters, helpers — that is not specific to one dashboard.
-Dashboards consume these entities. General config goes in `packages/general.yaml`,
+sensors, utility meters, helpers, entity groups — that is not specific to one
+dashboard. Dashboards consume these entities. General config goes in `packages/general.yaml`,
 one commented section per concern. A large coherent domain can graduate to its
 own file. Every yaml file in `packages/` is uploaded to HA's `packages/` directory
 by `scripts/ha_sync.py`, and HA loads the whole directory via
@@ -270,7 +270,7 @@ permission on its next local-network access.
 │   └── general_home_mobile/         # Mobile-first general home dashboard
 │
 ├── packages/                        # General HA packages (house-wide sensors,
-│   └── general.yaml                 #   utility meters) — not dashboard-specific
+│   └── general.yaml                 #   utility meters, groups) — not dashboard-specific
 │
 ├── home_assistant_backup/           # Backup of HA config (redacted, process list only)
 │   └── configuration.yaml

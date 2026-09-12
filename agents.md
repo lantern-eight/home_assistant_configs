@@ -42,6 +42,11 @@ dashboard's package file.
 - General config goes in `packages/general.yaml`, one commented section
   per concern. A large coherent domain can graduate to its own file —
   `!include_dir_named` picks up any new yaml file automatically.
+- Entity groups a dashboard needs for bulk control belong here too, not in
+  the dashboard. The Automations page's heading switches are `group:`
+  entries in `packages/general.yaml`, because Lovelace tap actions cannot be
+  templated: a dashboard-side version would have to repeat every entity id
+  in each card, and those copies drift as automations come and go.
 - Every `*.yaml` file in `packages/` is synced to HA's `packages/`
   directory by `scripts/ha_sync.py`, which restores `<entity_N>`
   placeholders from `entity_map.yaml` on push.
