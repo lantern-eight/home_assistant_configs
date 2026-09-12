@@ -374,6 +374,158 @@ x-fold-row-separator: &fold_row_separator |
     height: 1px;
     background: var(--row-separator-color);
   }
+# ── Window rows ───────────────────────────────────────────────────────────
+#
+# A window automation does not run at a moment, it runs between two times.
+# Drawing it as a span is what tells it apart at a glance from the
+# point-in-time rows around it.
+#
+# Four things to know before changing any of this.
+#
+# It is a card, not a row. An entities card resolves a `custom:` type straight
+# to that element and hands it the config, so a custom card works in a row
+# list. A built-in card does not — a plain `horizontal-stack` renders an error
+# row — which is why every piece here is a `custom:` type.
+#
+# The bar is two cards rather than one because a card carries a single tap
+# action and a window has two ends to adjust. Split in half, the end you tap is
+# the end you are editing, and each half holds its own time so that tapping the
+# time does the same thing as tapping the bar beside it.
+#
+# Each half reads its helper out of a variable rather than off its own entity.
+# A button-card evaluates the templates inside a nested card's config itself,
+# in its own context, where `entity` is the outer card's — which has none, so
+# the time came back empty and fell through to the entity's friendly name.
+# `variables` is the one thing that context does have.
+#
+# The clock format is written here in JavaScript and in `&schedule_time` in
+# Jinja, because button-card templates are JavaScript and entity rows are
+# Jinja. The two have to agree, so changing one means changing the other.
+x-window-start-time: &window_start_time |
+  [[[
+    const helper = states[variables.start_entity];
+    if (!helper || helper.attributes.hour == null) return '';
+    const attrs = helper.attributes;
+    return `${attrs.hour % 12 || 12}:${String(attrs.minute).padStart(2, '0')}${attrs.hour < 12 ? 'a' : 'p'}`;
+  ]]]
+x-window-end-time: &window_end_time |
+  [[[
+    const helper = states[variables.end_entity];
+    if (!helper || helper.attributes.hour == null) return '';
+    const attrs = helper.attributes;
+    return `${attrs.hour % 12 || 12}:${String(attrs.minute).padStart(2, '0')}${attrs.hour < 12 ? 'a' : 'p'}`;
+  ]]]
+# The halves take their colour from a custom property the row sets once, which
+# is what lets every window share these rather than naming a colour in each.
+# The property has to cross into the half's shadow root, and a custom property
+# is the only thing that does — button-card sets its own text colour, so
+# `currentColor` never reaches this far.
+x-window-bar-start: &window_bar_start
+  type: custom:button-card
+  show_icon: false
+  show_state: false
+  name: *window_start_time
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 0
+      # Lifted so the bar can bleed a pixel under the half beside it.
+      - overflow: visible
+    grid:
+      - grid-template-areas: '"n bar"'
+      # The time column is the width of the gutter on the rows below, so a
+      # window's opening time lands in the same column as their times.
+      - grid-template-columns: 40px 1fr
+      - align-items: center
+    name:
+      - justify-self: end
+      - font-size: 12px
+      - line-height: 1
+      - color: color-mix(in srgb, var(--primary-color) 55%, var(--primary-text-color))
+    custom_fields:
+      bar:
+        - margin-left: 8px
+        # The halves meet on a fractional pixel, where two antialiased edges do
+        # not add up to a solid one and the join shows as a notch. A pixel of
+        # overlap puts the join under solid colour instead.
+        - margin-right: -1px
+  custom_fields:
+    bar: '<div style="height: 4px; border-radius: 2px 0 0 2px; background: var(--window-bar-color);"></div>'
+x-window-bar-end: &window_bar_end
+  type: custom:button-card
+  show_icon: false
+  show_state: false
+  name: *window_end_time
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 0
+    grid:
+      - grid-template-areas: '"bar n"'
+      - grid-template-columns: 1fr auto
+      - align-items: center
+    name:
+      # The closing time is quieter than the opening one: the start is when
+      # something begins to happen, the end is only where it stops.
+      - justify-self: start
+      - font-size: 12px
+      - line-height: 1
+      - color: var(--secondary-text-color)
+    custom_fields:
+      bar:
+        - margin-right: 8px
+  custom_fields:
+    bar: '<div style="height: 4px; border-radius: 0 2px 2px 0; background: var(--window-bar-color);"></div>'
+# The row the halves sit in, carrying the window's name underneath them.
+#
+# It is a button-card rather than a pair of nested stacks because a stack draws
+# a card of its own, background and border included, and two of them nested
+# inside an entities card meant two opaque boxes to paint back out. A
+# button-card is told to draw nothing in one place, here.
+x-window-row: &window_row
+  type: custom:button-card
+  show_icon: false
+  show_name: false
+  show_state: false
+  show_label: true
+  tap_action:
+    action: none
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 40px
+    grid:
+      # Two equal columns, so the join between the halves lands on the middle
+      # of the row however wide the times either side of it turn out to be.
+      - grid-template-areas: '"bar_start bar_end" "l l"'
+      - grid-template-columns: 1fr 1fr
+      - align-items: center
+      - row-gap: 6px
+    label:
+      # Lines the window's name up with the left end of its bar.
+      - justify-self: start
+      - padding-left: 48px
+      - font-size: 12px
+      - line-height: 1
+      - color: var(--secondary-text-color)
+    custom_fields:
+      bar_start:
+        - justify-self: stretch
+      bar_end:
+        - justify-self: stretch
 # Row icon colour, one anchor per category.
 #
 # The first four are the same theme properties the schedule overview paints
@@ -4662,30 +4814,23 @@ views:
         card_mod:
           style:
             <<: [*switch_row_style, *heading_dot_style, *cat_security]
-      - type: custom:template-entity-row
-        entity: input_datetime.bedtime_door_window_start
-        name: Door Window Opens
-        icon: mdi:clock-start
-        secondary: *schedule_time
-        state: ' '
-        tap_action:
-          action: more-info
-          entity: input_datetime.bedtime_door_window_start
+      - <<: *window_row
+        label: Bedtime Door Window
+        variables:
+          start_entity: input_datetime.bedtime_door_window_start
+          end_entity: input_datetime.bedtime_door_window_end
         card_mod:
-          style:
-            <<: [*switch_row_style, *child_row_layout, *cat_security]
-      - type: custom:template-entity-row
-        entity: input_datetime.bedtime_door_window_end
-        name: Door Window Closes
-        icon: mdi:clock-end
-        secondary: *schedule_time
-        state: ' '
-        tap_action:
-          action: more-info
-          entity: input_datetime.bedtime_door_window_end
-        card_mod:
-          style:
-            <<: [*switch_row_style, *child_row_layout, *cat_security]
+          style: |
+            ha-card { --window-bar-color: var(--info-color); }
+        custom_fields:
+          bar_start:
+            card:
+              <<: *window_bar_start
+              entity: input_datetime.bedtime_door_window_start
+          bar_end:
+            card:
+              <<: *window_bar_end
+              entity: input_datetime.bedtime_door_window_end
       - entity: automation.door_opens_after_bedtime
         name: Door Opens After Bedtime
         card_mod:
@@ -4712,30 +4857,23 @@ views:
         card_mod:
           style:
             <<: [*switch_row_style, *heading_dot_style, *cat_bedtime]
-      - type: custom:template-entity-row
-        entity: input_datetime.nightlight_window_start
-        name: Nightlight Window Opens
-        icon: mdi:clock-start
-        secondary: *schedule_time
-        state: ' '
-        tap_action:
-          action: more-info
-          entity: input_datetime.nightlight_window_start
+      - <<: *window_row
+        label: Nightlight Window
+        variables:
+          start_entity: input_datetime.nightlight_window_start
+          end_entity: input_datetime.nightlight_window_end
         card_mod:
-          style:
-            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
-      - type: custom:template-entity-row
-        entity: input_datetime.nightlight_window_end
-        name: Nightlight Window Closes
-        icon: mdi:clock-end
-        secondary: *schedule_time
-        state: ' '
-        tap_action:
-          action: more-info
-          entity: input_datetime.nightlight_window_end
-        card_mod:
-          style:
-            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+          style: |
+            ha-card { --window-bar-color: var(--accent-color); }
+        custom_fields:
+          bar_start:
+            card:
+              <<: *window_bar_start
+              entity: input_datetime.nightlight_window_start
+          bar_end:
+            card:
+              <<: *window_bar_end
+              entity: input_datetime.nightlight_window_end
       # template-entity-row rather than a plain row: only it evaluates a
       # template in `name:`, which these need to render the label
       # capitalised. They have no schedule of their own — the window rows
