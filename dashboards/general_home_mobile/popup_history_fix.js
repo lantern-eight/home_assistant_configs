@@ -21,10 +21,12 @@ history.pushState = function (state, title, url) {
 
   // Kiosk mode hides the sidebar via DOM manipulation that persists
   // across SPA navigation. Force a full reload to restore it.
+  // Resolve the destination against the current page before checking it:
+  // popups open by pushing a bare hash ("#more"), which stays on this page.
   const leavingKiosk =
-    location.pathname.startsWith("/general-home") &&
     url != null &&
-    !String(url).includes("/general-home");
+    location.pathname.startsWith("/general-home") &&
+    !new URL(url, location.href).pathname.startsWith("/general-home");
 
   const result = _pushState(state, title, url);
 
