@@ -59,11 +59,8 @@ class TestFileMapExistence:
 # ── 2. PII scan ────────────────────────────────────────────────────────────
 
 
-# Local-only scratch directories. `plans/` holds working plans that track
-# in-progress work across sessions on one machine; they are gitignored, so
-# git already hides them here. Listing the prefix as well keeps the PII scan
-# off them even if a file is ever force-added, since a plan may legitimately
-# quote UUID-shaped things like design-tool URLs.
+# Directories to not scan
+# - `plans/` - Holds work plans; they're not comitted and may contain unredacted entities.
 _SCAN_EXCLUDED_PREFIXES = ('plans/',)
 
 
@@ -252,7 +249,7 @@ class TestAutomationIconsLiveInTheRegistry:
       REPO_ROOT / 'dashboards' / 'general_home_mobile' / 'dashboard.yaml'
     ).read_text(encoding='utf-8')
 
-    offenders = []
+    self_declared = []
     lines = dashboard.splitlines()
     for index, line in enumerate(lines):
       match = re.match(r'^(\s*)(?:- )?entity: (automation\.\S+)$', line)
@@ -264,20 +261,20 @@ class TestAutomationIconsLiveInTheRegistry:
       # tap_action's or a fold's inner keys are never mistaken for the row's.
       for following in lines[index + 1:index + 10]:
         if re.match(rf'^{re.escape(body)}icon: ', following):
-          offenders.append(f'{match.group(2)} (line {index + 1})')
+          self_declared.append(f'{match.group(2)} (line {index + 1})')
           break
         if re.match(rf'^{re.escape(body)}(card_mod|tap_action):', following):
           break
         if not following.startswith(body):
           break
-    return offenders
+    return self_declared
 
   def test_no_automation_row_declares_its_own_icon(self):
-    offenders = self._automation_rows_with_icons()
-    assert not offenders, (
+    self_declared = self._automation_rows_with_icons()
+    assert not self_declared, (
       "Automation rows declaring their own icon. Move these to the `icon:` "
       "key on the entity in registry_metadata.yaml, so the icon shows "
-      f"everywhere in Home Assistant rather than on this page only: {offenders}"
+      f"everywhere in Home Assistant rather than on this page only: {self_declared}"
     )
 
 

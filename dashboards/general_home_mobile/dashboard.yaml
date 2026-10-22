@@ -75,12 +75,12 @@ x-theme-chrome-style: &theme_chrome_style |
 # input_datetime — a time-window boundary, say — needs no second key
 # naming the same helper twice.
 #
-# 12-hour, with the meridiem as a single lowercase letter: "5:40a", "7:30p".
+# 12-hour, with the meridiem as a single lowercase letter: "5:00a", "7:30p".
 # The time sits in a narrow column to the left of each row, and a spelled-out
 # " AM" does not fit there — it ellipsises. Dropping the meridiem altogether
 # would be shorter still but ambiguous, because a few rows do not belong to
 # the half of the day their section is named for: the nightlight window
-# closes at 6:45 in the morning and is listed under Evening.
+# closes in the morning and is listed under Evening.
 #
 # Whitespace is trimmed on every tag: untrimmed Jinja blocks would pad the
 # rendered string and visibly offset the line.
@@ -108,10 +108,8 @@ x-titled-name: &titled_name >-
 # Page heading that carries a switch — the Automations page title and its
 # master on/off.
 #
-# An entities card rather than a mushroom-title-card because only an entity
-# row can hold a working control, and the switch belongs on the heading line
-# rather than in a card of its own below it. The exempt treatment strips the
-# card back to nothing so it still reads as page furniture, not content.
+# Exempt treatment strips the card back to nothing so it still reads as page furniture,
+# not content.
 #
 # Padding reproduces mushroom-title-card's own (24px top, 16px bottom, 12px
 # sides), so this heading lands in exactly the same place as the heading on
@@ -128,13 +126,8 @@ x-page-heading-style: &page_heading_style |
   }
 # The row inside that heading card.
 #
-# template-entity-row renders a flat shadow tree — state-badge, .info with
-# an optional .secondary, and .state holding the toggle — so these are plain
-# selectors rather than shadow-piercing ones.
-#
 # Type sizes mirror mushroom-title-card's title and subtitle so the two are
-# indistinguishable. No icon: on a heading the text is the heading, and the
-# badge would only push the title out of line with the other pages.
+# indistinguishable.
 x-page-heading-row-style: &page_heading_row_style |
   state-badge { display: none !important; }
   .info {
@@ -192,9 +185,9 @@ x-section-heading-style: &section_heading_style |
 # being dropped on the floor and the headings never showed one.
 #
 # The badge is shrunk well below its 40px default: at full size it towers
-# over a 24px heading and shoves the text off the left margin. Its colour is
-# pinned to the text colour so the heading reads as neutral and the palette
-# colours further down the page keep their meaning.
+# over a 24px heading and shoves the text off the left margin. Its color is
+# pinned to the text color so the heading reads as neutral and the palette
+# colors further down the page keep their meaning.
 x-section-heading-row-style: &section_heading_row_style |
   state-badge {
     flex: 0 0 26px !important;
@@ -224,19 +217,19 @@ x-section-heading-row-style: &section_heading_row_style |
 # `.info` is forced static so the time resolves against the row host and not
 # against the name block it nominally lives in.
 #
-# The marker is a plain coloured dot rather than an icon. A per-automation
+# The marker is a plain colored dot rather than an icon. A per-automation
 # glyph has to be guessed at from what the automation does, and the guesses
 # were both loud and unreliable — the kitchen light drew cutlery and the
 # daytime light drew a sun nearly identical to the Morning heading's own. The
 # name already states what an automation is; the only scannable thing the
-# marker adds is which category it belongs to, and that is carried by colour.
+# marker adds is which category it belongs to, and that is carried by color.
 # A dot says exactly that and stops competing with the name for attention.
 #
 # The glyph is collapsed with --mdc-icon-size rather than hidden from inside
 # the badge's shadow root, because that is a custom property and crosses the
 # boundary on its own. Reaching in would need the `state-badge$` key, which
-# the colour anchors already own, and merge keys resolve earliest-wins. The
-# dot takes `currentColor`, so it picks up whatever colour they set.
+# the color anchors already own, and merge keys resolve earliest-wins. The
+# dot takes `currentColor`, so it picks up whatever color they set.
 #
 # The `icon:` keys stay in the row configs, unused. They are the only icons
 # these rows have — Home Assistant automations carry none of their own, in
@@ -338,7 +331,7 @@ x-row-list-card-style: &row_list_card_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'card') }}
   /* Declared on the card so the fold below inherits it through its host,
-     which is what lets the two rules share one colour. */
+     which is what lets the two rules share one color. */
   ha-card {
     --row-separator-color: color-mix(in srgb, var(--primary-text-color) 7%, transparent);
   }
@@ -415,10 +408,10 @@ x-window-end-time: &window_end_time |
     const attrs = helper.attributes;
     return `${attrs.hour % 12 || 12}:${String(attrs.minute).padStart(2, '0')}${attrs.hour < 12 ? 'a' : 'p'}`;
   ]]]
-# The halves take their colour from a custom property the row sets once, which
-# is what lets every window share these rather than naming a colour in each.
+# The halves take their color from a custom property the row sets once, which
+# is what lets every window share these rather than naming a color in each.
 # The property has to cross into the half's shadow root, and a custom property
-# is the only thing that does — button-card sets its own text colour, so
+# is the only thing that does — button-card sets its own text color, so
 # `currentColor` never reaches this far.
 x-window-bar-start: &window_bar_start
   type: custom:button-card
@@ -452,7 +445,7 @@ x-window-bar-start: &window_bar_start
         - margin-left: 8px
         # The halves meet on a fractional pixel, where two antialiased edges do
         # not add up to a solid one and the join shows as a notch. A pixel of
-        # overlap puts the join under solid colour instead.
+        # overlap puts the join under solid color instead.
         - margin-right: -1px
   custom_fields:
     bar: '<div style="height: 4px; border-radius: 2px 0 0 2px; background: var(--window-bar-color);"></div>'
@@ -526,11 +519,11 @@ x-window-row: &window_row
         - justify-self: stretch
       bar_end:
         - justify-self: stretch
-# Row icon colour, one anchor per category.
+# Row icon color, one anchor per category.
 #
 # The first four are the same theme properties the schedule overview paints
-# its dots with, so a row's icon and its dot on the chart are the same colour
-# and the legend at the top of the page explains both. Change a colour here
+# its dots with, so a row's icon and its dot on the chart are the same color
+# and the legend at the top of the page explains both. Change a color here
 # and it must change in the overview's COLORS map too — they are deliberately
 # the same four properties, not the same variable, because one is CSS and the
 # other is JavaScript building a style string.
@@ -544,16 +537,16 @@ x-window-row: &window_row
 # Indigo palette primary and accent are the same hex, so its icons match the
 # bedtime ones exactly. That was weighed against the alternatives and kept —
 # the two categories live in different sections and never sit next to each
-# other, and the palettes that do separate the two colours give it an
-# identity for free. Do not "fix" this by swapping in the error colour.
+# other, and the palettes that do separate the two colors give it an
+# identity for free. Do not "fix" this by swapping in the error color.
 #
 # Both the badge and the icon inside it are targeted. A plain row sets an
-# inline colour on its icon element, and an inline colour on a descendant
-# beats a colour inherited from an ancestor — so setting only the host
+# inline color on its icon element, and an inline color on a descendant
+# beats a color inherited from an ancestor — so setting only the host
 # leaves every plain row on Home Assistant's default amber while the
 # template rows change. An !important rule on the icon itself wins over the
 # inline style and covers both shapes.
-# Colour is set from inside the badge's own shadow root rather than from the
+# color is set from inside the badge's own shadow root rather than from the
 # row, so it stays off the `.` key and the layout above can be written once
 # instead of repeated for every category. Two selectors again for the two row
 # shapes.
@@ -601,9 +594,9 @@ x-cat-infrastructure: &cat_infrastructure
     ha-state-icon { color: var(--secondary-text-color) !important; }
 # The two-tone sheen on a switch track, applied from the row that owns it.
 #
-# Switch colours themselves come from the theme macro, which sets the
+# Switch colors themselves come from the theme macro, which sets the
 # --ha-switch-* properties for the whole dashboard. The sheen cannot travel
-# with them: the track's fill is a `background-color`, which takes a colour
+# with them: the track's fill is a `background-color`, which takes a color
 # and not a gradient, so it has to be painted as a background-image inside
 # the switch's own shadow root.
 #
@@ -613,7 +606,7 @@ x-cat-infrastructure: &cat_infrastructure
 # switches. Attached per row instead, where there is exactly one switch to
 # find and nothing to miss.
 #
-# Both stops derive from one colour. Pairing --primary-color with
+# Both stops derive from one color. Pairing --primary-color with
 # --accent-color would read as flat on the several palettes that define the
 # two close together, the same trap the vacuum cards avoid by stating their
 # second stop outright.
@@ -4441,8 +4434,7 @@ views:
   - type: grid
     column_span: 1
     cards:
-    # Page title and the master switch, on one line. See the
-    # *page_heading_style anchor for why this is an entities card.
+    # Page title and the master switch, on one line.
     #
     # The row itself is inert — only the switch does anything. Tapping a
     # page title to open a group dialog would be a surprise, so the tap is
@@ -4485,10 +4477,9 @@ views:
     # Overview of when the day's scheduled automations actually fire.
     #
     # Drawn as two separately-scaled tracks rather than one axis across
-    # the whole day, because the schedule is not spread evenly: almost
-    # everything lands between 5–7 AM or 7:30–9 PM, with nothing at all
-    # in between. On a single 24-hour axis at phone width that is mostly
-    # empty space, and the pairs five minutes apart collapse into one
+    # the whole day, because the schedule is not spread evenly: most land
+    # morning or evening. A single 24-hour axis at phone width means mostly
+    # empty space, and the pairs, five minutes apart, collapse into one
     # dot. Scaling each track to its own span keeps those pairs legible.
     #
     # Times are read live from the same helpers the rows use, so the
@@ -4592,11 +4583,11 @@ views:
               const start = lo - pad, end = hi + pad;
               const pct = (mins) => ((mins - start) / (end - start)) * 100;
 
-              // Two-layer ring: a hard inner ring in the card colour, then
-              // the soft tinted halo. On a narrow phone the pairs five
-              // minutes apart sit about a dot's width apart, and where
-              // they share a category they would read as one long blob —
-              // the hard ring keeps a visible seam between them.
+              // Two-layer ring: a hard inner ring in the card color, then
+              // the soft tinted halo. On a phone, any that are minutes apart
+              // sit about a dot's width apart, and where they share a
+              // category they would read as one long blob. The hard ring
+              // keeps a visible seam between them.
               const dots = marks.map((m) => `
                 <div style="position:absolute;left:${pct(m.mins)}%;top:50%;
                             width:8px;height:8px;margin:-4px 0 0 -4px;

@@ -65,8 +65,7 @@ retry or delay-based fix.
 ### card_mod nested selectors style only the first match
 
 A `$`-piercing selector in a card-level `card_mod` block reaches one element
-per selector per card, not every element that matches. A rule written once on
-an entities card to restyle its rows styled 8 of 33 of them, silently.
+per selector per card, not every element that matches.
 
 Anything that has to apply to every row must be attached to every row. This is
 why the Automations page carries its layout, switch and category blocks on each
@@ -128,7 +127,7 @@ To theme a new card: `card_mod: style: *theme_card_style`
 
 A second family of anchors below these belongs to the Automations page rather
 than to theming: row layout (`&child_row_layout`, `&heading_dot_style`), one
-colour per category (`&cat_routine` and its siblings), the switch sheen
+color per category (`&cat_routine` and its siblings), the switch sheen
 (`&switch_row_style`), the card style carrying the row separators
 (`&row_list_card_style`) and the window bar (`&window_row` with its two
 halves). A row merges several at once with `<<: [*a, *b]`, which works only
@@ -331,8 +330,8 @@ Then reload the page.
    `test_conventions.py` fails if one appears.
 
 10. **Don't expect `mushroom-title-card` to draw an `icon:`.** It has no icon
-    option and drops the key without a word. The Automations section headings
-    are entities cards holding a `template-entity-row` for exactly this reason.
+    option and silently drops the key. The Automations section headings are
+    entities cards holding a `template-entity-row` for exactly this reason.
 
 11. **Don't mutate a memoised variable.** button-card evaluates each
    `variables:` entry once and hands the same object to every reader, so

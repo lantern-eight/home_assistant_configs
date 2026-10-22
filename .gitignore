@@ -68,5 +68,5 @@ registry_metadata.yaml
 dashboards/*/registry_metadata.yaml
 
 # Working plans — local scratch for tracking in-progress work across
-# sessions on this machine. Not repo content, so never synced to git.
+# sessions locally. Not repo content, so not synced to git.
 plans/

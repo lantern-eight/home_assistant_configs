@@ -335,9 +335,9 @@ because those cards sit inside per-account visibility blocks anyway.
 The theme has four independent axes that can be mixed and matched:
 
 1. **Mode** — light variant, dark variant, or follow the device (System)
-2. **Style** — the structural feel (card surfaces, borders, blur, corners)
-3. **Palette** — the color tokens (primary, accent, state colors, glow colors)
-4. **Background** — what's behind the cards (auto, none, solid color, image)
+1. **Style** — the structural feel (card surfaces, borders, blur, corners)
+1. **Palette** — the color tokens (primary, accent, state colors, glow colors)
+1. **Background** — what's behind the cards (auto, none, solid color, image)
 
 Changing one axis does not affect the others. The exception is `Auto`
 background, which dynamically reflects the current style and palette.
@@ -442,15 +442,15 @@ across accounts — tap actions route through scripts that resolve
 `context.user_id` to target the correct per-user helpers. Layout:
 
 1. **Mode picker** — Light / Dark / System tiles
-2. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
-3. **Palette picker** — 8 tiles with 4-dot color swatches
-4. **Background picker:**
+1. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
+1. **Palette picker** — 8 tiles with 4-dot color swatches
+1. **Background picker:**
    - Auto / None toggle
    - Curated color swatches (8 colors)
    - Palette-derived color swatches (4 shades from the active palette)
    - Custom hex input
    - Image thumbnails (from the backgrounds folder)
-5. **Card effects** — opacity and blur sliders with "Default" reset chips
+1. **Card effects** — opacity and blur sliders with "Default" reset chips
 
 ---
 
@@ -465,7 +465,7 @@ state-driven.
 1. **Promoted chips** — red severity items (door open) shown as standalone
    `button-card` chips above the dot counter. Each is a `type: conditional`
    card gated on the entity's state.
-2. **Dot counter** — all other items rendered as colored dots grouped by
+1. **Dot counter** — all other items rendered as colored dots grouped by
    severity, inside a themed `stack-in-card`. Tapping toggles an expanded
    list showing labels, icons, progress bars, and time remaining.
 
@@ -506,14 +506,13 @@ as a combined view of all items whether active or not.
 
 1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
    (both `state` and `items` attribute — they evaluate independently).
-2. Assign a severity: red (urgent), amber (warning), blue (info), green
+1. Assign a severity: red (urgent), amber (warning), blue (info), green
    (normal)
-3. If promoted (red): also add a `type: conditional` chip card in
+1. If promoted (red): also add a `type: conditional` chip card in
    `dashboard.yaml` using `*theme_chip_style`
-4. If it has progress: include `progress` (0-100) and optional
+1. If it has progress: include `progress` (0-100) and optional
    `time_remaining` in the item dict
-
-5. The item must always be present in `items` with an `active` flag
+1. The item must always be present in `items` with an `active` flag
    (true when triggered, false when idle). The Home view JS filters
    to active items; the Conditionals page shows everything. Use the
    item's severity when active, `green` when idle.
@@ -531,11 +530,11 @@ list, etc.), not just a notification dot.
    `general_home_mobile.yaml` with the active time range.
    For **state-based** triggers: use `input_boolean.cond_<id>` +
    on/off automations instead.
-2. Add the card entry to `sensor.dashboard_conditional_visible` in
+1. Add the card entry to `sensor.dashboard_conditional_visible` in
    `sensors.yaml` (state template)
-3. Add the conditional card in the `dashboard.yaml` Home view, gated on
+1. Add the conditional card in the `dashboard.yaml` Home view, gated on
    the schedule or input_boolean
-4. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
+1. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
    (the card body is defined once on the Home view with a `&cond_card_*`
    anchor; Conditionals uses `*cond_card_*` — no copy needed)
 
@@ -552,30 +551,25 @@ list, etc.), not just a notification dot.
 ## Automations Page
 
 Everything that runs on a schedule, at `/general-home/automations`, listed in
-the order it runs through the day rather than alphabetically, so the page reads
-as a timeline.
+the order it runs through the day.
 
 ### Layout
 
 Three sections — **Morning**, **Evening** and **Always Active** — each with a
 heading and a switch. Inside each, automations sit under subsection headings by
-category: Routine, Security, System, Bedtime, 3D Printing and Infrastructure.
-Infrastructure is collapsed behind a fold, being plumbing rather than anything
-worth changing day to day.
+category. Infrastructure is collapsed, since it's not changing regularly.
 
 A **schedule overview** sits at the top: two separately scaled tracks, one for
-the morning cluster and one for the evening, with a dot per automation coloured
+the morning cluster and one for the evening, with a dot per automation colored
 by category and a legend underneath. The tracks are scaled independently
-because almost everything runs between 5–7 AM or 7:30–9 PM, and a single
-24-hour axis at phone width is mostly empty space with the close pairs
-collapsed into one dot.
+because most things run morning or evening.
 
 ### Row anatomy
 
 | Part | What it is |
 |------|-----------|
 | Time | Right-aligned in a fixed gutter. Tapping a row opens the helper that sets its time |
-| Dot | 8px, coloured by category, the same colours the overview's legend names |
+| Dot | 8px, colored by category, the same colors the overview's legend names |
 | Name | The automation |
 | Switch | Turns that one automation on and off |
 
@@ -593,10 +587,10 @@ the closing one.
 
 Four levels, all driven by HA groups defined in `packages/general.yaml`:
 
-1. The master switch beside the page title (`group.automations_all`)
-2. One per section (`group.automations_morning` and its siblings)
-3. One per subsection (`group.automations_morning_routine` and its siblings)
-4. One per automation
+1. The master switch beside the page title.
+1. One per section.
+1. One per subsection.
+1. One per automation.
 
 A group is on when any member is on, and turning it off turns off every member,
 so a heading switch reads "is anything under here running" and flipping it
@@ -604,10 +598,7 @@ clears the whole heading. Groups nest, so turning off a part of the day
 cascades down to each category under it.
 
 Membership lives in the package rather than in the dashboard because Lovelace
-tap actions cannot be templated. A dashboard-side version would have to repeat
-every entity id in each card, and those copies drift as automations come and
-go.
-
+tap actions cannot be templated.
 ### Icons
 
 Automation icons live in the entity registry, set from
@@ -848,14 +839,14 @@ curl -s -X POST "http://YOUR_HA:8123/api/config/core/check_config" \
    remount after every restart. The sync script uses its own SMB connection and
    is unaffected.
 
-2. **Template sensors get stuck at `unknown`.** Run `template/reload`
+1. **Template sensors get stuck at `unknown`.** Run `template/reload`
    (Developer Tools > YAML > Template Entities, or
    `POST /api/services/template/reload`) after a restart. The theme itself
    is macro-rendered, not sensor-based — after editing
    `general_home_theme.jinja`, run `homeassistant.reload_custom_templates`
    and refresh the page.
 
-3. **`initial:` helpers reset.** If your `input_select`/`input_number` helpers
+1. **`initial:` helpers reset.** If your `input_select`/`input_number` helpers
    have `initial:` set, they reset to that value on restart. Remove `initial:`
    lines to persist the last-set value across restarts.
 
@@ -906,12 +897,10 @@ or `unknown`, card_mod applied but the macro render failed — check that
 ### card_mod Nested Selectors Hit Only the First Match
 
 A `$`-piercing selector in a card-level `card_mod` block styles one element per
-selector per card, not every element that matches. A rule written once on an
-entities card to restyle its rows reached 8 of 33 of them, with no error and no
-pattern that made the misses obvious.
+selector per card, not every element that matches.
 
 Anything that has to apply to every row must be attached to every row, which is
-why the Automations page carries its layout and colour blocks on each row
+why the Automations page carries its layout and color blocks on each row
 rather than once on the card around them.
 
 Ordinary selectors are unaffected. Elements sharing one shadow root, such as
