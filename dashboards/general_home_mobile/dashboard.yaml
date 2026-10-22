@@ -63,6 +63,562 @@ x-theme-chip-style: &theme_chip_style |
 x-theme-chrome-style: &theme_chrome_style |
   {% from 'general_home_theme.jinja' import theme_css %}
   {{ theme_css(user, 'chrome') }}
+# Schedule time shown on each row of the Automations view.
+#
+# Reads `schedule_entity` off the row's own config rather than naming an
+# entity inline, so this formatting lives in exactly one place and every
+# row references it by anchor. template-entity-row exposes the row's whole
+# YAML config to its templates, which is what makes the indirection work —
+# a plain anchor could not vary the entity per row.
+#
+# Falls back to the row's own entity so a row that already points at an
+# input_datetime — a time-window boundary, say — needs no second key
+# naming the same helper twice.
+#
+# 12-hour, with the meridiem as a single lowercase letter: "5:00a", "7:30p".
+# The time sits in a narrow column to the left of each row, and a spelled-out
+# " AM" does not fit there — it ellipsises. Dropping the meridiem altogether
+# would be shorter still but ambiguous, because a few rows do not belong to
+# the half of the day their section is named for: the nightlight window
+# closes in the morning and is listed under Evening.
+#
+# Whitespace is trimmed on every tag: untrimmed Jinja blocks would pad the
+# rendered string and visibly offset the line.
+x-schedule-time: &schedule_time >-
+  {%- set sched = config.schedule_entity | default(config.entity) -%}
+  {%- set hour = state_attr(sched, 'hour') -%}
+  {%- set minute = state_attr(sched, 'minute') -%}
+  {%- if hour is not none -%}
+  {{ hour % 12 if hour % 12 else 12 }}:{{ '%02d' % minute }}
+  {{- 'a' if hour < 12 else 'p' -}}
+  {%- endif -%}
+# Row label taken from the entity's own friendly name, title-cased.
+#
+# For automations named after a household member the name is redacted in
+# this file, and redaction is case-insensitive — every spelling collapses
+# to one placeholder, which restores as the lowercase form. That reaches
+# the automation's alias too, so its friendly name is lowercase in Home
+# Assistant. Title-casing here fixes the display without writing the real
+# name into a tracked file.
+#
+# Reads `config.entity`, so this is the same string on every row it is
+# used on and only needs to exist once.
+x-titled-name: &titled_name >-
+  {{ state_attr(config.entity, 'friendly_name') | title }}
+# Page heading that carries a switch — the Automations page title and its
+# master on/off.
+#
+# Exempt treatment strips the card back to nothing so it still reads as page furniture,
+# not content.
+#
+# Padding reproduces mushroom-title-card's own (24px top, 16px bottom, 12px
+# sides), so this heading lands in exactly the same place as the heading on
+# every other page instead of drifting a few pixels out of line.
+x-page-heading-style: &page_heading_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  /* Right padding is 16px to match what an entities card pads its rows by,
+     so the switch here lands in the same column as the switches on the rows
+     below. The left stays at 12px, which is where mushroom-title-card puts
+     heading text on every other page. */
+  #states {
+    padding: 24px 16px 16px 12px !important;
+  }
+# The row inside that heading card.
+#
+# Type sizes mirror mushroom-title-card's title and subtitle so the two are
+# indistinguishable.
+x-page-heading-row-style: &page_heading_row_style |
+  state-badge { display: none !important; }
+  .info {
+    margin-left: 0 !important;
+    font-size: 24px !important;
+    line-height: 32px !important;
+    cursor: default !important;
+  }
+  .info .secondary {
+    font-size: 16px !important;
+    line-height: 24px !important;
+    margin-top: 8px !important;
+  }
+  /* Names what the switch reaches, which the heading text alone does not
+     say — the title reads "Automations", not "all automations". */
+  .state {
+    position: relative;
+  }
+  .state::after {
+    content: 'ALL';
+    position: absolute;
+    right: 0;
+    top: calc(50% + 13px);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    line-height: 1;
+    color: var(--secondary-text-color);
+    opacity: 0.75;
+  }
+# Section heading that carries a switch — Morning, Evening, Always Active.
+#
+# Same shape as the page heading and for the same reason: only an entity row
+# can hold a working control, so a heading that owns a switch has to be a
+# row. Putting it here rather than as the first row of the card below means
+# the switch reads as governing that card, instead of looking like the first
+# item in it.
+#
+# Padding is what mushroom-title-card was already using for these headings
+# (24px above, 8px below), so replacing them moves nothing else on the page.
+x-section-heading-style: &section_heading_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'exempt') }}
+  /* Asymmetric for the same reason as the page heading: 16px on the right
+     lines this switch up with the ones on the rows underneath, 12px on the
+     left keeps the heading text where headings sit elsewhere. */
+  #states {
+    padding: 24px 16px 8px 12px !important;
+  }
+# The row inside a section heading.
+#
+# Unlike the page heading this one keeps its badge, because a section is
+# recognised by its icon as much as by its name. mushroom-title-card has no
+# icon option at all, so the `icon:` key those heading cards carried was
+# being dropped on the floor and the headings never showed one.
+#
+# The badge is shrunk well below its 40px default: at full size it towers
+# over a 24px heading and shoves the text off the left margin. Its color is
+# pinned to the text color so the heading reads as neutral and the palette
+# colors further down the page keep their meaning.
+x-section-heading-row-style: &section_heading_row_style |
+  state-badge {
+    flex: 0 0 26px !important;
+    width: 26px !important;
+    height: 26px !important;
+    --mdc-icon-size: 22px !important;
+    color: var(--primary-text-color) !important;
+    background: none !important;
+  }
+  .info {
+    margin-left: 10px !important;
+    font-size: 24px !important;
+    line-height: 32px !important;
+    cursor: default !important;
+  }
+# Layout for the rows sitting under a subsection heading.
+#
+# Two jobs at once. It indents a row from its heading, so the card stops
+# reading as one flat run and the grouping is carried by more than the
+# heading being in capitals. And it lifts the row's time out from under the
+# name and parks it in a column down the left, which is both easier to scan
+# and a line shorter per row.
+#
+# The time is the row's `secondary`, which normally renders as a second line
+# inside `.info`. Taking it out of flow and positioning it against the row
+# leaves `.info` single-line, so rows lose about a third of their height.
+# `.info` is forced static so the time resolves against the row host and not
+# against the name block it nominally lives in.
+#
+# The marker is a plain colored dot rather than an icon. A per-automation
+# glyph has to be guessed at from what the automation does, and the guesses
+# were both loud and unreliable — the kitchen light drew cutlery and the
+# daytime light drew a sun nearly identical to the Morning heading's own. The
+# name already states what an automation is; the only scannable thing the
+# marker adds is which category it belongs to, and that is carried by color.
+# A dot says exactly that and stops competing with the name for attention.
+#
+# The glyph is collapsed with --mdc-icon-size rather than hidden from inside
+# the badge's shadow root, because that is a custom property and crosses the
+# boundary on its own. Reaching in would need the `state-badge$` key, which
+# the color anchors already own, and merge keys resolve earliest-wins. The
+# dot takes `currentColor`, so it picks up whatever color they set.
+#
+# The `icon:` keys stay in the row configs, unused. They are the only icons
+# these rows have — Home Assistant automations carry none of their own, in
+# YAML or in the registry — so deleting them would discard the choices for no
+# gain, and restoring icons is a one-line change while they remain.
+#
+# The left column is sized for the longest time it has to hold ("11:59p"),
+# not for the longest one currently on the page — the times are adjustable
+# from this very page, so a column fitted to today's values would clip
+# tomorrow's.
+#
+# Two selectors for the two row shapes. A template-entity-row holds its badge
+# in its own shadow root; a plain row holds it one level down inside
+# hui-generic-entity-row and never carries a time, so it needs the indent
+# alone. Whichever shape a row is not, that selector matches nothing.
+x-child-row-layout: &child_row_layout
+  .: |
+    :host { position: relative; }
+    state-badge {
+      margin-left: 48px !important;
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
+    }
+    /* Zero the padding Home Assistant's own row stylesheet puts on .info, so
+       the margin below is the only thing setting the gap to the name. */
+    .info {
+      padding-left: 0 !important;
+      margin-left: 12px !important;
+      position: static !important;
+    }
+    /* Right-aligned against a fixed-width box, so the gap to the dot is the
+       same on every row. Left-aligned, the leftover space inside the box was
+       the gap, so a two-digit hour sat 7px closer to its dot than a
+       single-digit one. The width holds the widest time the box can carry
+       (a two-digit hour with a meridiem letter) with a little slack. */
+    .info .secondary {
+      position: absolute !important;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      text-align: right;
+      margin: 0 !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      color: color-mix(in srgb, var(--primary-color) 55%, var(--primary-text-color)) !important;
+    }
+  hui-generic-entity-row$: |
+    state-badge {
+      margin-left: 48px !important;
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
+    }
+    .info { padding-left: 0 !important; margin-left: 12px !important; }
+    /* An 8px marker no longer sets the row's height the way a 40px icon did,
+       so a plain row collapses to 22px and breaks the rhythm against the
+       template rows, which hold 40px on their own. */
+    .row { min-height: 40px !important; }
+# Subsection headings take the same dot as the rows under them, minus the
+# left column — a heading has no time and stays flush against the card edge,
+# which together with its capitals is what separates it from its children.
+x-heading-dot-style: &heading_dot_style
+  hui-generic-entity-row$: |
+    state-badge {
+      flex: 0 0 8px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      --mdc-icon-size: 0px !important;
+      overflow: hidden !important;
+    }
+    .info { padding-left: 0 !important; margin-left: 12px !important; }
+    .row { min-height: 40px !important; }
+# A hairline between two automations that sit next to each other, so the eye
+# can carry a name across to the switch that belongs to it without drifting a
+# row.
+#
+# It is drawn from the card rather than from the rows because a heading is a
+# row too: a rule attached to each row would underline every heading and every
+# group's first automation. The adjacent sibling combinator only fires when an
+# automation follows an automation, which also leaves a group holding a single
+# automation with no line at all, and draws nothing under a card's last row.
+#
+# Headings are the group rows — a heading's switch turns its whole group on and
+# off, so `group.` is what its entity has to be — and that is what tells a
+# heading from an automation here.
+x-row-list-card-style: &row_list_card_style |
+  {% from 'general_home_theme.jinja' import theme_css %}
+  {{ theme_css(user, 'card') }}
+  /* Declared on the card so the fold below inherits it through its host,
+     which is what lets the two rules share one color. */
+  ha-card {
+    --row-separator-color: color-mix(in srgb, var(--primary-text-color) 7%, transparent);
+  }
+  #states > div { position: relative; }
+  #states > div:has(> :is(template-entity-row, hui-toggle-entity-row))
+         + div:has(> :is(template-entity-row, hui-toggle-entity-row))::before {
+    content: '';
+    position: absolute;
+    /* Half of the 8px the card leaves between rows, so the line sits in the
+       middle of the gap instead of hugging the row above it. */
+    top: -4px;
+    /* Starts under the dot rather than at the card edge — the inset is the
+       width of the time gutter — and runs out to the switch. */
+    left: 48px;
+    right: 0;
+    height: 1px;
+    background: var(--row-separator-color);
+  }
+# The same hairline inside a fold, which cannot share the rule above. A fold
+# keeps its children in its own shadow root and stacks them flush rather than
+# in the card's 8px gaps, so the line goes on a row's top edge instead of half
+# a gap above it. Nothing here has to tell a heading from an automation,
+# because a fold holds only automations — and skipping the first child is what
+# leaves the fold's own heading unlined.
+x-fold-row-separator: &fold_row_separator |
+  .container.expanded > div { position: relative; }
+  .container.expanded > div + div::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 48px;
+    right: 0;
+    height: 1px;
+    background: var(--row-separator-color);
+  }
+# ── Window rows ───────────────────────────────────────────────────────────
+#
+# A window automation does not run at a moment, it runs between two times.
+# Drawing it as a span is what tells it apart at a glance from the
+# point-in-time rows around it.
+#
+# Four things to know before changing any of this.
+#
+# It is a card, not a row. An entities card resolves a `custom:` type straight
+# to that element and hands it the config, so a custom card works in a row
+# list. A built-in card does not — a plain `horizontal-stack` renders an error
+# row — which is why every piece here is a `custom:` type.
+#
+# The bar is two cards rather than one because a card carries a single tap
+# action and a window has two ends to adjust. Split in half, the end you tap is
+# the end you are editing, and each half holds its own time so that tapping the
+# time does the same thing as tapping the bar beside it.
+#
+# Each half reads its helper out of a variable rather than off its own entity.
+# A button-card evaluates the templates inside a nested card's config itself,
+# in its own context, where `entity` is the outer card's — which has none, so
+# the time came back empty and fell through to the entity's friendly name.
+# `variables` is the one thing that context does have.
+#
+# The clock format is written here in JavaScript and in `&schedule_time` in
+# Jinja, because button-card templates are JavaScript and entity rows are
+# Jinja. The two have to agree, so changing one means changing the other.
+x-window-start-time: &window_start_time |
+  [[[
+    const helper = states[variables.start_entity];
+    if (!helper || helper.attributes.hour == null) return '';
+    const attrs = helper.attributes;
+    return `${attrs.hour % 12 || 12}:${String(attrs.minute).padStart(2, '0')}${attrs.hour < 12 ? 'a' : 'p'}`;
+  ]]]
+x-window-end-time: &window_end_time |
+  [[[
+    const helper = states[variables.end_entity];
+    if (!helper || helper.attributes.hour == null) return '';
+    const attrs = helper.attributes;
+    return `${attrs.hour % 12 || 12}:${String(attrs.minute).padStart(2, '0')}${attrs.hour < 12 ? 'a' : 'p'}`;
+  ]]]
+# The halves take their color from a custom property the row sets once, which
+# is what lets every window share these rather than naming a color in each.
+# The property has to cross into the half's shadow root, and a custom property
+# is the only thing that does — button-card sets its own text color, so
+# `currentColor` never reaches this far.
+x-window-bar-start: &window_bar_start
+  type: custom:button-card
+  show_icon: false
+  show_state: false
+  name: *window_start_time
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 0
+      # Lifted so the bar can bleed a pixel under the half beside it.
+      - overflow: visible
+    grid:
+      - grid-template-areas: '"n bar"'
+      # The time column is the width of the gutter on the rows below, so a
+      # window's opening time lands in the same column as their times.
+      - grid-template-columns: 40px 1fr
+      - align-items: center
+    name:
+      - justify-self: end
+      - font-size: 12px
+      - line-height: 1
+      - color: color-mix(in srgb, var(--primary-color) 55%, var(--primary-text-color))
+    custom_fields:
+      bar:
+        - margin-left: 8px
+        # The halves meet on a fractional pixel, where two antialiased edges do
+        # not add up to a solid one and the join shows as a notch. A pixel of
+        # overlap puts the join under solid color instead.
+        - margin-right: -1px
+  custom_fields:
+    bar: '<div style="height: 4px; border-radius: 2px 0 0 2px; background: var(--window-bar-color);"></div>'
+x-window-bar-end: &window_bar_end
+  type: custom:button-card
+  show_icon: false
+  show_state: false
+  name: *window_end_time
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 0
+    grid:
+      - grid-template-areas: '"bar n"'
+      - grid-template-columns: 1fr auto
+      - align-items: center
+    name:
+      # The closing time is quieter than the opening one: the start is when
+      # something begins to happen, the end is only where it stops.
+      - justify-self: start
+      - font-size: 12px
+      - line-height: 1
+      - color: var(--secondary-text-color)
+    custom_fields:
+      bar:
+        - margin-right: 8px
+  custom_fields:
+    bar: '<div style="height: 4px; border-radius: 0 2px 2px 0; background: var(--window-bar-color);"></div>'
+# The row the halves sit in, carrying the window's name underneath them.
+#
+# It is a button-card rather than a pair of nested stacks because a stack draws
+# a card of its own, background and border included, and two of them nested
+# inside an entities card meant two opaque boxes to paint back out. A
+# button-card is told to draw nothing in one place, here.
+x-window-row: &window_row
+  type: custom:button-card
+  show_icon: false
+  show_name: false
+  show_state: false
+  show_label: true
+  tap_action:
+    action: none
+  styles:
+    card:
+      - padding: 0
+      - background: none
+      - border: none
+      - box-shadow: none
+      - min-height: 40px
+    grid:
+      # Two equal columns, so the join between the halves lands on the middle
+      # of the row however wide the times either side of it turn out to be.
+      - grid-template-areas: '"bar_start bar_end" "l l"'
+      - grid-template-columns: 1fr 1fr
+      - align-items: center
+      - row-gap: 6px
+    label:
+      # Lines the window's name up with the left end of its bar.
+      - justify-self: start
+      - padding-left: 48px
+      - font-size: 12px
+      - line-height: 1
+      - color: var(--secondary-text-color)
+    custom_fields:
+      bar_start:
+        - justify-self: stretch
+      bar_end:
+        - justify-self: stretch
+# Row icon color, one anchor per category.
+#
+# The first four are the same theme properties the schedule overview paints
+# its dots with, so a row's icon and its dot on the chart are the same color
+# and the legend at the top of the page explains both. Change a color here
+# and it must change in the overview's COLORS map too — they are deliberately
+# the same four properties, not the same variable, because one is CSS and the
+# other is JavaScript building a style string.
+#
+# The last two have no dot on the chart, because nothing in them runs to a
+# clock, so the overview never plots them and the legend never names them.
+# 3D printing takes the palette primary; infrastructure is deliberately
+# muted, being plumbing that is collapsed out of the way by default.
+#
+# Primary for 3D printing is a considered choice, not an oversight: on the
+# Indigo palette primary and accent are the same hex, so its icons match the
+# bedtime ones exactly. That was weighed against the alternatives and kept —
+# the two categories live in different sections and never sit next to each
+# other, and the palettes that do separate the two colors give it an
+# identity for free. Do not "fix" this by swapping in the error color.
+#
+# Both the badge and the icon inside it are targeted. A plain row sets an
+# inline color on its icon element, and an inline color on a descendant
+# beats a color inherited from an ancestor — so setting only the host
+# leaves every plain row on Home Assistant's default amber while the
+# template rows change. An !important rule on the icon itself wins over the
+# inline style and covers both shapes.
+# color is set from inside the badge's own shadow root rather than from the
+# row, so it stays off the `.` key and the layout above can be written once
+# instead of repeated for every category. Two selectors again for the two row
+# shapes.
+x-cat-routine: &cat_routine
+  state-badge$: |
+    :host { color: var(--success-color) !important; }
+    ha-state-icon { color: var(--success-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--success-color) !important; }
+    ha-state-icon { color: var(--success-color) !important; }
+x-cat-security: &cat_security
+  state-badge$: |
+    :host { color: var(--info-color) !important; }
+    ha-state-icon { color: var(--info-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--info-color) !important; }
+    ha-state-icon { color: var(--info-color) !important; }
+x-cat-bedtime: &cat_bedtime
+  state-badge$: |
+    :host { color: var(--accent-color) !important; }
+    ha-state-icon { color: var(--accent-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--accent-color) !important; }
+    ha-state-icon { color: var(--accent-color) !important; }
+x-cat-system: &cat_system
+  state-badge$: |
+    :host { color: var(--warning-color) !important; }
+    ha-state-icon { color: var(--warning-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--warning-color) !important; }
+    ha-state-icon { color: var(--warning-color) !important; }
+x-cat-printing: &cat_printing
+  state-badge$: |
+    :host { color: var(--primary-color) !important; }
+    ha-state-icon { color: var(--primary-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--primary-color) !important; }
+    ha-state-icon { color: var(--primary-color) !important; }
+x-cat-infrastructure: &cat_infrastructure
+  state-badge$: |
+    :host { color: var(--secondary-text-color) !important; }
+    ha-state-icon { color: var(--secondary-text-color) !important; }
+  hui-generic-entity-row$state-badge$: |
+    :host { color: var(--secondary-text-color) !important; }
+    ha-state-icon { color: var(--secondary-text-color) !important; }
+# The two-tone sheen on a switch track, applied from the row that owns it.
+#
+# Switch colors themselves come from the theme macro, which sets the
+# --ha-switch-* properties for the whole dashboard. The sheen cannot travel
+# with them: the track's fill is a `background-color`, which takes a color
+# and not a gradient, so it has to be painted as a background-image inside
+# the switch's own shadow root.
+#
+# It cannot be driven from the card either. card_mod's piercing selectors
+# reach only the first match at each level, so one entry on an entities card
+# styles one row and leaves every other row flat — measured at 8 of 33
+# switches. Attached per row instead, where there is exactly one switch to
+# find and nothing to miss.
+#
+# Both stops derive from one color. Pairing --primary-color with
+# --accent-color would read as flat on the several palettes that define the
+# two close together, the same trap the vacuum cards avoid by stating their
+# second stop outright.
+x-switch-row-style: &switch_row_style
+  ha-entity-toggle$ha-switch$: |
+    .checked .switch {
+      background-image: linear-gradient(135deg,
+        color-mix(in srgb, var(--primary-color) 82%, black),
+        var(--primary-color) 55%,
+        color-mix(in srgb, var(--primary-color) 55%, white)) !important;
+      border-color: transparent !important;
+    }
 # UV index severity colors (Material Design). Defined once, referenced by
 # both the annotation band fills and the line color_threshold so they
 # stay in sync automatically.
@@ -3878,138 +4434,636 @@ views:
   - type: grid
     column_span: 1
     cards:
-    - type: custom:mushroom-title-card
-      title: Automations
-      subtitle: Use the switch to enable or disable
-      icon: mdi:robot-outline
+    # Page title and the master switch, on one line.
+    #
+    # The row itself is inert — only the switch does anything. Tapping a
+    # page title to open a group dialog would be a surprise, so the tap is
+    # turned off rather than left to the row's default.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
-
-    - type: custom:mushroom-title-card
-      title: Security
-      icon: mdi:shield-lock
-      card_mod:
-        style: *theme_exempt_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+        style: *page_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_all
+        name: Automations
+        secondary: Tap a time to adjust it
+        toggle: true
+        tap_action:
+          action: none
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-          label: automation-security
-      show_empty: false
+          style:
+            <<: *switch_row_style
+            .: *page_heading_row_style
 
-    - type: custom:mushroom-title-card
-      title: Routine
-      icon: mdi:clock-outline
-      card_mod:
-        style: *theme_exempt_style
+    # =====================================================================
+    # Timeline sections — automations grouped by when they run
+    # =====================================================================
+    # Each row pairs an automation with the input_datetime that triggers
+    # it: the toggle enables/disables the automation, and tapping the row
+    # opens the helper's more-info dialog, which is HA's native time
+    # picker. That is the whole point of this layout — the schedule is
+    # adjustable from the dashboard instead of only from the automation's
+    # YAML.
+    #
+    # Rows are written out one by one rather than generated by
+    # auto-entities because `tap_action` cannot be templated in HA, so the
+    # helper entity has to be named literally on each row. The repeated
+    # part — formatting the time — is shared via the *schedule_time anchor.
+    #
+    # Headings are group entities, so a heading switch really is the
+    # automations under it rather than a separate flag that can fall out
+    # of step. Membership is defined once in packages/general.yaml.
 
-    - type: custom:mushroom-title-card
-      title: ''
-      subtitle: Morning
-      icon: mdi:weather-sunny
+    # Overview of when the day's scheduled automations actually fire.
+    #
+    # Drawn as two separately-scaled tracks rather than one axis across
+    # the whole day, because the schedule is not spread evenly: most land
+    # morning or evening. A single 24-hour axis at phone width means mostly
+    # empty space, and the pairs, five minutes apart, collapse into one
+    # dot. Scaling each track to its own span keeps those pairs legible.
+    #
+    # Times are read live from the same helpers the rows use, so the
+    # chart follows any adjustment made on this page.
+    - type: custom:button-card
       card_mod:
-        style: *theme_exempt_sub_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+        style: *theme_card_style
+      show_icon: false
+      show_name: false
+      show_state: false
+      tap_action:
+        action: none
+      styles:
+        card:
+          - padding: 16px 18px
+        grid:
+          - grid-template-areas: '"tracks"'
+      custom_fields:
+        tracks: |
+          [[[
+            // Resolved through the theme's CSS custom properties rather
+            // than fixed hex, the same way notification severity colors
+            // are, so these follow the active palette and the user's
+            // severity color mode preference. Bedtime has no severity
+            // equivalent and takes the palette accent.
+            const COLORS = {
+              routine:  'var(--success-color)',
+              security: 'var(--info-color)',
+              bedtime:  'var(--accent-color)',
+              system:   'var(--warning-color)',
+            };
+
+            const TRACKS = [
+              { label: 'Morning', marks: [
+                { helper: 'input_datetime.house_auto_disarm',        cat: 'security' },
+                { helper: 'input_datetime.main_suite_weekday_wake',  cat: 'routine'  },
+                { helper: 'input_datetime.kitchen_light_morning',    cat: 'routine'  },
+                { helper: 'input_datetime.uv_forecast_refresh',      cat: 'system'   },
+                { helper: 'input_datetime.<entity_4>_daytime_light', cat: 'routine'  },
+              ]},
+              { label: 'Evening', marks: [
+                { helper: 'input_datetime.<entity_4>_light_dim',         cat: 'bedtime' },
+                { helper: 'input_datetime.<entity_4>_light_off',         cat: 'bedtime' },
+                { helper: 'input_datetime.<entity_4>_light_second_off',  cat: 'bedtime' },
+                { helper: 'input_datetime.go_to_bed',                    cat: 'bedtime' },
+              ]},
+            ];
+
+            const minutesOf = (id) => {
+              const a = states[id]?.attributes;
+              if (!a || a.hour == null) return null;
+              return a.hour * 60 + a.minute;
+            };
+            const clockOf = (mins) => {
+              const h24 = Math.floor(mins / 60), m = mins % 60;
+              const h = h24 % 12 === 0 ? 12 : h24 % 12;
+              return `${h}:${String(m).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`;
+            };
+
+            // Axis labels are written short: the hour alone when a tick
+            // lands on it, and the meridiem only on the first tick and
+            // wherever it changes. Spelling out "5:00 AM 5:30 AM 6:00 AM"
+            // across a phone-width track is what made the old single range
+            // label unreadable in the first place.
+            const tickLabel = (mins, carriedMeridiem) => {
+              const h24 = Math.floor(mins / 60), m = mins % 60;
+              const h = h24 % 12 === 0 ? 12 : h24 % 12;
+              const meridiem = h24 < 12 ? 'AM' : 'PM';
+              const base = m === 0 ? `${h}` : `${h}:${String(m).padStart(2, '0')}`;
+              return {
+                text: meridiem === carriedMeridiem ? base : `${base} ${meridiem}`,
+                meridiem,
+              };
+            };
+
+            // Round intervals a reader already thinks in. The smallest one
+            // that fits within five ticks wins, so a wide track is not
+            // crowded and a narrow one still gets more than its two ends
+            // labelled.
+            const TICK_STEPS = [15, 30, 60, 120, 180, 240, 360];
+            const chooseStep = (start, end) =>
+              TICK_STEPS.find(
+                (s) => Math.floor(end / s) - Math.ceil(start / s) + 1 <= 5
+              ) || TICK_STEPS[TICK_STEPS.length - 1];
+
+            const now = new Date();
+            const nowMins = now.getHours() * 60 + now.getMinutes();
+
+            const rendered = TRACKS.map((track) => {
+              const marks = track.marks
+                .map((m) => ({ ...m, mins: minutesOf(m.helper) }))
+                .filter((m) => m.mins !== null);
+              if (!marks.length) return '';
+
+              // Pad the span so the first and last dots are not clipped by
+              // the ends of the track, and so a track whose marks all sit
+              // at one time still has a width to position within.
+              const lo = Math.min(...marks.map((m) => m.mins));
+              const hi = Math.max(...marks.map((m) => m.mins));
+              const pad = Math.max(10, Math.round((hi - lo) * 0.12));
+              const start = lo - pad, end = hi + pad;
+              const pct = (mins) => ((mins - start) / (end - start)) * 100;
+
+              // Two-layer ring: a hard inner ring in the card color, then
+              // the soft tinted halo. On a phone, any that are minutes apart
+              // sit about a dot's width apart, and where they share a
+              // category they would read as one long blob. The hard ring
+              // keeps a visible seam between them.
+              const dots = marks.map((m) => `
+                <div style="position:absolute;left:${pct(m.mins)}%;top:50%;
+                            width:8px;height:8px;margin:-4px 0 0 -4px;
+                            border-radius:50%;background:${COLORS[m.cat]};
+                            box-shadow:0 0 0 1.5px var(--card-background-color),
+                                       0 0 0 4px color-mix(in srgb, ${COLORS[m.cat]} 20%, transparent)"
+                     title="${clockOf(m.mins)}"></div>`).join('');
+
+              // Only drawn while the clock is inside this track's span.
+              const nowMarker = (nowMins >= start && nowMins <= end) ? `
+                <div style="position:absolute;left:${pct(nowMins)}%;top:0;bottom:0;
+                            width:2px;margin-left:-1px;border-radius:1px;
+                            background:var(--primary-text-color);opacity:0.45"></div>` : '';
+
+              // The scale itself. Each track is scaled to its own span, so
+              // the ticks have to be worked out per track rather than shared
+              // — an evening reading of 7:30/8/8:30/9 next to a morning one
+              // of 5/5:30/6/6:30/7.
+              const step = chooseStep(start, end);
+              const ticks = [];
+              let carried = null;
+              for (let t = Math.ceil(start / step) * step; t <= end; t += step) {
+                const { text, meridiem } = tickLabel(t, carried);
+                carried = meridiem;
+                ticks.push({ mins: t, text });
+              }
+
+              const tickMarks = ticks.map((t) => `
+                <div style="position:absolute;left:${pct(t.mins)}%;top:2px;bottom:2px;
+                            width:1px;margin-left:-0.5px;
+                            background:color-mix(in srgb, var(--primary-text-color) 14%, transparent)"></div>`
+              ).join('');
+
+              // A tick sitting hard against either end would have half its
+              // label hanging off the card, so the outermost ones anchor to
+              // the edge instead of centring on their mark.
+              const tickLabels = ticks.map((t) => {
+                const p = pct(t.mins);
+                const place = p < 8 ? 'left:0'
+                  : p > 92 ? 'right:0'
+                  : `left:${p}%;transform:translateX(-50%)`;
+                return `
+                <span style="position:absolute;${place};font-size:10px;
+                             white-space:nowrap;color:var(--secondary-text-color);
+                             opacity:0.8">${t.text}</span>`;
+              }).join('');
+
+              return `
+                <div style="margin-bottom:16px">
+                  <div style="font-size:11px;font-weight:600;letter-spacing:0.4px;
+                              color:var(--secondary-text-color);margin-bottom:7px"
+                       >${track.label.toUpperCase()}</div>
+                  <div style="position:relative;height:18px">
+                    <div style="position:absolute;left:0;right:0;top:50%;height:2px;
+                                margin-top:-1px;border-radius:1px;
+                                background:color-mix(in srgb, var(--primary-text-color) 10%, transparent)"></div>
+                    ${tickMarks}${nowMarker}${dots}
+                  </div>
+                  <div style="position:relative;height:14px;margin-top:1px">
+                    ${tickLabels}
+                  </div>
+                </div>`;
+            }).join('');
+
+            const legend = Object.entries(COLORS).map(([name, color]) => `
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:7px;height:7px;border-radius:50%;background:${color}"></div>
+                <span style="font-size:11px;color:var(--secondary-text-color);
+                             text-transform:capitalize">${name}</span>
+              </div>`).join('');
+
+            return `
+              <div style="width:100%;text-align:left">
+                ${rendered}
+                <div style="display:flex;gap:12px;flex-wrap:wrap;
+                            padding-top:2px">${legend}</div>
+              </div>`;
+          ]]]
+
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
+      card_mod:
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_morning
+        name: Morning
+        icon: mdi:weather-sunny
+        toggle: true
+        tap_action:
+          action: none
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-          label: automation-routine-morning
-      show_empty: false
-
-    - type: custom:mushroom-title-card
-      title: ''
-      subtitle: Bedtime
-      icon: mdi:weather-night
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
+    - type: entities
       card_mod:
-        style: *theme_exempt_sub_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+        style: *row_list_card_style
+      entities:
+      - entity: group.automations_morning_routine
+        name: ROUTINE
+        icon: mdi:clock-outline
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-          label: automation-routine-bedtime
-      show_empty: false
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_routine]
+      - type: custom:template-entity-row
+        entity: automation.main_suite_weekday_wake
+        schedule_entity: input_datetime.main_suite_weekday_wake
+        name: Main Suite Wake
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.main_suite_weekday_wake
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_routine]
+      - type: custom:template-entity-row
+        entity: automation.kitchen_light_morning
+        schedule_entity: input_datetime.kitchen_light_morning
+        name: Kitchen Light
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.kitchen_light_morning
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_routine]
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_daytime
+        schedule_entity: input_datetime.<entity_4>_daytime_light
+        name: *titled_name
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_daytime_light
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_routine]
 
-    - type: custom:mushroom-title-card
-      title: System
-      icon: mdi:cog
-      card_mod:
-        style: *theme_exempt_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+      - entity: group.automations_morning_security
+        name: SECURITY
+        icon: mdi:shield-lock
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-          label: automation-system
-      show_empty: false
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
+      - type: custom:template-entity-row
+        entity: automation.house_auto_disarm
+        schedule_entity: input_datetime.house_auto_disarm
+        name: House Auto-Disarm
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.house_auto_disarm
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_security]
 
-    - type: custom:mushroom-title-card
-      title: 3D Printing
-      icon: mdi:printer-3d
-      card_mod:
-        style: *theme_exempt_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+      - entity: group.automations_morning_system
+        name: SYSTEM
+        icon: mdi:cog
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-          label: automation-3d-printing
-      show_empty: false
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_system]
+      - type: custom:template-entity-row
+        entity: automation.refresh_uv_forecast
+        schedule_entity: input_datetime.uv_forecast_refresh
+        name: UV Forecast Refresh
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.uv_forecast_refresh
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_system]
 
-    - type: custom:mushroom-title-card
-      title: Other
-      icon: mdi:dots-horizontal
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
       card_mod:
-        style: *theme_exempt_style
-    - type: custom:auto-entities
-      card:
-        type: entities
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_evening
+        name: Evening
+        icon: mdi:weather-night
+        toggle: true
+        tap_action:
+          action: none
         card_mod:
-          style: *theme_card_style
-      sort:
-        method: friendly_name
-        ignore_case: true
-      filter:
-        include:
-        - domain: automation
-        exclude:
-        - label: automation-security
-        - label: automation-routine
-        - label: automation-system
-        - label: automation-3d-printing
-      show_empty: false
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
+    - type: entities
+      card_mod:
+        style: *row_list_card_style
+      entities:
+      # Automations that run inside a window rather than at a point in
+      # time list the window's two boundary helpers first, then the
+      # automations gated by them.
+      #
+      # The boundaries are template-entity-rows, not plain input_datetime
+      # rows: a plain row draws a full hh:mm inline editor, which is wider
+      # than a phone comfortably fits and breaks the rhythm of the list.
+      # These show the time where an automation row shows its toggle, and
+      # tapping opens the same picker every other row does.
+      - entity: group.automations_evening_security
+        name: SECURITY
+        icon: mdi:shield-lock
+        card_mod:
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
+      - <<: *window_row
+        label: Bedtime Door Window
+        variables:
+          start_entity: input_datetime.bedtime_door_window_start
+          end_entity: input_datetime.bedtime_door_window_end
+        card_mod:
+          style: |
+            ha-card { --window-bar-color: var(--info-color); }
+        custom_fields:
+          bar_start:
+            card:
+              <<: *window_bar_start
+              entity: input_datetime.bedtime_door_window_start
+          bar_end:
+            card:
+              <<: *window_bar_end
+              entity: input_datetime.bedtime_door_window_end
+      - entity: automation.door_opens_after_bedtime
+        name: Door Opens After Bedtime
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_security]
+      - entity: automation.door_closes_after_bedtime
+        name: Door Closes After Bedtime
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_security]
+      # Armed Door Opens has no schedule of its own — it is gated on the
+      # house being armed, which in practice is an evening state. Listed
+      # here without a time so the section reflects what actually runs at
+      # night.
+      - entity: automation.armed_door_opens
+        name: Armed Door Opens
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_security]
+
+      - entity: group.automations_evening_bedtime
+        name: BEDTIME
+        icon: mdi:bed-clock
+        card_mod:
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_bedtime]
+      - <<: *window_row
+        label: Nightlight Window
+        variables:
+          start_entity: input_datetime.nightlight_window_start
+          end_entity: input_datetime.nightlight_window_end
+        card_mod:
+          style: |
+            ha-card { --window-bar-color: var(--accent-color); }
+        custom_fields:
+          bar_start:
+            card:
+              <<: *window_bar_start
+              entity: input_datetime.nightlight_window_start
+          bar_end:
+            card:
+              <<: *window_bar_end
+              entity: input_datetime.nightlight_window_end
+      # template-entity-row rather than a plain row: only it evaluates a
+      # template in `name:`, which these need to render the label
+      # capitalised. They have no schedule of their own — the window rows
+      # above are what gates them — so there is no secondary or tap.
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_nightlight_on
+        name: *titled_name
+        toggle: true
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_nightlight_off
+        name: *titled_name
+        toggle: true
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_dim_1
+        schedule_entity: input_datetime.<entity_4>_light_dim
+        name: *titled_name
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_dim
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_off_1
+        schedule_entity: input_datetime.<entity_4>_light_off
+        name: *titled_name
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_off
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+      - type: custom:template-entity-row
+        entity: automation.<entity_4>_light_off_2
+        schedule_entity: input_datetime.<entity_4>_light_second_off
+        name: *titled_name
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.<entity_4>_light_second_off
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+      - type: custom:template-entity-row
+        entity: automation.go_to_bed
+        schedule_entity: input_datetime.go_to_bed
+        name: Go to Bed
+        secondary: *schedule_time
+        toggle: true
+        tap_action:
+          action: more-info
+          entity: input_datetime.go_to_bed
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_bedtime]
+
+    # Section heading with the switch for everything under it. See the
+    # *section_heading_style anchor for why this is an entities card.
+    - type: entities
+      card_mod:
+        style: *section_heading_style
+      entities:
+      - type: custom:template-entity-row
+        entity: group.automations_always_active
+        name: Always Active
+        icon: mdi:lightning-bolt-outline
+        toggle: true
+        tap_action:
+          action: none
+        card_mod:
+          style:
+            <<: *switch_row_style
+            .: *section_heading_row_style
+    - type: entities
+      card_mod:
+        style:
+          .: *row_list_card_style
+          fold-entity-row$: *fold_row_separator
+      entities:
+      # Everything here reacts to a state change rather than a clock, so
+      # these rows are plain: no time to show and no tap target to adjust,
+      # just the toggle. Subsections still match the rest of the page so
+      # the categories read the same wherever you are on it.
+      - entity: group.automations_always_printing
+        name: 3D PRINTING
+        icon: mdi:printer-3d
+        card_mod:
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_printing]
+      - entity: automation.3d_print_complete_notification
+        name: Print Complete
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_printing]
+      - entity: automation.3d_print_failure_alert
+        name: Print Failure
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_printing]
+      - entity: automation.3d_print_halfway_notification
+        name: Print Halfway
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_printing]
+      - entity: automation.3d_printer_light_on_on_start
+        name: Printer Light on Start
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_printing]
+
+      - entity: group.automations_always_security
+        name: SECURITY
+        icon: mdi:shield-lock
+        card_mod:
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_security]
+      - entity: automation.basement_door_open_too_long
+        name: Basement Door Open Too Long
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_security]
+
+      - entity: group.automations_always_system
+        name: SYSTEM
+        icon: mdi:cog
+        card_mod:
+          style:
+            <<: [*switch_row_style, *heading_dot_style, *cat_system]
+      - entity: automation.soil_moisture_low
+        name: Soil Moisture Low
+        card_mod:
+          style:
+            <<: [*switch_row_style, *child_row_layout, *cat_system]
+
+      # Plumbing that keeps caches and helpers in sync. Toggling any of
+      # it breaks something else on the dashboard, so it is collapsed by
+      # default — present and switchable, but out of the way of the
+      # automations worth changing day to day.
+      # The fold's head is the group row, so the same line both expands
+      # the list and carries its switch. Infrastructure sits outside the
+      # per-day groups, so this is the only heading that reaches it —
+      # apart from the master switch at the top of the page.
+      - type: custom:fold-entity-row
+        open: false
+        head:
+          entity: group.automations_infrastructure
+          name: INFRASTRUCTURE
+          icon: mdi:cog-sync
+          card_mod:
+            style:
+              <<: [*switch_row_style, *heading_dot_style, *cat_infrastructure]
+        entities:
+        - entity: automation.initialize_schedule_helpers
+          name: Initialize Schedule Helpers
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.theme_generate_background_thumbnails
+          name: Generate Theme Thumbnails
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.cache_3d_print_filename
+          name: Cache Print Filename
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.cache_<entity_20>_slot_data
+          name: Cache <entity_20> Slot Data
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.cache_<entity_21>_slot_data
+          name: Cache <entity_21> Slot Data
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.reset_slot_cache_on_new_job
+          name: Reset Slot Cache
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+        - entity: automation.spoolman_update_on_print_complete
+          name: Spoolman Update
+          card_mod:
+            style:
+              <<: [*switch_row_style, *child_row_layout, *cat_infrastructure]
+
   - type: grid
     column_span: 1
     cards:

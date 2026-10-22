@@ -107,6 +107,12 @@ applies them to Home Assistant's entity registry.
 
 ### Labels vs. categories
 
+`icon:` sets the entity's registry icon. It is written on every entity the
+file lists, so removing it here clears it in Home Assistant rather than
+leaving the last one applied. Clearing only removes the registry override:
+anything declaring an icon in its own YAML, as the helpers in `packages/` do,
+falls back to that.
+
 - **Labels** are cross-cutting tags — an entity can have many. They
   describe what an entity relates to: `Lighting`, `Security`,
   `Scheduled`, `Notification`, `3D Printing`.
@@ -118,8 +124,10 @@ applies them to Home Assistant's entity registry.
 ### Conventions
 
 - **Automations** get a category + at least one label in the root
-  file, plus a dashboard-scoped `automation-*` label in the dashboard
-  file.
+  file, plus an `icon:`. An automation cannot declare an icon in its own
+  YAML, so this is the only way one reaches the Settings list, search and
+  related-entity views. Dashboards should not set icons on automation
+  rows — `test_conventions.py` enforces that.
 - **Helpers** get at least one label. Dashboard helpers also get a
   category.
 - **Scripts** get a category + labels.
@@ -143,8 +151,8 @@ uv run python scripts/ha_sync.py
 ## General HA Packages
 
 `packages/` at the repo root holds general-purpose HA config — house-wide
-sensors, utility meters, helpers — that is not specific to one dashboard.
-Dashboards consume these entities. General config goes in `packages/general.yaml`,
+sensors, utility meters, helpers, entity groups — that is not specific to one
+dashboard. Dashboards consume these entities. General config goes in `packages/general.yaml`,
 one commented section per concern. A large coherent domain can graduate to its
 own file. Every yaml file in `packages/` is uploaded to HA's `packages/` directory
 by `scripts/ha_sync.py`, and HA loads the whole directory via
@@ -213,7 +221,8 @@ uv run python -m pytest tests/ -v
 - `test_redaction.py` — name redaction, pronoun neutralization, ID shortening
 - `test_process_backup_files.py` — end-to-end backup file processing
 - `test_restore.py` — entity map round-trip restore
-- `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement
+- `test_conventions.py` — FILE_MAP existence, PII scan, doc/map agreement,
+  automation icons in the registry, HACS cards documented
 - `test_config.py` — config loading from YAML and environment
 
 ## macOS Local Network Permission
@@ -261,7 +270,7 @@ permission on its next local-network access.
 │   └── general_home_mobile/         # Mobile-first general home dashboard
 │
 ├── packages/                        # General HA packages (house-wide sensors,
-│   └── general.yaml                 #   utility meters) — not dashboard-specific
+│   └── general.yaml                 #   utility meters, groups) — not dashboard-specific
 │
 ├── home_assistant_backup/           # Backup of HA config (redacted, process list only)
 │   └── configuration.yaml

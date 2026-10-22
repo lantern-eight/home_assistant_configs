@@ -56,6 +56,7 @@ card_mod)
   - [Card Opacity and Blur](#card-opacity-and-blur)
   - [Appearance Subview](#appearance-subview)
 - [Notification System](#notification-system)
+- [Automations Page](#automations-page)
 - [Architecture](#architecture)
   - [Why Card-Level, Not View-Level](#why-card-level-not-view-level)
   - [Macro Library, Not Sensors](#macro-library-not-sensors)
@@ -103,11 +104,19 @@ aggregate all lights in an HA area (excluding presence-detection LEDs).
 **More popup:** Navigation links to Appearance, Conditionals, Automations,
 3D Printer Farm (links to the Cyberdeck dashboard), and core HA UI.
 
+**Automations view:** A chronological timeline of everything that runs on a
+schedule, with switches at four levels. See
+[Automations Page](#automations-page).
+
 ---
 
 ## Required HACS Integrations
 
 Install all of these via HACS before setting up the dashboard:
+
+`test_conventions.py` checks this table against the card types
+`dashboard.yaml` actually uses, so it fails if a card is added without
+being listed here (or stays listed after its last use is removed).
 
 | Integration | Purpose |
 |-------------|---------|
@@ -115,13 +124,17 @@ Install all of these via HACS before setting up the dashboard:
 | **bubble-card** | Popup cards for Rooms and More |
 | **mushroom** | Template cards, entity cards, chips, title cards |
 | **stack-in-card** | Card grouping with unified styling |
+| **button-card** | Cards that draw their own body from a JS template |
 | **mini-graph-card** | Sparkline graphs |
 | **apexcharts-card** | UV index chart |
-| **clock-weather-card** | Combined clock/weather display |
+| **weather-forecast-card** | Weather card on the Home view |
 | **calendar-card-pro** | Calendar view |
 | **navbar-card** | Bottom navigation bar |
-| **auto-entities** | Dynamic card generation|
+| **auto-entities** | Dynamic card generation |
 | **streamline-card** | Parameterised card bodies |
+| **config-template-card** | Templating in card options that aren't templatable |
+| **template-entity-row** | Entity rows whose text comes from a template |
+| **fold-entity-row** | Collapsible groups of rows inside an entities card |
 | **material-you-utilities** | Material You theme support |
 | **kiosk-mode** | Hide HA header and sidebar |
 
@@ -322,9 +335,9 @@ because those cards sit inside per-account visibility blocks anyway.
 The theme has four independent axes that can be mixed and matched:
 
 1. **Mode** — light variant, dark variant, or follow the device (System)
-2. **Style** — the structural feel (card surfaces, borders, blur, corners)
-3. **Palette** — the color tokens (primary, accent, state colors, glow colors)
-4. **Background** — what's behind the cards (auto, none, solid color, image)
+1. **Style** — the structural feel (card surfaces, borders, blur, corners)
+1. **Palette** — the color tokens (primary, accent, state colors, glow colors)
+1. **Background** — what's behind the cards (auto, none, solid color, image)
 
 Changing one axis does not affect the others. The exception is `Auto`
 background, which dynamically reflects the current style and palette.
@@ -429,15 +442,15 @@ across accounts — tap actions route through scripts that resolve
 `context.user_id` to target the correct per-user helpers. Layout:
 
 1. **Mode picker** — Light / Dark / System tiles
-2. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
-3. **Palette picker** — 8 tiles with 4-dot color swatches
-4. **Background picker:**
+1. **Style picker** — 5 tiles with visual previews (Clean, Glass, Dark, Glow, Neon)
+1. **Palette picker** — 8 tiles with 4-dot color swatches
+1. **Background picker:**
    - Auto / None toggle
    - Curated color swatches (8 colors)
    - Palette-derived color swatches (4 shades from the active palette)
    - Custom hex input
    - Image thumbnails (from the backgrounds folder)
-5. **Card effects** — opacity and blur sliders with "Default" reset chips
+1. **Card effects** — opacity and blur sliders with "Default" reset chips
 
 ---
 
@@ -452,7 +465,7 @@ state-driven.
 1. **Promoted chips** — red severity items (door open) shown as standalone
    `button-card` chips above the dot counter. Each is a `type: conditional`
    card gated on the entity's state.
-2. **Dot counter** — all other items rendered as colored dots grouped by
+1. **Dot counter** — all other items rendered as colored dots grouped by
    severity, inside a themed `stack-in-card`. Tapping toggles an expanded
    list showing labels, icons, progress bars, and time remaining.
 
@@ -493,14 +506,13 @@ as a combined view of all items whether active or not.
 
 1. Add the entity check to `sensor.dashboard_notifications` in `sensors.yaml`
    (both `state` and `items` attribute — they evaluate independently).
-2. Assign a severity: red (urgent), amber (warning), blue (info), green
+1. Assign a severity: red (urgent), amber (warning), blue (info), green
    (normal)
-3. If promoted (red): also add a `type: conditional` chip card in
+1. If promoted (red): also add a `type: conditional` chip card in
    `dashboard.yaml` using `*theme_chip_style`
-4. If it has progress: include `progress` (0-100) and optional
+1. If it has progress: include `progress` (0-100) and optional
    `time_remaining` in the item dict
-
-5. The item must always be present in `items` with an `active` flag
+1. The item must always be present in `items` with an `active` flag
    (true when triggered, false when idle). The Home view JS filters
    to active items; the Conditionals page shows everything. Use the
    item's severity when active, `green` when idle.
@@ -518,11 +530,11 @@ list, etc.), not just a notification dot.
    `general_home_mobile.yaml` with the active time range.
    For **state-based** triggers: use `input_boolean.cond_<id>` +
    on/off automations instead.
-2. Add the card entry to `sensor.dashboard_conditional_visible` in
+1. Add the card entry to `sensor.dashboard_conditional_visible` in
    `sensors.yaml` (state template)
-3. Add the conditional card in the `dashboard.yaml` Home view, gated on
+1. Add the conditional card in the `dashboard.yaml` Home view, gated on
    the schedule or input_boolean
-4. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
+1. Alias the card's anchor on the Conditionals page in `dashboard.yaml`
    (the card body is defined once on the Home view with a `&cond_card_*`
    anchor; Conditionals uses `*cond_card_*` — no copy needed)
 
@@ -533,6 +545,67 @@ list, etc.), not just a notification dot.
 - `input_boolean.notification_expanded` — expand/collapse toggle
 - `&theme_chip_style` — YAML anchor for promoted chip cards (theme chrome
   without background/border)
+
+---
+
+## Automations Page
+
+Everything that runs on a schedule, at `/general-home/automations`, listed in
+the order it runs through the day.
+
+### Layout
+
+Three sections — **Morning**, **Evening** and **Always Active** — each with a
+heading and a switch. Inside each, automations sit under subsection headings by
+category. Infrastructure is collapsed, since it's not changing regularly.
+
+A **schedule overview** sits at the top: two separately scaled tracks, one for
+the morning cluster and one for the evening, with a dot per automation colored
+by category and a legend underneath. The tracks are scaled independently
+because most things run morning or evening.
+
+### Row anatomy
+
+| Part | What it is |
+|------|-----------|
+| Time | Right-aligned in a fixed gutter. Tapping a row opens the helper that sets its time |
+| Dot | 8px, colored by category, the same colors the overview's legend names |
+| Name | The automation |
+| Switch | Turns that one automation on and off |
+
+A hairline separates two automations that sit next to each other. It never
+touches a heading, and a category holding a single automation gets none, so the
+lines mark only the rows that can be mistaken for one another.
+
+**Window rows** are the exception. An automation that runs *between* two times
+gets a single row with a bar spanning from its opening time to its closing one
+and the window's name underneath. The bar is split down the middle: tapping
+anywhere in the left half opens the opening time, anywhere in the right half
+the closing one.
+
+### Switch hierarchy
+
+Four levels, all driven by HA groups defined in `packages/general.yaml`:
+
+1. The master switch beside the page title.
+1. One per section.
+1. One per subsection.
+1. One per automation.
+
+A group is on when any member is on, and turning it off turns off every member,
+so a heading switch reads "is anything under here running" and flipping it
+clears the whole heading. Groups nest, so turning off a part of the day
+cascades down to each category under it.
+
+Membership lives in the package rather than in the dashboard because Lovelace
+tap actions cannot be templated.
+### Icons
+
+Automation icons live in the entity registry, set from
+`registry_metadata.yaml`. A Home Assistant automation cannot declare an icon in
+its own YAML, so the registry is the only thing that puts one in the Settings
+list, in search and on related-entity views. This page draws dots rather than
+icons — the registry icons are for everywhere else in HA.
 
 ---
 
@@ -766,14 +839,14 @@ curl -s -X POST "http://YOUR_HA:8123/api/config/core/check_config" \
    remount after every restart. The sync script uses its own SMB connection and
    is unaffected.
 
-2. **Template sensors get stuck at `unknown`.** Run `template/reload`
+1. **Template sensors get stuck at `unknown`.** Run `template/reload`
    (Developer Tools > YAML > Template Entities, or
    `POST /api/services/template/reload`) after a restart. The theme itself
    is macro-rendered, not sensor-based — after editing
    `general_home_theme.jinja`, run `homeassistant.reload_custom_templates`
    and refresh the page.
 
-3. **`initial:` helpers reset.** If your `input_select`/`input_number` helpers
+1. **`initial:` helpers reset.** If your `input_select`/`input_number` helpers
    have `initial:` set, they reset to that value on restart. Remove `initial:`
    lines to persist the last-set value across restarts.
 
@@ -820,6 +893,19 @@ returns `#009ac7` (Material You default), it didn't. If it returns nothing
 or `unknown`, card_mod applied but the macro render failed — check that
 `custom_templates/general_home_theme.jinja` is deployed, run
 `homeassistant.reload_custom_templates`, and confirm the theme helpers exist.
+
+### card_mod Nested Selectors Hit Only the First Match
+
+A `$`-piercing selector in a card-level `card_mod` block styles one element per
+selector per card, not every element that matches.
+
+Anything that has to apply to every row must be attached to every row, which is
+why the Automations page carries its layout and color blocks on each row
+rather than once on the card around them.
+
+Ordinary selectors are unaffected. Elements sharing one shadow root, such as
+`#states` and its children, all match a single rule — the limit is specific to
+shadow piercing.
 
 ### Neon Font Loading
 

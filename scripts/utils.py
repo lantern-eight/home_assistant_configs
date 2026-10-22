@@ -418,6 +418,16 @@ def apply_registry_metadata(metadata_path: Path, token: str, entity_map_path: Pa
         'type': 'config/entity_registry/update',
         'entity_id': entity_id,
         'labels': label_ids,
+        # Sent on every entity, not only the ones naming an icon, so this
+        # file stays the single answer to what an entity's icon is. An
+        # entity whose `icon:` is removed here has it cleared in Home
+        # Assistant rather than silently keeping the last one applied.
+        #
+        # `None` clears the registry override; it does not blank the icon.
+        # Anything declaring its own icon in YAML — every helper in
+        # packages/ does — falls back to that. Automations have no such
+        # field, which is why they need this route at all.
+        'icon': props.get('icon') or None,
       }
       entity_cat = props.get('category', '')
       if entity_cat:

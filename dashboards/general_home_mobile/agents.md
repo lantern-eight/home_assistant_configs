@@ -62,6 +62,28 @@ not just as a Lovelace resource. Without this, cards that instantiate before
 card_mod patches them are permanently unstyled for that page load. There is no
 retry or delay-based fix.
 
+### card_mod nested selectors style only the first match
+
+A `$`-piercing selector in a card-level `card_mod` block reaches one element
+per selector per card, not every element that matches.
+
+Anything that has to apply to every row must be attached to every row. This is
+why the Automations page carries its layout, switch and category blocks on each
+row rather than once on the card around them.
+
+Ordinary selectors are unaffected — elements sharing one shadow root, such as
+`#states` and its children, all match a single rule. The limit is specific to
+shadow piercing, which is what makes the row separator a card-level rule while
+everything else on those rows is not.
+
+### An entities card takes a custom card as a row, but not a built-in one
+
+Home Assistant resolves a `custom:` type straight to that element and hands it
+the config, so any custom card with a `setConfig` renders in a row list. A
+built-in type goes through a row lookup with no cards in it, so a plain
+`horizontal-stack` there renders an error row. The Automations page's window
+rows are a `custom:button-card` for this reason.
+
 ### Entity IDs derive from sensor name, not unique_id
 
 A sensor with `unique_id: foo_bar` but `name: "Foo Bar Something"` gets
@@ -102,6 +124,15 @@ Eight anchors defined at the top of `dashboard.yaml` control card theming:
 | `&theme_bg_card` | Background overlay — must be first card in every view |
 
 To theme a new card: `card_mod: style: *theme_card_style`
+
+A second family of anchors below these belongs to the Automations page rather
+than to theming: row layout (`&child_row_layout`, `&heading_dot_style`), one
+color per category (`&cat_routine` and its siblings), the switch sheen
+(`&switch_row_style`), the card style carrying the row separators
+(`&row_list_card_style`) and the window bar (`&window_row` with its two
+halves). A row merges several at once with `<<: [*a, *b]`, which works only
+because each owns a different selector key. Just one of them may own `.` — if
+two do, the later is silently discarded and its styling never appears.
 
 ## Reusing a Card Body
 
@@ -291,7 +322,18 @@ Then reload the page.
    throws at compile time — the field renders blank and the only sign is a
    console error.
 
-9. **Don't mutate a memoised variable.** button-card evaluates each
+9. **Don't give an automation row its own `icon:`.** An HA automation cannot
+   declare an icon in its own YAML, so the entity registry is the only thing
+   that puts one in the Settings list, in search and on related-entity views.
+   Icons belong on the entity in `registry_metadata.yaml`. A row-level icon
+   overrides that for one dashboard and leaves the entity bare everywhere else.
+   `test_conventions.py` fails if one appears.
+
+10. **Don't expect `mushroom-title-card` to draw an `icon:`.** It has no icon
+    option and silently drops the key. The Automations section headings are
+    entities cards holding a `template-entity-row` for exactly this reason.
+
+11. **Don't mutate a memoised variable.** button-card evaluates each
    `variables:` entry once and hands the same object to every reader, so
    an in-place `.sort()` or `.splice()` on one holding an array reorders
    what the other cards on that entity see. Copy first.
