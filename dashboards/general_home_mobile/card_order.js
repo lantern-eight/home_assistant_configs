@@ -107,17 +107,20 @@ function clearCache() {
   let retries = 0;
 
   // hass and its WebSocket connection load asynchronously after the
-  // frontend shell renders, so we poll until they're available.
+  // frontend shell renders, so we poll until they're available. `states`
+  // arrives after the connection, so hass can exist with a live connection
+  // while states is still null; reading it then would throw and end the init.
   function tryInit() {
     const home_assistant = document.querySelector('home-assistant');
-    if (!home_assistant || !home_assistant.hass || !home_assistant.hass.connection) {
+    const hass = home_assistant && home_assistant.hass;
+    if (!hass || !hass.connection || !hass.states) {
       if (retries++ < 30) setTimeout(tryInit, 250);
       return;
     }
 
-    applyOrder(home_assistant.hass);
+    applyOrder(hass);
 
-    home_assistant.hass.connection.subscribeEvents(function () {
+    hass.connection.subscribeEvents(function () {
       const home_assistant = document.querySelector('home-assistant');
       if (home_assistant && home_assistant.hass) applyOrder(home_assistant.hass);
     }, 'state_changed');
