@@ -196,6 +196,17 @@ copy for the max-age window. Deploying an edit won't update; the query string ma
 a browser re-fetch. The HACS-served card-mod URL needs no such treatment — HACS
 versions its own path.
 
+The Companion app needs one more step when it reaches HA through the Nabu Casa URL. It
+starts at `/?external_auth=1`, and over https HA's service worker answers that from its
+cache. The route matches with `ignoreSearch`, and Chromium returns the oldest match: the
+copy of `/` stored when the worker installed, not the fresher ones each launch writes
+under the query string. That copy only changes when the worker reinstalls on an HA
+update, so until then every launch imports the old `?v=` and runs the old module until
+something reloads the page. After a bump, run *Settings → Companion app →
+Troubleshooting → Reset frontend cache* on each phone using that URL. The next launch
+reloads itself once, a few seconds in, as the new worker takes over. Over the LAN URL
+(plain http) there is no service worker, and the bump alone is enough.
+
 ### 4. Theme Helpers
 
 > **Package:** These helpers are defined in `general_home_mobile.yaml` and deployed to
